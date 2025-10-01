@@ -87,10 +87,4 @@ jobs:
     
     - name: Build
       run: make build
-    
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: trashscanner-binary
-        path: bin/trashscanner
-        retention-days: 7
+
