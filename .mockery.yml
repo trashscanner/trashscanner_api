@@ -1,0 +1,14 @@
+all: false
+dir: '{{.InterfaceDir}}/mocks'
+filename: '{{.InterfaceName}}'
+force-file-write: false
+formatter: gofmt
+log-level: info
+structname: '{{.InterfaceName}}'
+pkgname: 'mocks'
+recursive: false
+template: testify
+packages:
+  github.com/vektra/mockery/v3/internal/fixtures:
+    config:
+      all: true
