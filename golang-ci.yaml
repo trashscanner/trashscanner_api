@@ -1,3 +1,5 @@
+version: 2
+
 linters:
   default: all
   enable:
@@ -248,6 +250,17 @@ linters:
           - errcheck
           - dupl
           - gosec
+          - funlen
+          - gocognit
+          - maintidx
+          - wrapcheck
+          - varnamelen
+          - paralleltest
+          - testpackage
+          - goconst
+          - goerr113
+          - nlreturn
+          - wsl
       # Run some linter only for test files by excluding its issues for everything else.
       - path-except: _test\.go
         linters:

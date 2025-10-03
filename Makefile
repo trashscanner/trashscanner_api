@@ -11,12 +11,55 @@ lint:
 	if [ -z $$(which golangci-lint 2>/dev/null) ]; then \
 		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $$(go env GOPATH)/bin v2.5.0; \
 	fi
-	golangci-lint run
+	golangci-lint cache clean
+	golangci-lint run --timeout 5m --config golang-ci.yaml
 
 test:
-	go test ./... -coverprofile=coverage.txt --race --timeout 2m
+	go test $$(go list ./... | grep -v '/internal/database' | grep -v '/mocks') -coverprofile=coverage.out --race --timeout 2m
+	cat coverage.out | grep -v "internal/database/sqlc" > coverage.txt || true
+
+test-all:
+	go test $$(go list ./... | grep -v '/mocks') -coverprofile=coverage.out --race --timeout 2m
+	cat coverage.out | grep -v "internal/database/sqlc" > coverage.txt || true
+
+test-db:
+	go test ./internal/database/... -v --race --timeout 2m
 
 build:
 	go build -o bin/trashscanner cmd/trashscanner/main.go
 
-.PHONY: run mock-gen lint test
+sqlc-gen:
+	@if [ -z $$(which sqlc 2>/dev/null) ]; then \
+		go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest; \
+	fi
+	cd internal/database/sqlc && sqlc generate
+	cd ../../..
+
+new-migration:
+	@if [ -z "$(name)" ]; then \
+		echo "Error: migration name is required. Usage: make new-migration name=your_migration_name"; \
+		exit 1; \
+	fi; \
+	LAST_NUM=$$(ls internal/database/migrations/ 2>/dev/null | grep -E '^[0-9]+_.*\.up\.sql$$' | sed 's/^\([0-9]*\)_.*/\1/' | sort -n | tail -1); \
+	if [ -z "$$LAST_NUM" ]; then \
+		LAST_NUM=0; \
+	fi; \
+	NEXT_NUM=$$(printf "%06d" $$(($$LAST_NUM + 1))); \
+	UP_FILE="internal/database/migrations/$${NEXT_NUM}_$(name).up.sql"; \
+	DOWN_FILE="internal/database/migrations/$${NEXT_NUM}_$(name).down.sql"; \
+	touch $$UP_FILE $$DOWN_FILE; \
+	echo "Created migration files:"; \
+	echo "  - $$UP_FILE"; \
+	echo "  - $$DOWN_FILE"
+
+local-store:
+	docker-compose -f docker-compose.local.yml up -d
+
+connect-local-pg-store:
+	docker exec -it trashscanner_postgres psql -U trashscanner -d trashscanner_db
+
+drop-local-store:
+	docker-compose -f docker-compose.local.yml down -v --remove-orphans
+
+
+.PHONY: run mock-gen lint test test-all test-db build sqlc-gen new-migration local-store connect-local-pg-store drop-local-store
