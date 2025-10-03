@@ -1,7 +1,7 @@
 all: false
 dir: '{{.InterfaceDir}}/mocks'
 filename: '{{.InterfaceName}}'
-force-file-write: false
+force-file-write: true
 formatter: gofmt
 log-level: info
 structname: '{{.InterfaceName}}'
@@ -9,6 +9,25 @@ pkgname: 'mocks'
 recursive: false
 template: testify
 packages:
-  github.com/vektra/mockery/v3/internal/fixtures:
-    config:
-      all: true
+  github.com/trashscanner/trashscanner_api/internal/database/sqlc/db:
+    interfaces:
+      Querier:
+        config:
+          dir: 'internal/database/mocks'
+          filename: 'querier.go'
+  github.com/jackc/pgx/v5:
+    interfaces:
+      Tx:
+        config:
+          dir: 'internal/store/mocks'
+          filename: 'pgx_tx.go'
+  github.com/trashscanner/trashscanner_api/internal/store:
+    interfaces:
+      Store:
+        config:
+          dir: 'internal/store/mocks'
+          filename: 'store.go'
+      Connection:
+        config:
+          dir: 'internal/store/mocks'
+          filename: 'connection.go'
