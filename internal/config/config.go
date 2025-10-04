@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
@@ -14,7 +15,8 @@ const (
 )
 
 type Config struct {
-	DB DBConfig `mapstructure:"database"`
+	DB   DBConfig          `mapstructure:"database"`
+	Auth AuthManagerConfig `mapstructure:"auth_manager"`
 }
 
 type DBConfig struct {
@@ -26,6 +28,14 @@ type DBConfig struct {
 
 	MigrationsPath string `mapstructure:"migrations_path" validate:"required"`
 	SSLMode        string `mapstructure:"sslmode" validate:"required,oneof=disable require verify-ca verify-full"`
+}
+
+type AuthManagerConfig struct {
+	AccessTokenTTL   time.Duration `mapstructure:"access_token_ttl" validate:"required,gt=0"`
+	RefreshTokenTTL  time.Duration `mapstructure:"refresh_token_ttl" validate:"required,gt=0"`
+	Algorithm        string        `mapstructure:"signing_algorithm" validate:"required,oneof=HS256 HS384 HS512 RS256 RS384 RS512 ES256 ES384 ES512 EdDSA"`
+	SecretPrivateKey string        `mapstructure:"secret_private_key"`
+	PublicKey        string        `mapstructure:"public_key"`
 }
 
 func NewConfig() (Config, error) {

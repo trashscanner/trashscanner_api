@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -11,9 +12,13 @@ import (
 func TestConfig(t *testing.T) {
 	os.Setenv("CONFIG_PATH", ".")
 	os.Setenv("CONFIG_NAME", "test_config")
+	os.Setenv("AUTH_MANAGER_PUBLIC_KEY", "public-key")
+	os.Setenv("AUTH_MANAGER_SECRET_PRIVATE_KEY", "private-key")
 	defer func() {
 		os.Unsetenv("CONFIG_PATH")
 		os.Unsetenv("CONFIG_NAME")
+		os.Unsetenv("AUTH_MANAGER_PUBLIC_KEY")
+		os.Unsetenv("AUTH_MANAGER_SECRET_PRIVATE_KEY")
 	}()
 
 	t.Run("successful config loading", func(t *testing.T) {
@@ -27,6 +32,13 @@ func TestConfig(t *testing.T) {
 				Name:           "testdb",
 				MigrationsPath: "file://internal/database/migrations",
 				SSLMode:        "disable",
+			},
+			Auth: AuthManagerConfig{
+				AccessTokenTTL:   time.Minute * 15,
+				RefreshTokenTTL:  time.Hour * 168,
+				Algorithm:        "EdDSA",
+				PublicKey:        "public-key",
+				SecretPrivateKey: "private-key",
 			},
 		}
 		assert.NoError(t, err)
