@@ -15,8 +15,14 @@ const (
 )
 
 type Config struct {
-	DB   DBConfig          `mapstructure:"database"`
-	Auth AuthManagerConfig `mapstructure:"auth_manager"`
+	Server ServerConfig      `mapstructure:"server"`
+	DB     DBConfig          `mapstructure:"database"`
+	Auth   AuthManagerConfig `mapstructure:"auth_manager"`
+}
+
+type ServerConfig struct {
+	Host string `mapstructure:"host"`
+	Port string `mapstructure:"port"`
 }
 
 type DBConfig struct {
@@ -31,11 +37,9 @@ type DBConfig struct {
 }
 
 type AuthManagerConfig struct {
-	AccessTokenTTL   time.Duration `mapstructure:"access_token_ttl" validate:"required,gt=0"`
-	RefreshTokenTTL  time.Duration `mapstructure:"refresh_token_ttl" validate:"required,gt=0"`
-	Algorithm        string        `mapstructure:"signing_algorithm" validate:"required,oneof=HS256 HS384 HS512 RS256 RS384 RS512 ES256 ES384 ES512 EdDSA"`
-	SecretPrivateKey string        `mapstructure:"secret_private_key"`
-	PublicKey        string        `mapstructure:"public_key"`
+	AccessTokenTTL  time.Duration `mapstructure:"access_token_ttl" validate:"required,gt=0"`
+	RefreshTokenTTL time.Duration `mapstructure:"refresh_token_ttl" validate:"required,gt=0"`
+	Algorithm       string        `mapstructure:"signing_algorithm" validate:"required,oneof=EdDSA"`
 }
 
 func NewConfig() (Config, error) {
@@ -56,6 +60,7 @@ func NewConfig() (Config, error) {
 	v.AutomaticEnv()
 	v.SetEnvPrefix("")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	setDefaults(v)
 
 	var config Config
 	if err := v.ReadInConfig(); err != nil {
@@ -66,4 +71,9 @@ func NewConfig() (Config, error) {
 	}
 
 	return config, validator.New().Struct(config)
+}
+
+func setDefaults(v *viper.Viper) {
+	v.SetDefault("server.host", "0.0.0.0")
+	v.SetDefault("server.port", "8080")
 }

@@ -60,7 +60,9 @@ func DownMigrations(pool *pgxpool.Pool, conf config.Config) error {
 	if err != nil {
 		return fmt.Errorf("failed to setup migrations: %w", err)
 	}
-	defer migrate.Close()
+	defer func() {
+		_, _ = migrate.Close()
+	}()
 
 	if err := migrate.Down(); err != nil {
 		if errors.Is(err, m.ErrNoChange) {

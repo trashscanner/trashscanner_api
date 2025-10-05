@@ -59,20 +59,18 @@ var (
 
 	LoginHistory1ID = uuid.MustParse("54ae379a-31a6-4b32-a6d7-f6cdd844f86f")
 	LoginHistory1   = models.LoginHistory{
-		ID:           LoginHistory1ID,
-		UserID:       User1ID,
-		LoginAttempt: User1.Login,
-		Success:      true,
-		IpAddress:    addrPtr("192.168.1.1"),
-		UserAgent:    stringPtr("Mozilla/5.0"),
-		Location:     stringPtr("Moscow, Russia"),
+		ID:        LoginHistory1ID,
+		UserID:    User1ID,
+		Success:   true,
+		IpAddress: addrPtr("192.168.1.1"),
+		UserAgent: stringPtr("Mozilla/5.0"),
+		Location:  stringPtr("Moscow, Russia"),
 	}
 
 	LoginHistory2ID = uuid.MustParse("64ae379a-31a6-4b32-a6d7-f6cdd844f87a")
 	LoginHistory2   = models.LoginHistory{
 		ID:            LoginHistory2ID,
 		UserID:        User1ID,
-		LoginAttempt:  User1.Login,
 		Success:       false,
 		FailureReason: stringPtr("Invalid password"),
 		IpAddress:     addrPtr("192.168.1.1"),
@@ -82,13 +80,12 @@ var (
 
 	LoginHistory3ID = uuid.MustParse("74ae379a-31a6-4b32-a6d7-f6cdd844f88b")
 	LoginHistory3   = models.LoginHistory{
-		ID:           LoginHistory3ID,
-		UserID:       User2ID,
-		LoginAttempt: User2.Login,
-		Success:      true,
-		IpAddress:    addrPtr("10.0.0.1"),
-		UserAgent:    stringPtr("Chrome/120.0"),
-		Location:     stringPtr("Saint Petersburg, Russia"),
+		ID:        LoginHistory3ID,
+		UserID:    User2ID,
+		Success:   true,
+		IpAddress: addrPtr("10.0.0.1"),
+		UserAgent: stringPtr("Chrome/120.0"),
+		Location:  stringPtr("Saint Petersburg, Russia"),
 	}
 
 	TestIPAddress = netip.MustParseAddr("203.0.113.42")
@@ -96,20 +93,18 @@ var (
 	TestLocation  = "Test City, Test Country"
 
 	DBLoginHistory1 = db.LoginHistory{
-		ID:           LoginHistory1ID,
-		UserID:       User1ID,
-		LoginAttempt: User1.Login,
-		Success:      true,
-		IpAddress:    addrPtr("192.168.1.1"),
-		UserAgent:    stringPtr("Mozilla/5.0"),
-		Location:     stringPtr("Moscow, Russia"),
-		CreatedAt:    time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC),
+		ID:        LoginHistory1ID,
+		UserID:    User1ID,
+		Success:   true,
+		IpAddress: addrPtr("192.168.1.1"),
+		UserAgent: stringPtr("Mozilla/5.0"),
+		Location:  stringPtr("Moscow, Russia"),
+		CreatedAt: time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC),
 	}
 
 	DBLoginHistory2 = db.LoginHistory{
 		ID:            LoginHistory2ID,
 		UserID:        User1ID,
-		LoginAttempt:  User1.Login,
 		Success:       false,
 		FailureReason: stringPtr("Invalid password"),
 		IpAddress:     addrPtr("192.168.1.1"),
@@ -118,46 +113,40 @@ var (
 		CreatedAt:     time.Date(2024, 1, 15, 11, 0, 0, 0, time.UTC),
 	}
 
-	TokenFamily1    = uuid.MustParse("84ae379a-31a6-4b32-a6d7-f6cdd844f89c")
-	TokenFamily2    = uuid.MustParse("94ae379a-31a6-4b32-a6d7-f6cdd844f90d")
 	RefreshToken1ID = uuid.MustParse("a4ae379a-31a6-4b32-a6d7-f6cdd844f91e")
 	RefreshToken1   = models.RefreshToken{
-		ID:          RefreshToken1ID,
-		UserID:      User1ID,
-		TokenFamily: TokenFamily1,
-		TokenHash:   "hash_token_1",
-		ExpiresAt:   time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
-		Revoked:     false,
+		ID:        RefreshToken1ID,
+		UserID:    User1ID,
+		TokenHash: "hash_token_1",
+		ExpiresAt: time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
+		Revoked:   false,
 	}
 
 	RefreshToken2ID = uuid.MustParse("b4ae379a-31a6-4b32-a6d7-f6cdd844f92f")
 	RefreshToken2   = models.RefreshToken{
-		ID:          RefreshToken2ID,
-		UserID:      User1ID,
-		TokenFamily: TokenFamily1,
-		TokenHash:   "hash_token_2",
-		ExpiresAt:   time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
-		Revoked:     false,
+		ID:        RefreshToken2ID,
+		UserID:    User1ID,
+		TokenHash: "hash_token_2",
+		ExpiresAt: time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
+		Revoked:   false,
 	}
 
 	RefreshToken3ID = uuid.MustParse("c4ae379a-31a6-4b32-a6d7-f6cdd844f93a")
 	RefreshToken3   = models.RefreshToken{
-		ID:          RefreshToken3ID,
-		UserID:      User2ID,
-		TokenFamily: TokenFamily2,
-		TokenHash:   "hash_token_3",
-		ExpiresAt:   time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
-		Revoked:     false,
+		ID:        RefreshToken3ID,
+		UserID:    User2ID,
+		TokenHash: "hash_token_3",
+		ExpiresAt: time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
+		Revoked:   false,
 	}
 
 	RevokedTokenID = uuid.MustParse("d4ae379a-31a6-4b32-a6d7-f6cdd844f94b")
 	RevokedToken   = models.RefreshToken{
-		ID:          RevokedTokenID,
-		UserID:      User1ID,
-		TokenFamily: TokenFamily1,
-		TokenHash:   "hash_revoked_token",
-		ExpiresAt:   time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
-		Revoked:     true,
+		ID:        RevokedTokenID,
+		UserID:    User1ID,
+		TokenHash: "hash_revoked_token",
+		ExpiresAt: time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
+		Revoked:   true,
 	}
 )
 

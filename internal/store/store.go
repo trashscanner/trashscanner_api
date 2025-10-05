@@ -22,9 +22,18 @@ const (
 type Store interface {
 	CreateUser(ctx context.Context, user *models.User) error
 	GetUser(ctx context.Context, id uuid.UUID, withStats bool) (*models.User, error)
+	GetUserByLogin(ctx context.Context, login string) (*models.User, error)
 	UpdateUserPass(ctx context.Context, id uuid.UUID, newHashedPass string) error
 	UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
+
+	InsertRefreshToken(ctx context.Context, refreshToken *models.RefreshToken) error
+	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (*models.RefreshToken, error)
+	RevokeRefreshToken(ctx context.Context, tokenHash string) error
+	RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error
+
+	InsertLoginHistory(ctx context.Context, loginHistory *models.LoginHistory) error
+	GetLoginHistory(ctx context.Context, userID uuid.UUID) ([]models.LoginHistory, error)
 
 	Close()
 	Conn() *pgxpool.Pool
@@ -96,7 +105,9 @@ func (s *pgStore) ExecTx(ctx context.Context, fn func(db.Querier) error) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
 
 	if err := fn(s.qf(tx)); err != nil {
 		return err

@@ -6,11 +6,13 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/pem"
 	"fmt"
 	"log"
 	"os"
 
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/ssh"
 )
 
 func HashPass(pass string) (string, error) {
@@ -41,11 +43,25 @@ func GenerateAndSetKeys() {
 		log.Fatalf("failed to generate EdDSA keys: %v", err)
 	}
 
-	privateKeyBase64 := base64.StdEncoding.EncodeToString(privateKey)
-	publicKeyBase64 := base64.StdEncoding.EncodeToString(publicKey)
+	pemPrivateKey, err := ssh.MarshalPrivateKey(privateKey, "")
+	if err != nil {
+		log.Fatalf("failed to marshal private key: %v", err)
+	}
+	privateKeyPEM := pem.EncodeToMemory(pemPrivateKey)
+	privateKeyBase64 := base64.StdEncoding.EncodeToString(privateKeyPEM)
 
-	os.Setenv("AUTH_MANAGER_SECRET_PRIVATE_KEY", privateKeyBase64)
-	os.Setenv("AUTH_MANAGER_PUBLIC_KEY", publicKeyBase64)
+	sshPublicKey, err := ssh.NewPublicKey(publicKey)
+	if err != nil {
+		log.Fatalf("failed to create SSH public key: %v", err)
+	}
+	publicKeyBase64 := base64.StdEncoding.EncodeToString(ssh.MarshalAuthorizedKey(sshPublicKey))
+
+	if err := os.Setenv("AUTH_MANAGER_SECRET_PRIVATE_KEY", privateKeyBase64); err != nil {
+		log.Fatalf("failed to set private key env: %v", err)
+	}
+	if err := os.Setenv("AUTH_MANAGER_PUBLIC_KEY", publicKeyBase64); err != nil {
+		log.Fatalf("failed to set public key env: %v", err)
+	}
 }
 
 func GetEdDSAKeysFromEnv() (ed25519.PrivateKey, ed25519.PublicKey, error) {
@@ -56,15 +72,37 @@ func GetEdDSAKeysFromEnv() (ed25519.PrivateKey, ed25519.PublicKey, error) {
 		return nil, nil, fmt.Errorf("EdDSA keys not found in environment variables")
 	}
 
-	privateKey, err := base64.StdEncoding.DecodeString(privateKeyBase64)
+	privateKeyPEM, err := base64.StdEncoding.DecodeString(privateKeyBase64)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to decode private key: %w", err)
 	}
 
-	publicKey, err := base64.StdEncoding.DecodeString(publicKeyBase64)
+	publicKeyPEM, err := base64.StdEncoding.DecodeString(publicKeyBase64)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to decode public key: %w", err)
 	}
 
-	return ed25519.PrivateKey(privateKey), ed25519.PublicKey(publicKey), nil
+	privateKey, err := ssh.ParseRawPrivateKey(privateKeyPEM)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse private key: %w", err)
+	}
+
+	ed25519PrivateKey, ok := privateKey.(*ed25519.PrivateKey)
+	if !ok {
+		return nil, nil, fmt.Errorf("private key is not Ed25519 type")
+	}
+
+	sshPublicKey, _, _, _, err := ssh.ParseAuthorizedKey(publicKeyPEM)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse public key: %w", err)
+	}
+
+	cryptoPublicKey := sshPublicKey.(ssh.CryptoPublicKey).CryptoPublicKey()
+
+	ed25519PublicKey, ok := cryptoPublicKey.(ed25519.PublicKey)
+	if !ok {
+		return nil, nil, fmt.Errorf("public key is not Ed25519 type")
+	}
+
+	return *ed25519PrivateKey, ed25519PublicKey, nil
 }

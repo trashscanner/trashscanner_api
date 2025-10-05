@@ -353,6 +353,142 @@ func (_c *Store_ExecTx_Call) RunAndReturn(run func(ctx context.Context, fn func(
 	return _c
 }
 
+// GetLoginHistory provides a mock function for the type Store
+func (_mock *Store) GetLoginHistory(ctx context.Context, userID uuid.UUID) ([]models.LoginHistory, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLoginHistory")
+	}
+
+	var r0 []models.LoginHistory
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]models.LoginHistory, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []models.LoginHistory); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.LoginHistory)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Store_GetLoginHistory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLoginHistory'
+type Store_GetLoginHistory_Call struct {
+	*mock.Call
+}
+
+// GetLoginHistory is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *Store_Expecter) GetLoginHistory(ctx interface{}, userID interface{}) *Store_GetLoginHistory_Call {
+	return &Store_GetLoginHistory_Call{Call: _e.mock.On("GetLoginHistory", ctx, userID)}
+}
+
+func (_c *Store_GetLoginHistory_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *Store_GetLoginHistory_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_GetLoginHistory_Call) Return(loginHistorys []models.LoginHistory, err error) *Store_GetLoginHistory_Call {
+	_c.Call.Return(loginHistorys, err)
+	return _c
+}
+
+func (_c *Store_GetLoginHistory_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) ([]models.LoginHistory, error)) *Store_GetLoginHistory_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRefreshTokenByHash provides a mock function for the type Store
+func (_mock *Store) GetRefreshTokenByHash(ctx context.Context, tokenHash string) (*models.RefreshToken, error) {
+	ret := _mock.Called(ctx, tokenHash)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRefreshTokenByHash")
+	}
+
+	var r0 *models.RefreshToken
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*models.RefreshToken, error)); ok {
+		return returnFunc(ctx, tokenHash)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *models.RefreshToken); ok {
+		r0 = returnFunc(ctx, tokenHash)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.RefreshToken)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, tokenHash)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Store_GetRefreshTokenByHash_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRefreshTokenByHash'
+type Store_GetRefreshTokenByHash_Call struct {
+	*mock.Call
+}
+
+// GetRefreshTokenByHash is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tokenHash string
+func (_e *Store_Expecter) GetRefreshTokenByHash(ctx interface{}, tokenHash interface{}) *Store_GetRefreshTokenByHash_Call {
+	return &Store_GetRefreshTokenByHash_Call{Call: _e.mock.On("GetRefreshTokenByHash", ctx, tokenHash)}
+}
+
+func (_c *Store_GetRefreshTokenByHash_Call) Run(run func(ctx context.Context, tokenHash string)) *Store_GetRefreshTokenByHash_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_GetRefreshTokenByHash_Call) Return(refreshToken *models.RefreshToken, err error) *Store_GetRefreshTokenByHash_Call {
+	_c.Call.Return(refreshToken, err)
+	return _c
+}
+
+func (_c *Store_GetRefreshTokenByHash_Call) RunAndReturn(run func(ctx context.Context, tokenHash string) (*models.RefreshToken, error)) *Store_GetRefreshTokenByHash_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUser provides a mock function for the type Store
 func (_mock *Store) GetUser(ctx context.Context, id uuid.UUID, withStats bool) (*models.User, error) {
 	ret := _mock.Called(ctx, id, withStats)
@@ -423,6 +559,302 @@ func (_c *Store_GetUser_Call) Return(user *models.User, err error) *Store_GetUse
 }
 
 func (_c *Store_GetUser_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, withStats bool) (*models.User, error)) *Store_GetUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserByLogin provides a mock function for the type Store
+func (_mock *Store) GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
+	ret := _mock.Called(ctx, login)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserByLogin")
+	}
+
+	var r0 *models.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*models.User, error)); ok {
+		return returnFunc(ctx, login)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *models.User); ok {
+		r0 = returnFunc(ctx, login)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, login)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Store_GetUserByLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByLogin'
+type Store_GetUserByLogin_Call struct {
+	*mock.Call
+}
+
+// GetUserByLogin is a helper method to define mock.On call
+//   - ctx context.Context
+//   - login string
+func (_e *Store_Expecter) GetUserByLogin(ctx interface{}, login interface{}) *Store_GetUserByLogin_Call {
+	return &Store_GetUserByLogin_Call{Call: _e.mock.On("GetUserByLogin", ctx, login)}
+}
+
+func (_c *Store_GetUserByLogin_Call) Run(run func(ctx context.Context, login string)) *Store_GetUserByLogin_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_GetUserByLogin_Call) Return(user *models.User, err error) *Store_GetUserByLogin_Call {
+	_c.Call.Return(user, err)
+	return _c
+}
+
+func (_c *Store_GetUserByLogin_Call) RunAndReturn(run func(ctx context.Context, login string) (*models.User, error)) *Store_GetUserByLogin_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// InsertLoginHistory provides a mock function for the type Store
+func (_mock *Store) InsertLoginHistory(ctx context.Context, loginHistory *models.LoginHistory) error {
+	ret := _mock.Called(ctx, loginHistory)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InsertLoginHistory")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *models.LoginHistory) error); ok {
+		r0 = returnFunc(ctx, loginHistory)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Store_InsertLoginHistory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InsertLoginHistory'
+type Store_InsertLoginHistory_Call struct {
+	*mock.Call
+}
+
+// InsertLoginHistory is a helper method to define mock.On call
+//   - ctx context.Context
+//   - loginHistory *models.LoginHistory
+func (_e *Store_Expecter) InsertLoginHistory(ctx interface{}, loginHistory interface{}) *Store_InsertLoginHistory_Call {
+	return &Store_InsertLoginHistory_Call{Call: _e.mock.On("InsertLoginHistory", ctx, loginHistory)}
+}
+
+func (_c *Store_InsertLoginHistory_Call) Run(run func(ctx context.Context, loginHistory *models.LoginHistory)) *Store_InsertLoginHistory_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *models.LoginHistory
+		if args[1] != nil {
+			arg1 = args[1].(*models.LoginHistory)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_InsertLoginHistory_Call) Return(err error) *Store_InsertLoginHistory_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Store_InsertLoginHistory_Call) RunAndReturn(run func(ctx context.Context, loginHistory *models.LoginHistory) error) *Store_InsertLoginHistory_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// InsertRefreshToken provides a mock function for the type Store
+func (_mock *Store) InsertRefreshToken(ctx context.Context, refreshToken *models.RefreshToken) error {
+	ret := _mock.Called(ctx, refreshToken)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InsertRefreshToken")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *models.RefreshToken) error); ok {
+		r0 = returnFunc(ctx, refreshToken)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Store_InsertRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InsertRefreshToken'
+type Store_InsertRefreshToken_Call struct {
+	*mock.Call
+}
+
+// InsertRefreshToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - refreshToken *models.RefreshToken
+func (_e *Store_Expecter) InsertRefreshToken(ctx interface{}, refreshToken interface{}) *Store_InsertRefreshToken_Call {
+	return &Store_InsertRefreshToken_Call{Call: _e.mock.On("InsertRefreshToken", ctx, refreshToken)}
+}
+
+func (_c *Store_InsertRefreshToken_Call) Run(run func(ctx context.Context, refreshToken *models.RefreshToken)) *Store_InsertRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *models.RefreshToken
+		if args[1] != nil {
+			arg1 = args[1].(*models.RefreshToken)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_InsertRefreshToken_Call) Return(err error) *Store_InsertRefreshToken_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Store_InsertRefreshToken_Call) RunAndReturn(run func(ctx context.Context, refreshToken *models.RefreshToken) error) *Store_InsertRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RevokeAllUserTokens provides a mock function for the type Store
+func (_mock *Store) RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeAllUserTokens")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Store_RevokeAllUserTokens_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeAllUserTokens'
+type Store_RevokeAllUserTokens_Call struct {
+	*mock.Call
+}
+
+// RevokeAllUserTokens is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *Store_Expecter) RevokeAllUserTokens(ctx interface{}, userID interface{}) *Store_RevokeAllUserTokens_Call {
+	return &Store_RevokeAllUserTokens_Call{Call: _e.mock.On("RevokeAllUserTokens", ctx, userID)}
+}
+
+func (_c *Store_RevokeAllUserTokens_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *Store_RevokeAllUserTokens_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_RevokeAllUserTokens_Call) Return(err error) *Store_RevokeAllUserTokens_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Store_RevokeAllUserTokens_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) error) *Store_RevokeAllUserTokens_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RevokeRefreshToken provides a mock function for the type Store
+func (_mock *Store) RevokeRefreshToken(ctx context.Context, tokenHash string) error {
+	ret := _mock.Called(ctx, tokenHash)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeRefreshToken")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, tokenHash)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Store_RevokeRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeRefreshToken'
+type Store_RevokeRefreshToken_Call struct {
+	*mock.Call
+}
+
+// RevokeRefreshToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tokenHash string
+func (_e *Store_Expecter) RevokeRefreshToken(ctx interface{}, tokenHash interface{}) *Store_RevokeRefreshToken_Call {
+	return &Store_RevokeRefreshToken_Call{Call: _e.mock.On("RevokeRefreshToken", ctx, tokenHash)}
+}
+
+func (_c *Store_RevokeRefreshToken_Call) Run(run func(ctx context.Context, tokenHash string)) *Store_RevokeRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_RevokeRefreshToken_Call) Return(err error) *Store_RevokeRefreshToken_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Store_RevokeRefreshToken_Call) RunAndReturn(run func(ctx context.Context, tokenHash string) error) *Store_RevokeRefreshToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

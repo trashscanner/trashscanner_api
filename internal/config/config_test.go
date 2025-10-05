@@ -34,11 +34,13 @@ func TestConfig(t *testing.T) {
 				SSLMode:        "disable",
 			},
 			Auth: AuthManagerConfig{
-				AccessTokenTTL:   time.Minute * 15,
-				RefreshTokenTTL:  time.Hour * 168,
-				Algorithm:        "EdDSA",
-				PublicKey:        "public-key",
-				SecretPrivateKey: "private-key",
+				AccessTokenTTL:  time.Minute * 15,
+				RefreshTokenTTL: time.Hour * 168,
+				Algorithm:       "EdDSA",
+			},
+			Server: ServerConfig{
+				Host: "0.0.0.0",
+				Port: "8080",
 			},
 		}
 		assert.NoError(t, err)
