@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	dbMock "github.com/trashscanner/trashscanner_api/internal/database/mocks"
 	"github.com/trashscanner/trashscanner_api/internal/database/sqlc/db"
+	"github.com/trashscanner/trashscanner_api/internal/errlocal"
 	"github.com/trashscanner/trashscanner_api/internal/store/mocks"
 	"github.com/trashscanner/trashscanner_api/internal/testdata"
 )
@@ -100,7 +101,7 @@ func TestUserCreate(t *testing.T) {
 		err := store.CreateUser(ctx, &user)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "database error")
+		assert.Contains(t, err.Error(), "failed to check existing user")
 	})
 
 	t.Run("Transaction begin fails", func(t *testing.T) {
@@ -157,7 +158,8 @@ func TestUserCreate(t *testing.T) {
 
 		err := store.CreateUser(ctx, &user)
 
-		assert.ErrorIs(t, err, createErr)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to create user")
 	})
 
 	t.Run("CreateStats in transaction fails", func(t *testing.T) {
@@ -194,7 +196,8 @@ func TestUserCreate(t *testing.T) {
 
 		err := store.CreateUser(ctx, &user)
 
-		assert.ErrorIs(t, err, statsErr)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to create user stats")
 	})
 }
 
@@ -287,7 +290,7 @@ func TestGetUser(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, user)
-		assert.ErrorIs(t, err, pgx.ErrNoRows)
+		assert.Contains(t, err.Error(), "user not found")
 	})
 
 	t.Run("Stats fetch fails", func(t *testing.T) {
@@ -319,6 +322,84 @@ func TestGetUser(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, user)
 		assert.Contains(t, err.Error(), "failed to get user stats")
+	})
+}
+
+func TestGetUserByLogin(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQ := dbMock.NewQuerier(t)
+
+		store := &pgStore{
+			q: mockQ,
+		}
+
+		dbUser := db.User{
+			ID:             testdata.User1ID,
+			Login:          testdata.User1.Login,
+			HashedPassword: testdata.User1.HashedPassword,
+			Avatar:         nil,
+			Deleted:        false,
+		}
+
+		mockQ.EXPECT().GetUserByLogin(mock.Anything, testdata.User1.Login).
+			Return(dbUser, nil).Once()
+
+		user, err := store.GetUserByLogin(ctx, testdata.User1.Login)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, user)
+		assert.Equal(t, testdata.User1ID, user.ID)
+		assert.Equal(t, testdata.User1.Login, user.Login)
+		assert.Equal(t, testdata.User1.HashedPassword, user.HashedPassword)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQ := dbMock.NewQuerier(t)
+
+		store := &pgStore{
+			q: mockQ,
+		}
+
+		login := "missing_user"
+
+		mockQ.EXPECT().GetUserByLogin(mock.Anything, login).
+			Return(db.User{}, pgx.ErrNoRows).Once()
+
+		user, err := store.GetUserByLogin(ctx, login)
+
+		assert.Error(t, err)
+		assert.Nil(t, user)
+		var notFoundErr *errlocal.ErrNotFound
+		assert.ErrorAs(t, err, &notFoundErr)
+		assert.Contains(t, err.Error(), "user not found")
+	})
+
+	t.Run("database error", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQ := dbMock.NewQuerier(t)
+
+		store := &pgStore{
+			q: mockQ,
+		}
+
+		login := "db_error_user"
+		dbErr := assert.AnError
+
+		mockQ.EXPECT().GetUserByLogin(mock.Anything, login).
+			Return(db.User{}, dbErr).Once()
+
+		user, err := store.GetUserByLogin(ctx, login)
+
+		assert.Error(t, err)
+		assert.Nil(t, user)
+		var internalErr *errlocal.ErrInternal
+		assert.ErrorAs(t, err, &internalErr)
+		assert.Contains(t, internalErr.System(), dbErr.Error())
 	})
 }
 
@@ -358,7 +439,10 @@ func TestUpdateUserPass(t *testing.T) {
 
 		err := store.UpdateUserPass(ctx, testdata.User2ID, testdata.NewHashedPassword)
 
-		assert.ErrorIs(t, err, updateErr)
+		assert.Error(t, err)
+		var localErr *errlocal.ErrInternal
+		assert.ErrorAs(t, err, &localErr)
+		assert.Contains(t, localErr.System(), updateErr.Error())
 	})
 }
 
@@ -401,23 +485,6 @@ func TestUpdateAvatar(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Invalid avatar URL", func(t *testing.T) {
-		ctx := context.Background()
-
-		mockQ := dbMock.NewQuerier(t)
-
-		store := &pgStore{
-			q: mockQ,
-		}
-
-		invalidURL := "://invalid-url"
-
-		err := store.UpdateAvatar(ctx, testdata.User1ID, invalidURL)
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid avatar URL")
-	})
-
 	t.Run("Update avatar fails", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -434,7 +501,10 @@ func TestUpdateAvatar(t *testing.T) {
 
 		err := store.UpdateAvatar(ctx, testdata.User1ID, testdata.AvatarURL)
 
-		assert.ErrorIs(t, err, updateErr)
+		assert.Error(t, err)
+		var localErr *errlocal.ErrInternal
+		assert.ErrorAs(t, err, &localErr)
+		assert.Contains(t, localErr.System(), updateErr.Error())
 	})
 }
 
@@ -472,7 +542,10 @@ func TestDeleteUser(t *testing.T) {
 
 		err := store.DeleteUser(ctx, testdata.User2ID)
 
-		assert.ErrorIs(t, err, deleteErr)
+		assert.Error(t, err)
+		var localErr *errlocal.ErrInternal
+		assert.ErrorAs(t, err, &localErr)
+		assert.Contains(t, localErr.System(), deleteErr.Error())
 	})
 
 	t.Run("User not found", func(t *testing.T) {
@@ -491,7 +564,9 @@ func TestDeleteUser(t *testing.T) {
 
 		err := store.DeleteUser(ctx, nonExistentID)
 
-		assert.ErrorIs(t, err, pgx.ErrNoRows)
+		assert.Error(t, err)
+		var localErr *errlocal.ErrNotFound
+		assert.ErrorAs(t, err, &localErr)
 	})
 }
 

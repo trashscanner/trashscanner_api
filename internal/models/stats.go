@@ -52,16 +52,16 @@ func (k TrashKind) Valid() bool {
 }
 
 type Stat struct {
-	ID            uuid.UUID
-	Status        UserStatus
-	Rating        int
-	FilesScanned  int
-	TotalWeight   float64
-	LastScannedAt time.Time
-	Achievements  []Achievement
-	TrashByTypes  map[TrashKind]int
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID            uuid.UUID         `json:"id"`
+	Status        UserStatus        `json:"status"`
+	Rating        int               `json:"rating"`
+	FilesScanned  int               `json:"files_scanned"`
+	TotalWeight   float64           `json:"total_weight"`
+	LastScannedAt time.Time         `json:"last_scanned_at,omitempty"`
+	Achievements  []Achievement     `json:"-"`
+	TrashByTypes  map[TrashKind]int `json:"trash_by_types"`
+	CreatedAt     time.Time         `json:"created_at"`
+	UpdatedAt     time.Time         `json:"updated_at"`
 }
 
 func (s *Stat) Model(stat db.Stat) {

@@ -31,3 +31,9 @@ packages:
         config:
           dir: 'internal/store/mocks'
           filename: 'connection.go'
+  github.com/trashscanner/trashscanner_api/internal/auth:
+    interfaces:
+      AuthManager:
+        config:
+          dir: 'internal/auth/mocks'
+          filename: 'auth_manager.go'

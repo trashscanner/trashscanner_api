@@ -23,7 +23,7 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByLogin(ctx context.Context, login string) (User, error)
 	RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error
-	RevokeTokenFamily(ctx context.Context, tokenFamily uuid.UUID) error
+	RevokeRefreshToken(ctx context.Context, tokenHash string) error
 	UpdateStats(ctx context.Context, arg UpdateStatsParams) error
 	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error

@@ -1,0 +1,450 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server TrashScanner API.",
+        "title": "Swagger TrashScanner API",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/login": {
+            "post": {
+                "description": "Authenticate user and return JWT tokens",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "User login",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AuthRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tokens for existing user",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AuthResponse"
+                        }
+                    },
+                    "201": {
+                        "description": "Tokens for newly created user",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrBadRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrUnauthorized"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrInternal"
+                        }
+                    }
+                }
+            }
+        },
+        "/refresh": {
+            "post": {
+                "description": "Get new access token using refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh access token",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "New tokens",
+                        "schema": {
+                            "$ref": "#/definitions/dto.RefreshResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrBadRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired token",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrUnauthorized"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrInternal"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user-id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get user details by ID (requires authentication)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user information",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user-id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User information",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrUnauthorized"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - user ID mismatch",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrForbidden"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrNotFound"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrInternal"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.AuthRequest": {
+            "type": "object",
+            "required": [
+                "login",
+                "password"
+            ],
+            "properties": {
+                "login": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 8
+                }
+            }
+        },
+        "dto.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "tokens": {
+                    "$ref": "#/definitions/dto.Tokens"
+                },
+                "user": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string"
+                        },
+                        "login": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "dto.RefreshRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RefreshResponse": {
+            "type": "object",
+            "properties": {
+                "tokens": {
+                    "$ref": "#/definitions/dto.Tokens"
+                }
+            }
+        },
+        "dto.Tokens": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UserResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "stat": {
+                    "$ref": "#/definitions/models.Stat"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "errlocal.ErrBadRequest": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "message": {
+                    "type": "string"
+                },
+                "system": {
+                    "type": "string"
+                }
+            }
+        },
+        "errlocal.ErrForbidden": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "message": {
+                    "type": "string"
+                },
+                "system": {
+                    "type": "string"
+                }
+            }
+        },
+        "errlocal.ErrInternal": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "message": {
+                    "type": "string"
+                },
+                "system": {
+                    "type": "string"
+                }
+            }
+        },
+        "errlocal.ErrNotFound": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "message": {
+                    "type": "string"
+                },
+                "system": {
+                    "type": "string"
+                }
+            }
+        },
+        "errlocal.ErrUnauthorized": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "message": {
+                    "type": "string"
+                },
+                "system": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Stat": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "files_scanned": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_scanned_at": {
+                    "type": "string"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.UserStatus"
+                },
+                "total_weight": {
+                    "type": "number"
+                },
+                "trash_by_types": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserStatus": {
+            "type": "string",
+            "enum": [
+                "newbie",
+                "eco_scout",
+                "green_guard",
+                "eco_warrior",
+                "nature_hero",
+                "earth_defender",
+                "eco_champion",
+                "planet_guardian",
+                "eco_legend"
+            ],
+            "x-enum-comments": {
+                "UserStatusEarthDefend": "Защитник Земли",
+                "UserStatusEcoChampion": "Эко-чемпион",
+                "UserStatusEcoLegend": "Эко-легенда",
+                "UserStatusEcoScout": "Эко-разведчик",
+                "UserStatusEcoWarrior": "Эко-воин",
+                "UserStatusGreenGuard": "Зеленый страж",
+                "UserStatusNatureHero": "Герой природы",
+                "UserStatusNewbie": "Новичок",
+                "UserStatusPlanetGuard": "Хранитель планеты"
+            },
+            "x-enum-descriptions": [
+                "Новичок",
+                "Эко-разведчик",
+                "Зеленый страж",
+                "Эко-воин",
+                "Герой природы",
+                "Защитник Земли",
+                "Эко-чемпион",
+                "Хранитель планеты",
+                "Эко-легенда"
+            ],
+            "x-enum-varnames": [
+                "UserStatusNewbie",
+                "UserStatusEcoScout",
+                "UserStatusGreenGuard",
+                "UserStatusEcoWarrior",
+                "UserStatusNatureHero",
+                "UserStatusEarthDefend",
+                "UserStatusEcoChampion",
+                "UserStatusPlanetGuard",
+                "UserStatusEcoLegend"
+            ]
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Type \"Bearer\" followed by a space and JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

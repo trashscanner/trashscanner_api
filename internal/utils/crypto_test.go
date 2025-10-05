@@ -2,7 +2,6 @@ package utils
 
 import (
 	"crypto/ed25519"
-	"encoding/base64"
 	"os"
 	"testing"
 
@@ -143,13 +142,8 @@ func TestGenerateAndSetKeys_Success(t *testing.T) {
 	assert.NotEmpty(t, privateKeyBase64)
 	assert.NotEmpty(t, publicKeyBase64)
 
-	privateKeyBytes, err := base64.StdEncoding.DecodeString(privateKeyBase64)
+	_, _, err := GetEdDSAKeysFromEnv()
 	require.NoError(t, err)
-	assert.Len(t, privateKeyBytes, ed25519.PrivateKeySize)
-
-	publicKeyBytes, err := base64.StdEncoding.DecodeString(publicKeyBase64)
-	require.NoError(t, err)
-	assert.Len(t, publicKeyBytes, ed25519.PublicKeySize)
 }
 
 func TestGenerateAndSetKeys_DifferentKeys(t *testing.T) {

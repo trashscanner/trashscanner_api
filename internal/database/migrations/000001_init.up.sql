@@ -14,7 +14,6 @@ CREATE INDEX idx_users_login ON users(login) WHERE deleted = FALSE;
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_family UUID NOT NULL,
     token_hash TEXT UNIQUE NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
     revoked BOOLEAN NOT NULL DEFAULT FALSE,
@@ -26,14 +25,12 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 
 CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_token_hash ON refresh_tokens(token_hash) WHERE revoked = FALSE;
-CREATE INDEX idx_refresh_tokens_token_family ON refresh_tokens(token_family);
 CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at) WHERE revoked = FALSE;
 
 
 CREATE TABLE IF NOT EXISTS login_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    login_attempt TEXT NOT NULL,
     success BOOLEAN NOT NULL,
     failure_reason TEXT,
     

@@ -15,35 +15,28 @@ import (
 const createRefreshToken = `-- name: CreateRefreshToken :one
 INSERT INTO refresh_tokens (
     user_id,
-    token_family,
     token_hash,
     expires_at
 ) VALUES (
-    $1, $2, $3, $4
+    $1, $2, $3
 ) RETURNING id
 `
 
 type CreateRefreshTokenParams struct {
-	UserID      uuid.UUID `json:"user_id"`
-	TokenFamily uuid.UUID `json:"token_family"`
-	TokenHash   string    `json:"token_hash"`
-	ExpiresAt   time.Time `json:"expires_at"`
+	UserID    uuid.UUID `json:"user_id"`
+	TokenHash string    `json:"token_hash"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, createRefreshToken,
-		arg.UserID,
-		arg.TokenFamily,
-		arg.TokenHash,
-		arg.ExpiresAt,
-	)
+	row := q.db.QueryRow(ctx, createRefreshToken, arg.UserID, arg.TokenHash, arg.ExpiresAt)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
 }
 
 const getActiveTokensByUser = `-- name: GetActiveTokensByUser :many
-SELECT id, user_id, token_family, token_hash, expires_at, revoked, revoked_at, created_at, updated_at FROM refresh_tokens
+SELECT id, user_id, token_hash, expires_at, revoked, revoked_at, created_at, updated_at FROM refresh_tokens
 WHERE user_id = $1 AND revoked = FALSE AND expires_at > now()
 ORDER BY created_at DESC
 `
@@ -60,7 +53,6 @@ func (q *Queries) GetActiveTokensByUser(ctx context.Context, userID uuid.UUID) (
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
-			&i.TokenFamily,
 			&i.TokenHash,
 			&i.ExpiresAt,
 			&i.Revoked,
@@ -79,7 +71,7 @@ func (q *Queries) GetActiveTokensByUser(ctx context.Context, userID uuid.UUID) (
 }
 
 const getRefreshTokenByHash = `-- name: GetRefreshTokenByHash :one
-SELECT id, user_id, token_family, token_hash, expires_at, revoked, revoked_at, created_at, updated_at FROM refresh_tokens
+SELECT id, user_id, token_hash, expires_at, revoked, revoked_at, created_at, updated_at FROM refresh_tokens
 WHERE token_hash = $1 AND revoked = FALSE AND expires_at > now()
 LIMIT 1
 `
@@ -90,7 +82,6 @@ func (q *Queries) GetRefreshTokenByHash(ctx context.Context, tokenHash string) (
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.TokenFamily,
 		&i.TokenHash,
 		&i.ExpiresAt,
 		&i.Revoked,
@@ -112,13 +103,13 @@ func (q *Queries) RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) err
 	return err
 }
 
-const revokeTokenFamily = `-- name: RevokeTokenFamily :exec
+const revokeRefreshToken = `-- name: RevokeRefreshToken :exec
 UPDATE refresh_tokens
 SET revoked = TRUE, revoked_at = now(), updated_at = now()
-WHERE token_family = $1
+WHERE token_hash = $1
 `
 
-func (q *Queries) RevokeTokenFamily(ctx context.Context, tokenFamily uuid.UUID) error {
-	_, err := q.db.Exec(ctx, revokeTokenFamily, tokenFamily)
+func (q *Queries) RevokeRefreshToken(ctx context.Context, tokenHash string) error {
+	_, err := q.db.Exec(ctx, revokeRefreshToken, tokenHash)
 	return err
 }

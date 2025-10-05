@@ -824,44 +824,44 @@ func (_c *Querier_RevokeAllUserTokens_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
-// RevokeTokenFamily provides a mock function for the type Querier
-func (_mock *Querier) RevokeTokenFamily(ctx context.Context, tokenFamily uuid.UUID) error {
-	ret := _mock.Called(ctx, tokenFamily)
+// RevokeRefreshToken provides a mock function for the type Querier
+func (_mock *Querier) RevokeRefreshToken(ctx context.Context, tokenHash string) error {
+	ret := _mock.Called(ctx, tokenHash)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RevokeTokenFamily")
+		panic("no return value specified for RevokeRefreshToken")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
-		r0 = returnFunc(ctx, tokenFamily)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, tokenHash)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// Querier_RevokeTokenFamily_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeTokenFamily'
-type Querier_RevokeTokenFamily_Call struct {
+// Querier_RevokeRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeRefreshToken'
+type Querier_RevokeRefreshToken_Call struct {
 	*mock.Call
 }
 
-// RevokeTokenFamily is a helper method to define mock.On call
+// RevokeRefreshToken is a helper method to define mock.On call
 //   - ctx context.Context
-//   - tokenFamily uuid.UUID
-func (_e *Querier_Expecter) RevokeTokenFamily(ctx interface{}, tokenFamily interface{}) *Querier_RevokeTokenFamily_Call {
-	return &Querier_RevokeTokenFamily_Call{Call: _e.mock.On("RevokeTokenFamily", ctx, tokenFamily)}
+//   - tokenHash string
+func (_e *Querier_Expecter) RevokeRefreshToken(ctx interface{}, tokenHash interface{}) *Querier_RevokeRefreshToken_Call {
+	return &Querier_RevokeRefreshToken_Call{Call: _e.mock.On("RevokeRefreshToken", ctx, tokenHash)}
 }
 
-func (_c *Querier_RevokeTokenFamily_Call) Run(run func(ctx context.Context, tokenFamily uuid.UUID)) *Querier_RevokeTokenFamily_Call {
+func (_c *Querier_RevokeRefreshToken_Call) Run(run func(ctx context.Context, tokenHash string)) *Querier_RevokeRefreshToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 uuid.UUID
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
@@ -871,12 +871,12 @@ func (_c *Querier_RevokeTokenFamily_Call) Run(run func(ctx context.Context, toke
 	return _c
 }
 
-func (_c *Querier_RevokeTokenFamily_Call) Return(err error) *Querier_RevokeTokenFamily_Call {
+func (_c *Querier_RevokeRefreshToken_Call) Return(err error) *Querier_RevokeRefreshToken_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *Querier_RevokeTokenFamily_Call) RunAndReturn(run func(ctx context.Context, tokenFamily uuid.UUID) error) *Querier_RevokeTokenFamily_Call {
+func (_c *Querier_RevokeRefreshToken_Call) RunAndReturn(run func(ctx context.Context, tokenHash string) error) *Querier_RevokeRefreshToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

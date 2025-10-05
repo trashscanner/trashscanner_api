@@ -4,19 +4,20 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/trashscanner/trashscanner_api/internal/database/sqlc/db"
 )
 
 type User struct {
-	ID             uuid.UUID
-	Login          string
-	HashedPassword string
-	Avatar         url.URL
-	Stat           *Stat
-	Deleted        bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID             uuid.UUID `json:"id"`
+	Login          string    `json:"login"`
+	HashedPassword string    `json:"-"`
+	Avatar         url.URL   `json:"avatar,omitempty" swaggertype:"string"`
+	Stat           *Stat     `json:"stat,omitempty"`
+	Deleted        bool      `json:"-"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 func (u *User) Model(user db.User) {
@@ -42,5 +43,13 @@ func (u *User) WithStat(stat db.Stat) {
 }
 
 type RefreshToken db.RefreshToken
+
+func NewRefreshFromClaims(hash string, claims jwt.RegisteredClaims) *RefreshToken {
+	return &RefreshToken{
+		UserID:    uuid.MustParse(claims.Subject),
+		ExpiresAt: claims.ExpiresAt.Time,
+		TokenHash: hash,
+	}
+}
 
 type LoginHistory db.LoginHistory

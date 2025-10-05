@@ -10,18 +10,18 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/utils"
 )
 
-type JWTManager struct {
+type jwtGenerator struct {
 	signingMethod         jwt.SigningMethod
 	privateKey, publicKey interface{}
 	ttlAccess, ttlRefresh time.Duration
 }
 
-func NewJWTManager(cfg config.Config) (*JWTManager, error) {
+func newJWTGenerator(cfg config.Config) (*jwtGenerator, error) {
 	privateKey, publicKey, err := utils.GetEdDSAKeysFromEnv()
 	if err != nil {
 		return nil, err
 	}
-	return &JWTManager{
+	return &jwtGenerator{
 		signingMethod: jwt.GetSigningMethod(cfg.Auth.Algorithm),
 		privateKey:    privateKey,
 		publicKey:     publicKey,
@@ -37,13 +37,8 @@ type Claims struct {
 	TokenType string `json:"token_type"`
 }
 
-type TokenPair struct {
-	Access, Refresh, TokenFamily string
-}
-
-func (m *JWTManager) NewPair(user models.User) (*TokenPair, error) {
+func (m *jwtGenerator) newPair(user models.User) (*TokenPair, error) {
 	now := time.Now()
-	tokenFamilyID := uuid.New().String()
 
 	accessToken := jwt.NewWithClaims(m.signingMethod, Claims{
 		UserID:    user.ID.String(),
@@ -67,7 +62,7 @@ func (m *JWTManager) NewPair(user models.User) (*TokenPair, error) {
 		ExpiresAt: jwt.NewNumericDate(now.Add(m.ttlRefresh)),
 		IssuedAt:  jwt.NewNumericDate(now),
 		NotBefore: jwt.NewNumericDate(now),
-		ID:        tokenFamilyID,
+		ID:        uuid.New().String(),
 	})
 
 	refreshString, err := refreshToken.SignedString(m.privateKey)
@@ -76,13 +71,12 @@ func (m *JWTManager) NewPair(user models.User) (*TokenPair, error) {
 	}
 
 	return &TokenPair{
-		Access:      accessString,
-		Refresh:     refreshString,
-		TokenFamily: tokenFamilyID,
+		Access:  accessString,
+		Refresh: refreshString,
 	}, nil
 }
 
-func (m *JWTManager) ParseAccess(tokenStr string) (*Claims, error) {
+func (m *jwtGenerator) parseAccess(tokenStr string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if token.Method.Alg() != m.signingMethod.Alg() {
 			return nil, jwt.ErrTokenUnverifiable
@@ -106,7 +100,7 @@ func (m *JWTManager) ParseAccess(tokenStr string) (*Claims, error) {
 	return claims, nil
 }
 
-func (m *JWTManager) ParseRefresh(tokenStr string) (*jwt.Token, error) {
+func (m *jwtGenerator) parseRefresh(tokenStr string) (*models.RefreshToken, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if token.Method.Alg() != m.signingMethod.Alg() {
 			return nil, jwt.ErrTokenUnverifiable
@@ -123,18 +117,14 @@ func (m *JWTManager) ParseRefresh(tokenStr string) (*jwt.Token, error) {
 		return nil, jwt.ErrTokenInvalidClaims
 	}
 
-	return token, nil
-}
-
-func (m *JWTManager) GetTokenFamily(refreshToken string) (string, error) {
-	t, err := m.ParseRefresh(refreshToken)
-	if err != nil {
-		return "", err
-	}
-	claims, ok := t.Claims.(*jwt.RegisteredClaims)
+	claims, ok := token.Claims.(*jwt.RegisteredClaims)
 	if !ok {
-		return "", jwt.ErrTokenInvalidClaims
+		return nil, jwt.ErrTokenInvalidClaims
 	}
 
-	return claims.ID, nil
+	if claims.Subject == "" {
+		return nil, jwt.ErrTokenInvalidClaims
+	}
+
+	return models.NewRefreshFromClaims(utils.HashToken(tokenStr), *claims), nil
 }

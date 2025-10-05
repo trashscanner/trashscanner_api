@@ -1,0 +1,308 @@
+basePath: /api/v1
+definitions:
+  dto.AuthRequest:
+    properties:
+      login:
+        maxLength: 32
+        minLength: 3
+        type: string
+      password:
+        maxLength: 64
+        minLength: 8
+        type: string
+    required:
+    - login
+    - password
+    type: object
+  dto.AuthResponse:
+    properties:
+      tokens:
+        $ref: '#/definitions/dto.Tokens'
+      user:
+        properties:
+          id:
+            type: string
+          login:
+            type: string
+        type: object
+    type: object
+  dto.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dto.RefreshResponse:
+    properties:
+      tokens:
+        $ref: '#/definitions/dto.Tokens'
+    type: object
+  dto.Tokens:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  dto.UserResponse:
+    properties:
+      avatar:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      login:
+        type: string
+      stat:
+        $ref: '#/definitions/models.Stat'
+      updated_at:
+        type: string
+    type: object
+  errlocal.ErrBadRequest:
+    properties:
+      details:
+        additionalProperties: {}
+        type: object
+      message:
+        type: string
+      system:
+        type: string
+    type: object
+  errlocal.ErrForbidden:
+    properties:
+      details:
+        additionalProperties: {}
+        type: object
+      message:
+        type: string
+      system:
+        type: string
+    type: object
+  errlocal.ErrInternal:
+    properties:
+      details:
+        additionalProperties: {}
+        type: object
+      message:
+        type: string
+      system:
+        type: string
+    type: object
+  errlocal.ErrNotFound:
+    properties:
+      details:
+        additionalProperties: {}
+        type: object
+      message:
+        type: string
+      system:
+        type: string
+    type: object
+  errlocal.ErrUnauthorized:
+    properties:
+      details:
+        additionalProperties: {}
+        type: object
+      message:
+        type: string
+      system:
+        type: string
+    type: object
+  models.Stat:
+    properties:
+      created_at:
+        type: string
+      files_scanned:
+        type: integer
+      id:
+        type: string
+      last_scanned_at:
+        type: string
+      rating:
+        type: integer
+      status:
+        $ref: '#/definitions/models.UserStatus'
+      total_weight:
+        type: number
+      trash_by_types:
+        additionalProperties:
+          type: integer
+        type: object
+      updated_at:
+        type: string
+    type: object
+  models.UserStatus:
+    enum:
+    - newbie
+    - eco_scout
+    - green_guard
+    - eco_warrior
+    - nature_hero
+    - earth_defender
+    - eco_champion
+    - planet_guardian
+    - eco_legend
+    type: string
+    x-enum-comments:
+      UserStatusEarthDefend: Защитник Земли
+      UserStatusEcoChampion: Эко-чемпион
+      UserStatusEcoLegend: Эко-легенда
+      UserStatusEcoScout: Эко-разведчик
+      UserStatusEcoWarrior: Эко-воин
+      UserStatusGreenGuard: Зеленый страж
+      UserStatusNatureHero: Герой природы
+      UserStatusNewbie: Новичок
+      UserStatusPlanetGuard: Хранитель планеты
+    x-enum-descriptions:
+    - Новичок
+    - Эко-разведчик
+    - Зеленый страж
+    - Эко-воин
+    - Герой природы
+    - Защитник Земли
+    - Эко-чемпион
+    - Хранитель планеты
+    - Эко-легенда
+    x-enum-varnames:
+    - UserStatusNewbie
+    - UserStatusEcoScout
+    - UserStatusGreenGuard
+    - UserStatusEcoWarrior
+    - UserStatusNatureHero
+    - UserStatusEarthDefend
+    - UserStatusEcoChampion
+    - UserStatusPlanetGuard
+    - UserStatusEcoLegend
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server TrashScanner API.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Swagger TrashScanner API
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT tokens
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tokens for existing user
+          schema:
+            $ref: '#/definitions/dto.AuthResponse'
+        "201":
+          description: Tokens for newly created user
+          schema:
+            $ref: '#/definitions/dto.AuthResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/errlocal.ErrBadRequest'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/errlocal.ErrUnauthorized'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      summary: User login
+      tags:
+      - auth
+  /refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get new access token using refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: New tokens
+          schema:
+            $ref: '#/definitions/dto.RefreshResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/errlocal.ErrBadRequest'
+        "401":
+          description: Invalid or expired token
+          schema:
+            $ref: '#/definitions/errlocal.ErrUnauthorized'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      summary: Refresh access token
+      tags:
+      - auth
+  /users/{user-id}:
+    get:
+      consumes:
+      - application/json
+      description: Get user details by ID (requires authentication)
+      parameters:
+      - description: User ID
+        in: path
+        name: user-id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User information
+          schema:
+            $ref: '#/definitions/dto.UserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errlocal.ErrUnauthorized'
+        "403":
+          description: Forbidden - user ID mismatch
+          schema:
+            $ref: '#/definitions/errlocal.ErrForbidden'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/errlocal.ErrNotFound'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      security:
+      - BearerAuth: []
+      summary: Get user information
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

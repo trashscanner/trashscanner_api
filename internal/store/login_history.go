@@ -5,12 +5,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/trashscanner/trashscanner_api/internal/database/sqlc/db"
+	"github.com/trashscanner/trashscanner_api/internal/errlocal"
 	"github.com/trashscanner/trashscanner_api/internal/models"
 )
 
 func (s *pgStore) InsertLoginHistory(
 	ctx context.Context,
-	userID uuid.UUID,
 	loginHistory *models.LoginHistory,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, connTimeout)
@@ -18,16 +18,19 @@ func (s *pgStore) InsertLoginHistory(
 
 	id, err := s.q.CreateLoginHistory(ctx, db.CreateLoginHistoryParams{
 		UserID:        loginHistory.UserID,
-		LoginAttempt:  loginHistory.LoginAttempt,
 		Success:       loginHistory.Success,
 		FailureReason: loginHistory.FailureReason,
 		IpAddress:     loginHistory.IpAddress,
 		UserAgent:     loginHistory.UserAgent,
 		Location:      loginHistory.Location,
 	})
+	if err != nil {
+		return errlocal.NewErrInternal("failed to create login history", err.Error(),
+			map[string]any{"user_id": loginHistory.UserID})
+	}
 	loginHistory.ID = id
 
-	return err
+	return nil
 }
 
 func (s *pgStore) GetLoginHistory(ctx context.Context, userID uuid.UUID) ([]models.LoginHistory, error) {
@@ -43,7 +46,8 @@ func (s *pgStore) GetLoginHistory(ctx context.Context, userID uuid.UUID) ([]mode
 			Offset: offset,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errlocal.NewErrInternal("failed to get login history", err.Error(),
+				map[string]any{"user_id": userID, "offset": offset})
 		}
 		dbHistory = append(dbHistory, loginHistories...)
 

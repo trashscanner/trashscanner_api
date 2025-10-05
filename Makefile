@@ -15,7 +15,8 @@ lint:
 	golangci-lint run --timeout 5m --config golang-ci.yaml
 
 test:
-	go test $$(go list ./... | grep -v '/internal/database' | grep -v '/mocks') -coverprofile=coverage.out --race --timeout 2m
+	go test $$(go list ./... | grep -v '/internal/database' | grep -v '/docs' | \
+		grep -v '/internal/api/dto'  | grep -v '/mocks') -coverprofile=coverage.out --race --timeout 2m
 	cat coverage.out | grep -v "internal/database/sqlc" > coverage.txt || true
 
 test-all:
@@ -61,5 +62,20 @@ connect-local-pg-store:
 drop-local-store:
 	docker-compose -f docker-compose.local.yml down -v --remove-orphans
 
+gen-keys:
+	@ssh-keygen -t ed25519 -f /tmp/jwt_key -N "" -q
+	@echo "Private Key:"
+	@base64 -w 0 /tmp/jwt_key
+	@echo ""
+	@echo "Public Key:"
+	@base64 -w 0 /tmp/jwt_key.pub
+	@echo ""
+	@rm /tmp/jwt_key /tmp/jwt_key.pub
 
-.PHONY: run mock-gen lint test test-all test-db build sqlc-gen new-migration local-store connect-local-pg-store drop-local-store
+swagger:
+	if [ -z $$(which swag 2>/dev/null) ]; then \
+		go install github.com/swaggo/swag/cmd/swag@v1.16.6; \
+	fi
+	swag init -g internal/api/server.go
+
+.PHONY: run mock-gen lint test test-all test-db build sqlc-gen new-migration local-store connect-local-pg-store drop-local-store gen-keys swagger

@@ -207,10 +207,9 @@ func (s *databaseTestSuite) TestCreateRefreshToken() {
 	userID := s.createTestUser("testCreateRefreshToken")
 
 	tokenID, err := s.store.CreateRefreshToken(s.ctx, db.CreateRefreshTokenParams{
-		UserID:      userID,
-		TokenFamily: userID,
-		TokenHash:   "test_hash_123",
-		ExpiresAt:   time.Now().Add(24 * time.Hour),
+		UserID:    userID,
+		TokenHash: "test_hash_123",
+		ExpiresAt: time.Now().Add(24 * time.Hour),
 	})
 	s.NoError(err)
 	s.NotEqual(uuid.Nil, tokenID)
@@ -220,10 +219,9 @@ func (s *databaseTestSuite) TestGetRefreshTokenByHash() {
 	userID := s.createTestUser("testGetRefreshTokenByHash")
 
 	_, err := s.store.CreateRefreshToken(s.ctx, db.CreateRefreshTokenParams{
-		UserID:      userID,
-		TokenFamily: userID,
-		TokenHash:   "unique_hash",
-		ExpiresAt:   time.Now().Add(24 * time.Hour),
+		UserID:    userID,
+		TokenHash: "unique_hash",
+		ExpiresAt: time.Now().Add(24 * time.Hour),
 	})
 	s.NoError(err)
 
@@ -243,10 +241,9 @@ func (s *databaseTestSuite) TestGetRefreshTokenByHash_Expired() {
 	userID := s.createTestUser("testExpiredToken")
 
 	_, err := s.store.CreateRefreshToken(s.ctx, db.CreateRefreshTokenParams{
-		UserID:      userID,
-		TokenFamily: userID,
-		TokenHash:   "expired_hash",
-		ExpiresAt:   time.Now().Add(-24 * time.Hour),
+		UserID:    userID,
+		TokenHash: "expired_hash",
+		ExpiresAt: time.Now().Add(-24 * time.Hour),
 	})
 	s.NoError(err)
 
@@ -259,10 +256,9 @@ func (s *databaseTestSuite) TestGetActiveTokensByUser() {
 
 	for i := 0; i < 3; i++ {
 		_, err := s.store.CreateRefreshToken(s.ctx, db.CreateRefreshTokenParams{
-			UserID:      userID,
-			TokenFamily: userID,
-			TokenHash:   fmt.Sprintf("active_hash_%d", i),
-			ExpiresAt:   time.Now().Add(24 * time.Hour),
+			UserID:    userID,
+			TokenHash: fmt.Sprintf("active_hash_%d", i),
+			ExpiresAt: time.Now().Add(24 * time.Hour),
 		})
 		s.NoError(err)
 	}
@@ -280,34 +276,14 @@ func (s *databaseTestSuite) TestGetActiveTokensByUser_NoTokens() {
 	s.Empty(tokens)
 }
 
-func (s *databaseTestSuite) TestRevokeTokenFamily() {
-	userID := s.createTestUser("testRevokeFamily")
-	familyID := uuid.New()
-
-	_, err := s.store.CreateRefreshToken(s.ctx, db.CreateRefreshTokenParams{
-		UserID:      userID,
-		TokenFamily: familyID,
-		TokenHash:   "family_token_1",
-		ExpiresAt:   time.Now().Add(24 * time.Hour),
-	})
-	s.NoError(err)
-
-	err = s.store.RevokeTokenFamily(s.ctx, familyID)
-	s.NoError(err)
-
-	_, err = s.store.GetRefreshTokenByHash(s.ctx, "family_token_1")
-	s.Error(err)
-}
-
 func (s *databaseTestSuite) TestRevokeAllUserTokens() {
 	userID := s.createTestUser("testRevokeAll")
 
 	for i := 0; i < 3; i++ {
 		_, err := s.store.CreateRefreshToken(s.ctx, db.CreateRefreshTokenParams{
-			UserID:      userID,
-			TokenFamily: userID,
-			TokenHash:   fmt.Sprintf("revoke_hash_%d", i),
-			ExpiresAt:   time.Now().Add(24 * time.Hour),
+			UserID:    userID,
+			TokenHash: fmt.Sprintf("revoke_hash_%d", i),
+			ExpiresAt: time.Now().Add(24 * time.Hour),
 		})
 		s.NoError(err)
 	}
@@ -324,9 +300,8 @@ func (s *databaseTestSuite) TestCreateLoginHistory() {
 	userID := s.createTestUser("testCreateLoginHistory")
 
 	historyID, err := s.store.CreateLoginHistory(s.ctx, db.CreateLoginHistoryParams{
-		UserID:       userID,
-		LoginAttempt: "test_login_attempt",
-		Success:      true,
+		UserID:  userID,
+		Success: true,
 	})
 	s.NoError(err)
 	s.NotEqual(uuid.Nil, historyID)
@@ -335,9 +310,8 @@ func (s *databaseTestSuite) TestCreateLoginHistory() {
 	location := "Moscow, Russia"
 
 	historyID2, err := s.store.CreateLoginHistory(s.ctx, db.CreateLoginHistoryParams{
-		UserID:       userID,
-		LoginAttempt: "another_attempt",
-		Success:      false,
+		UserID:  userID,
+		Success: false,
 		FailureReason: func() *string {
 			s := "Invalid password"
 			return &s
@@ -354,9 +328,8 @@ func (s *databaseTestSuite) TestGetLoginHistoryByUser() {
 
 	for i := 0; i < 5; i++ {
 		_, err := s.store.CreateLoginHistory(s.ctx, db.CreateLoginHistoryParams{
-			UserID:       userID,
-			LoginAttempt: fmt.Sprintf("attempt_%d", i),
-			Success:      i%2 == 0,
+			UserID:  userID,
+			Success: i%2 == 0,
 		})
 		s.NoError(err)
 		time.Sleep(10 * time.Millisecond)

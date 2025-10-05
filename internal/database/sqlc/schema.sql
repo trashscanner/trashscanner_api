@@ -12,7 +12,6 @@ CREATE TABLE users (
 CREATE TABLE refresh_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_family UUID NOT NULL,
     token_hash TEXT UNIQUE NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
     revoked BOOLEAN NOT NULL DEFAULT FALSE,
@@ -25,7 +24,6 @@ CREATE TABLE refresh_tokens (
 CREATE TABLE login_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    login_attempt TEXT NOT NULL,
     success BOOLEAN NOT NULL,
     failure_reason TEXT,
     

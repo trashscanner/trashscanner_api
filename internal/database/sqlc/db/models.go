@@ -15,7 +15,6 @@ import (
 type LoginHistory struct {
 	ID            uuid.UUID   `json:"id"`
 	UserID        uuid.UUID   `json:"user_id"`
-	LoginAttempt  string      `json:"login_attempt"`
 	Success       bool        `json:"success"`
 	FailureReason *string     `json:"failure_reason"`
 	IpAddress     *netip.Addr `json:"ip_address"`
@@ -25,15 +24,14 @@ type LoginHistory struct {
 }
 
 type RefreshToken struct {
-	ID          uuid.UUID          `json:"id"`
-	UserID      uuid.UUID          `json:"user_id"`
-	TokenFamily uuid.UUID          `json:"token_family"`
-	TokenHash   string             `json:"token_hash"`
-	ExpiresAt   time.Time          `json:"expires_at"`
-	Revoked     bool               `json:"revoked"`
-	RevokedAt   pgtype.Timestamptz `json:"revoked_at"`
-	CreatedAt   time.Time          `json:"created_at"`
-	UpdatedAt   time.Time          `json:"updated_at"`
+	ID        uuid.UUID          `json:"id"`
+	UserID    uuid.UUID          `json:"user_id"`
+	TokenHash string             `json:"token_hash"`
+	ExpiresAt time.Time          `json:"expires_at"`
+	Revoked   bool               `json:"revoked"`
+	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
 }
 
 type Stat struct {

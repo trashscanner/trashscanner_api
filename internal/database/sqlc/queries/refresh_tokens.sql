@@ -1,11 +1,10 @@
 -- name: CreateRefreshToken :one
 INSERT INTO refresh_tokens (
     user_id,
-    token_family,
     token_hash,
     expires_at
 ) VALUES (
-    $1, $2, $3, $4
+    $1, $2, $3
 ) RETURNING id;
 
 -- name: GetRefreshTokenByHash :one
@@ -13,10 +12,10 @@ SELECT * FROM refresh_tokens
 WHERE token_hash = $1 AND revoked = FALSE AND expires_at > now()
 LIMIT 1;
 
--- name: RevokeTokenFamily :exec
+-- name: RevokeRefreshToken :exec
 UPDATE refresh_tokens
 SET revoked = TRUE, revoked_at = now(), updated_at = now()
-WHERE token_family = $1;
+WHERE token_hash = $1;
 
 -- name: RevokeAllUserTokens :exec
 UPDATE refresh_tokens
