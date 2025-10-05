@@ -325,6 +325,84 @@ func TestGetUser(t *testing.T) {
 	})
 }
 
+func TestGetUserByLogin(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQ := dbMock.NewQuerier(t)
+
+		store := &pgStore{
+			q: mockQ,
+		}
+
+		dbUser := db.User{
+			ID:             testdata.User1ID,
+			Login:          testdata.User1.Login,
+			HashedPassword: testdata.User1.HashedPassword,
+			Avatar:         nil,
+			Deleted:        false,
+		}
+
+		mockQ.EXPECT().GetUserByLogin(mock.Anything, testdata.User1.Login).
+			Return(dbUser, nil).Once()
+
+		user, err := store.GetUserByLogin(ctx, testdata.User1.Login)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, user)
+		assert.Equal(t, testdata.User1ID, user.ID)
+		assert.Equal(t, testdata.User1.Login, user.Login)
+		assert.Equal(t, testdata.User1.HashedPassword, user.HashedPassword)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQ := dbMock.NewQuerier(t)
+
+		store := &pgStore{
+			q: mockQ,
+		}
+
+		login := "missing_user"
+
+		mockQ.EXPECT().GetUserByLogin(mock.Anything, login).
+			Return(db.User{}, pgx.ErrNoRows).Once()
+
+		user, err := store.GetUserByLogin(ctx, login)
+
+		assert.Error(t, err)
+		assert.Nil(t, user)
+		var notFoundErr *errlocal.ErrNotFound
+		assert.ErrorAs(t, err, &notFoundErr)
+		assert.Contains(t, err.Error(), "user not found")
+	})
+
+	t.Run("database error", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQ := dbMock.NewQuerier(t)
+
+		store := &pgStore{
+			q: mockQ,
+		}
+
+		login := "db_error_user"
+		dbErr := assert.AnError
+
+		mockQ.EXPECT().GetUserByLogin(mock.Anything, login).
+			Return(db.User{}, dbErr).Once()
+
+		user, err := store.GetUserByLogin(ctx, login)
+
+		assert.Error(t, err)
+		assert.Nil(t, user)
+		var internalErr *errlocal.ErrInternal
+		assert.ErrorAs(t, err, &internalErr)
+		assert.Contains(t, internalErr.System(), dbErr.Error())
+	})
+}
+
 func TestUpdateUserPass(t *testing.T) {
 	t.Run("Update password successfully", func(t *testing.T) {
 		ctx := context.Background()
