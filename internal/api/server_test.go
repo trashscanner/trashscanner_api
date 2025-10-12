@@ -13,16 +13,22 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/config"
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
 	filestoremocks "github.com/trashscanner/trashscanner_api/internal/filestore/mocks"
+	"github.com/trashscanner/trashscanner_api/internal/logging"
 	storemocks "github.com/trashscanner/trashscanner_api/internal/store/mocks"
 )
 
 func TestNewServer(t *testing.T) {
-	cfg := config.Config{Server: config.ServerConfig{Host: "127.0.0.1", Port: "9090"}}
+	cfg := config.Config{
+		Server: config.ServerConfig{Host: "127.0.0.1", Port: "9090"},
+		Log:    config.LogConfig{Level: "info", Format: "text"},
+	}
 	store := storemocks.NewStore(t)
 	fileStore := filestoremocks.NewFileStore(t)
 	authManager := mocks.NewAuthManager(t)
+	logger, err := logging.NewLogger(cfg)
+	require.NoError(t, err)
 
-	server := NewServer(cfg, store, fileStore, authManager)
+	server := NewServer(cfg, store, fileStore, authManager, logger)
 
 	require.NotNil(t, server.router)
 	require.NotNil(t, server.s)
@@ -37,9 +43,10 @@ func TestWriteResponse(t *testing.T) {
 	server, _, _, _ := newTestServer(t)
 
 	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/test", nil)
 	data := map[string]any{"message": "ok"}
 
-	server.WriteResponse(rr, http.StatusAccepted, data)
+	server.WriteResponse(rr, req, http.StatusAccepted, data)
 
 	assert.Equal(t, http.StatusAccepted, rr.Code)
 	assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
@@ -50,9 +57,10 @@ func TestWriteError(t *testing.T) {
 	server, _, _, _ := newTestServer(t)
 
 	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/test", nil)
 	err := errlocal.NewErrInternal("boom", errors.New("boom").Error(), nil)
 
-	server.WriteError(rr, err)
+	server.WriteError(rr, req, err)
 
 	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))

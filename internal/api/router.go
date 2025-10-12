@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 	_ "github.com/trashscanner/trashscanner_api/docs"
-	"github.com/trashscanner/trashscanner_api/internal/api/middlewares"
 )
 
 func (s *Server) initRouter() {
@@ -20,7 +19,7 @@ func (s *Server) initRouter() {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	})
 
-	root.Use(mux.CORSMethodMiddleware(root), middlewares.Common)
+	root.Use(mux.CORSMethodMiddleware(root), s.commonMiddleware)
 
 	loginRouter := root.PathPrefix("/login").Subrouter()
 	loginRouter.Use(s.loginMiddleware)

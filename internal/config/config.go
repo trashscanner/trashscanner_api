@@ -19,6 +19,7 @@ type Config struct {
 	DB     DBConfig          `mapstructure:"database"`
 	Store  FileStoreConfig   `mapstructure:"filestore"`
 	Auth   AuthManagerConfig `mapstructure:"auth_manager"`
+	Log    LogConfig         `mapstructure:"log"`
 }
 
 type ServerConfig struct {
@@ -49,6 +50,12 @@ type AuthManagerConfig struct {
 	AccessTokenTTL  time.Duration `mapstructure:"access_token_ttl" validate:"required,gt=0"`
 	RefreshTokenTTL time.Duration `mapstructure:"refresh_token_ttl" validate:"required,gt=0"`
 	Algorithm       string        `mapstructure:"signing_algorithm" validate:"required,oneof=EdDSA"`
+}
+
+type LogConfig struct {
+	Level  string `mapstructure:"level"`
+	Format string `mapstructure:"format"`
+	File   string `mapstructure:"file"`
 }
 
 func NewConfig() (Config, error) {

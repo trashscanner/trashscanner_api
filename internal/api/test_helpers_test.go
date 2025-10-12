@@ -13,7 +13,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
 	authmocks "github.com/trashscanner/trashscanner_api/internal/auth/mocks"
+	"github.com/trashscanner/trashscanner_api/internal/config"
 	filestoremocks "github.com/trashscanner/trashscanner_api/internal/filestore/mocks"
+	"github.com/trashscanner/trashscanner_api/internal/logging"
 	storemocks "github.com/trashscanner/trashscanner_api/internal/store/mocks"
 )
 
@@ -23,6 +25,8 @@ func newTestServer(t *testing.T) (*Server, *storemocks.Store, *authmocks.AuthMan
 	store := storemocks.NewStore(t)
 	authManager := authmocks.NewAuthManager(t)
 	fileStore := filestoremocks.NewFileStore(t)
+	cfg := config.Config{Log: config.LogConfig{Level: "error", Format: "text"}}
+	logger, _ := logging.NewLogger(cfg)
 
 	srv := &Server{
 		s:           &http.Server{},
@@ -30,6 +34,7 @@ func newTestServer(t *testing.T) (*Server, *storemocks.Store, *authmocks.AuthMan
 		store:       store,
 		authManager: authManager,
 		fileStore:   fileStore,
+		logger:      logger,
 	}
 
 	return srv, store, authManager, fileStore

@@ -19,3 +19,7 @@ auth_manager:
 server:
   host: localhost
   port: "8080"
+log:
+  level: debug 
+  format: text
+  file: ""

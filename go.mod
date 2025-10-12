@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/minio/minio-go/v7 v7.0.95
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/http-swagger v1.3.4

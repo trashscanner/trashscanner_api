@@ -14,6 +14,7 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/config"
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
 	"github.com/trashscanner/trashscanner_api/internal/filestore"
+	"github.com/trashscanner/trashscanner_api/internal/logging"
 	"github.com/trashscanner/trashscanner_api/internal/store"
 )
 
@@ -30,6 +31,7 @@ type Server struct {
 	store       store.Store
 	fileStore   filestore.FileStore
 	authManager auth.AuthManager
+	logger      *logging.Logger
 }
 
 // @title TrashScanner API
@@ -55,6 +57,7 @@ func NewServer(
 	store store.Store,
 	fileStore filestore.FileStore,
 	authManager auth.AuthManager,
+	logger *logging.Logger,
 ) *Server {
 	r := mux.NewRouter()
 
@@ -69,22 +72,31 @@ func NewServer(
 		store:       store,
 		fileStore:   fileStore,
 		authManager: authManager,
+		logger:      logger.WithApiTag(),
 	}
 }
 
 func (s *Server) Start() error {
+	s.logger.Infof("starting server at %s", s.s.Addr)
 	s.initRouter()
 
 	return s.s.ListenAndServe()
 }
 
 func (s *Server) Shutdown() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	s.logger.Infof("shutting down server at %s", s.s.Addr)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	return s.s.Shutdown(ctx)
+
+	if err := s.s.Shutdown(ctx); err != nil {
+		s.logger.Warnf("graceful shutdown failed, forcing close: %v", err)
+		return s.s.Close()
+	}
+
+	return nil
 }
 
-func (s *Server) WriteResponse(w http.ResponseWriter, status int, data any) {
+func (s *Server) WriteResponse(w http.ResponseWriter, r *http.Request, status int, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 
@@ -97,11 +109,14 @@ func (s *Server) WriteResponse(w http.ResponseWriter, status int, data any) {
 
 	err := encoder.Encode(data)
 	if err != nil {
-		s.WriteError(w, errlocal.NewErrInternal("failed to encode response", err.Error(), nil))
+		s.WriteError(w, r, errlocal.NewErrInternal("failed to encode response", err.Error(), nil))
+		return
 	}
+
+	s.logger.WithContext(r.Context()).WithField("status", status).Info("request processed")
 }
 
-func (s *Server) WriteError(w http.ResponseWriter, err error) {
+func (s *Server) WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	var errLocal errlocal.LocalError
 	if !errors.As(err, &errLocal) {
@@ -115,5 +130,8 @@ func (s *Server) WriteError(w http.ResponseWriter, err error) {
 
 	if encodeErr := encoder.Encode(err); encodeErr != nil {
 		http.Error(w, `{"message":"failed to encode error response"}`, http.StatusInternalServerError)
+		return
 	}
+
+	s.logger.WithContext(r.Context()).WithError(err).Error("request processed with error")
 }
