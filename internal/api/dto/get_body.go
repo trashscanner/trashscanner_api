@@ -8,7 +8,7 @@ import (
 )
 
 type HTTPResource interface {
-	AuthRequest | RefreshRequest
+	AuthRequest | RefreshRequest | SwitchPasswordRequest
 }
 
 func GetRequestBody[T any](r *http.Request) (*T, error) {

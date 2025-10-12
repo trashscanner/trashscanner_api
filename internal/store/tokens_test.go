@@ -224,8 +224,9 @@ func TestRevokeAllUserTokens(t *testing.T) {
 
 		err := s.RevokeAllUserTokens(ctx, testdata.User1ID)
 
-		var internalErr *errlocal.ErrInternal
-		require.ErrorAs(t, err, &internalErr)
-		assert.Contains(t, internalErr.Error(), dbErr.Error())
+		assert.Error(t, err)
+		var localErr *errlocal.ErrInternal
+		assert.ErrorAs(t, err, &localErr)
+		assert.Contains(t, localErr.System(), dbErr.Error())
 	})
 }

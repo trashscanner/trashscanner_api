@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/trashscanner/trashscanner_api/internal/config"
 	"github.com/trashscanner/trashscanner_api/internal/models"
 	"github.com/trashscanner/trashscanner_api/internal/store"
@@ -20,6 +21,7 @@ type AuthManager interface {
 	CreateNewPair(ctx context.Context, user models.User) (*TokenPair, error)
 	Refresh(ctx context.Context, refreshToken string) (*TokenPair, error)
 	Parse(tokenStr string) (*Claims, error)
+	RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error
 }
 
 type jwtManager struct {
@@ -88,4 +90,8 @@ func (m *jwtManager) Refresh(ctx context.Context, refreshTokenStr string) (*Toke
 
 func (m *jwtManager) Parse(tokenStr string) (*Claims, error) {
 	return m.generator.parseAccess(tokenStr)
+}
+
+func (m *jwtManager) RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error {
+	return m.store.RevokeAllUserTokens(ctx, userID)
 }

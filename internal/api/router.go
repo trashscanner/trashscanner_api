@@ -1,17 +1,12 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 	_ "github.com/trashscanner/trashscanner_api/docs"
 	"github.com/trashscanner/trashscanner_api/internal/api/middlewares"
-)
-
-const (
-	userKey = "user-id"
 )
 
 func (s *Server) initRouter() {
@@ -33,7 +28,10 @@ func (s *Server) initRouter() {
 
 	root.HandleFunc("/refresh", s.refresh).Methods(http.MethodPost)
 
-	userRouter := root.PathPrefix("/users").Subrouter()
+	userRouter := root.PathPrefix("/users/me").Subrouter()
 	userRouter.Use(s.authMiddleware, s.userMiddleware)
-	userRouter.HandleFunc(fmt.Sprintf("/{%s}", userKey), s.getUser).Methods(http.MethodGet)
+	userRouter.HandleFunc("", s.getUser).Methods(http.MethodGet)
+	userRouter.HandleFunc("", s.deleteUser).Methods(http.MethodDelete)
+	userRouter.HandleFunc("/logout", s.logout).Methods(http.MethodPost)
+	userRouter.HandleFunc("/switch-password", s.switchPassword).Methods(http.MethodPut)
 }
