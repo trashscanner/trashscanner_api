@@ -32,6 +32,8 @@ func (s *Server) initRouter() {
 	userRouter.Use(s.authMiddleware, s.userMiddleware)
 	userRouter.HandleFunc("", s.getUser).Methods(http.MethodGet)
 	userRouter.HandleFunc("", s.deleteUser).Methods(http.MethodDelete)
+	userRouter.HandleFunc("/avatar", s.setAvatar).Methods(http.MethodPut)
+	userRouter.HandleFunc("/avatar", s.deleteAvatar).Methods(http.MethodDelete)
 	userRouter.HandleFunc("/logout", s.logout).Methods(http.MethodPost)
 	userRouter.HandleFunc("/switch-password", s.switchPassword).Methods(http.MethodPut)
 }

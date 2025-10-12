@@ -59,6 +59,12 @@ definitions:
       refresh_token:
         type: string
     type: object
+  dto.UploadAvatarResponse:
+    properties:
+      avatar_url:
+        example: http://localhost:9000/trashscanner-images/user-id/avatars/avatar.jpg
+        type: string
+    type: object
   dto.UserResponse:
     properties:
       avatar:
@@ -335,6 +341,75 @@ paths:
       security:
       - BearerAuth: []
       summary: Get user information
+      tags:
+      - users
+  /users/me/avatar:
+    delete:
+      consumes:
+      - application/json
+      description: Remove the avatar of the authenticated user
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Avatar deleted successfully
+        "400":
+          description: No avatar to delete
+          schema:
+            $ref: '#/definitions/errlocal.ErrBadRequest'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errlocal.ErrUnauthorized'
+        "403":
+          description: Forbidden - user ID mismatch
+          schema:
+            $ref: '#/definitions/errlocal.ErrForbidden'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/errlocal.ErrNotFound'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      security:
+      - BearerAuth: []
+      summary: Delete user avatar
+      tags:
+      - users
+    put:
+      consumes:
+      - multipart/form-data
+      description: Upload and set a new avatar for the authenticated user
+      parameters:
+      - description: Avatar image file (JPEG or PNG, max 10MB)
+        in: formData
+        name: avatar
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Avatar updated successfully
+          schema:
+            $ref: '#/definitions/dto.UploadAvatarResponse'
+        "400":
+          description: Invalid avatar file
+          schema:
+            $ref: '#/definitions/errlocal.ErrBadRequest'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errlocal.ErrUnauthorized'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      security:
+      - BearerAuth: []
+      summary: Set user avatar
       tags:
       - users
   /users/me/logout:

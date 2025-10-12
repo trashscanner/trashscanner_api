@@ -24,7 +24,7 @@ type Store interface {
 	GetUser(ctx context.Context, id uuid.UUID, withStats bool) (*models.User, error)
 	GetUserByLogin(ctx context.Context, login string) (*models.User, error)
 	UpdateUserPass(ctx context.Context, id uuid.UUID, newHashedPass string) error
-	UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) error
+	UpdateAvatar(ctx context.Context, user *models.User) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 
 	InsertRefreshToken(ctx context.Context, refreshToken *models.RefreshToken) error

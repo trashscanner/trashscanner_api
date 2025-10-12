@@ -17,7 +17,7 @@ import (
 )
 
 func TestWriteLoginHistory_NoUser(t *testing.T) {
-	server, storeMock, _ := newTestServer(t)
+	server, storeMock, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/login", nil)
 
@@ -27,7 +27,7 @@ func TestWriteLoginHistory_NoUser(t *testing.T) {
 }
 
 func TestWriteLoginHistory_Success(t *testing.T) {
-	server, storeMock, _ := newTestServer(t)
+	server, storeMock, _, _ := newTestServer(t)
 
 	user := testdata.User1
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/login", nil)
@@ -55,7 +55,7 @@ func TestWriteLoginHistory_Success(t *testing.T) {
 }
 
 func TestWriteLoginHistory_WithFailure(t *testing.T) {
-	server, storeMock, _ := newTestServer(t)
+	server, storeMock, _, _ := newTestServer(t)
 
 	user := testdata.User1
 	ctx := utils.SetUser(context.Background(), user)

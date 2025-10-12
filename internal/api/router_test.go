@@ -20,7 +20,7 @@ import (
 )
 
 func TestInitRouter_NotFound(t *testing.T) {
-	server, _, _ := newTestServer(t)
+	server, _, _, _ := newTestServer(t)
 	server.initRouter()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/unknown", nil)
@@ -33,7 +33,7 @@ func TestInitRouter_NotFound(t *testing.T) {
 }
 
 func TestInitRouter_MethodNotAllowed(t *testing.T) {
-	server, _, _ := newTestServer(t)
+	server, _, _, _ := newTestServer(t)
 	server.initRouter()
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/login", nil)
@@ -46,7 +46,7 @@ func TestInitRouter_MethodNotAllowed(t *testing.T) {
 }
 
 func TestInitRouter_LoginFlow(t *testing.T) {
-	server, storeMock, authMock := newTestServer(t)
+	server, storeMock, authMock, _ := newTestServer(t)
 	server.initRouter()
 
 	body := loadJSONFixture(t, "login_valid.json")
@@ -88,7 +88,7 @@ func TestInitRouter_LoginFlow(t *testing.T) {
 }
 
 func TestInitRouter_GetUserFlow(t *testing.T) {
-	server, storeMock, authMock := newTestServer(t)
+	server, storeMock, authMock, _ := newTestServer(t)
 	server.initRouter()
 
 	user := testdata.User1

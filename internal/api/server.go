@@ -13,6 +13,7 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/auth"
 	"github.com/trashscanner/trashscanner_api/internal/config"
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
+	"github.com/trashscanner/trashscanner_api/internal/filestore"
 	"github.com/trashscanner/trashscanner_api/internal/store"
 )
 
@@ -27,6 +28,7 @@ type Server struct {
 	s           *http.Server
 	router      *mux.Router
 	store       store.Store
+	fileStore   filestore.FileStore
 	authManager auth.AuthManager
 }
 
@@ -51,6 +53,7 @@ type Server struct {
 func NewServer(
 	cfg config.Config,
 	store store.Store,
+	fileStore filestore.FileStore,
 	authManager auth.AuthManager,
 ) *Server {
 	r := mux.NewRouter()
@@ -64,6 +67,7 @@ func NewServer(
 		},
 		router:      r,
 		store:       store,
+		fileStore:   fileStore,
 		authManager: authManager,
 	}
 }

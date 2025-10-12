@@ -119,21 +119,21 @@ func (s *pgStore) UpdateUserPass(ctx context.Context, id uuid.UUID, newHashedPas
 	return nil
 }
 
-func (s *pgStore) UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) error {
+func (s *pgStore) UpdateAvatar(ctx context.Context, user *models.User) error {
 	ctx, cancel := context.WithTimeout(ctx, connTimeout)
 	defer cancel()
 
 	err := s.q.UpdateUserAvatar(ctx, db.UpdateUserAvatarParams{
-		ID:     id,
-		Avatar: &avatarURL,
+		ID:     user.ID,
+		Avatar: user.Avatar,
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return errlocal.NewErrNotFound("user not found", "no user with given ID",
-				map[string]any{"user_id": id})
+				map[string]any{"user_id": user.ID.String()})
 		}
 		return errlocal.NewErrInternal("failed to update user avatar", err.Error(),
-			map[string]any{"user_id": id})
+			map[string]any{"user_id": user.ID.String()})
 	}
 	return nil
 }

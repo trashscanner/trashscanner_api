@@ -37,3 +37,9 @@ packages:
         config:
           dir: 'internal/auth/mocks'
           filename: 'auth_manager.go'
+  github.com/trashscanner/trashscanner_api/internal/filestore:
+    interfaces:
+      FileStore:
+        config:
+          dir: 'internal/filestore/mocks'
+          filename: 'file_store.go'

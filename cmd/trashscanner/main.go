@@ -10,6 +10,7 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/auth"
 	"github.com/trashscanner/trashscanner_api/internal/config"
 	"github.com/trashscanner/trashscanner_api/internal/database"
+	"github.com/trashscanner/trashscanner_api/internal/filestore"
 	"github.com/trashscanner/trashscanner_api/internal/store"
 )
 
@@ -29,13 +30,19 @@ func main() {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
+	fileStore, err := filestore.NewMinioStore(cfg)
+	if err != nil {
+		store.Close()
+		log.Fatalf("failed to create file store: %v", err)
+	}
+
 	auth, err := auth.NewJWTManager(cfg, store)
 	if err != nil {
 		store.Close()
 		log.Fatalf("failed to create auth manager: %v", err)
 	}
 
-	server := api.NewServer(cfg, store, auth)
+	server := api.NewServer(cfg, store, fileStore, auth)
 
 	go func() {
 		if err := server.Start(); err != nil {

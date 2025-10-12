@@ -17,6 +17,7 @@ const (
 type Config struct {
 	Server ServerConfig      `mapstructure:"server"`
 	DB     DBConfig          `mapstructure:"database"`
+	Store  FileStoreConfig   `mapstructure:"filestore"`
 	Auth   AuthManagerConfig `mapstructure:"auth_manager"`
 }
 
@@ -34,6 +35,14 @@ type DBConfig struct {
 
 	MigrationsPath string `mapstructure:"migrations_path" validate:"required"`
 	SSLMode        string `mapstructure:"sslmode" validate:"required,oneof=disable require verify-ca verify-full"`
+}
+
+type FileStoreConfig struct {
+	Endpoint  string `mapstructure:"endpoint" validate:"required"`
+	AccessKey string `mapstructure:"access_key" validate:"required"`
+	SecretKey string `mapstructure:"secret_key" validate:"required"`
+	UseSSL    bool   `mapstructure:"use_ssl"`
+	Bucket    string `mapstructure:"bucket" validate:"required"`
 }
 
 type AuthManagerConfig struct {

@@ -12,15 +12,17 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/auth/mocks"
 	"github.com/trashscanner/trashscanner_api/internal/config"
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
+	filestoremocks "github.com/trashscanner/trashscanner_api/internal/filestore/mocks"
 	storemocks "github.com/trashscanner/trashscanner_api/internal/store/mocks"
 )
 
 func TestNewServer(t *testing.T) {
 	cfg := config.Config{Server: config.ServerConfig{Host: "127.0.0.1", Port: "9090"}}
 	store := storemocks.NewStore(t)
+	fileStore := filestoremocks.NewFileStore(t)
 	authManager := mocks.NewAuthManager(t)
 
-	server := NewServer(cfg, store, authManager)
+	server := NewServer(cfg, store, fileStore, authManager)
 
 	require.NotNil(t, server.router)
 	require.NotNil(t, server.s)
@@ -32,7 +34,7 @@ func TestNewServer(t *testing.T) {
 }
 
 func TestWriteResponse(t *testing.T) {
-	server, _, _ := newTestServer(t)
+	server, _, _, _ := newTestServer(t)
 
 	rr := httptest.NewRecorder()
 	data := map[string]any{"message": "ok"}
@@ -45,7 +47,7 @@ func TestWriteResponse(t *testing.T) {
 }
 
 func TestWriteError(t *testing.T) {
-	server, _, _ := newTestServer(t)
+	server, _, _, _ := newTestServer(t)
 
 	rr := httptest.NewRecorder()
 	err := errlocal.NewErrInternal("boom", errors.New("boom").Error(), nil)
@@ -58,7 +60,7 @@ func TestWriteError(t *testing.T) {
 }
 
 func TestShutdownWithoutStart(t *testing.T) {
-	server, _, _ := newTestServer(t)
+	server, _, _, _ := newTestServer(t)
 
 	start := time.Now()
 	err := server.Shutdown()

@@ -16,7 +16,7 @@ lint:
 
 test:
 	go test $$(go list ./... | grep -v '/internal/database' | grep -v '/docs' | \
-		grep -v '/internal/api/dto'  | grep -v '/mocks') -coverprofile=coverage.out --race --timeout 2m
+		grep -v '/internal/api/dto'  | grep -v '/mocks' | grep -v '/filestore') -coverprofile=coverage.out --race --timeout 2m
 	cat coverage.out | grep -v "internal/database/sqlc" > coverage.txt || true
 
 test-all:
@@ -25,6 +25,9 @@ test-all:
 
 test-db:
 	go test ./internal/database/... -v --race --timeout 2m
+
+test-filestore:
+	go test ./internal/filestore/... -v --race --timeout 2m
 
 build:
 	go build -o bin/trashscanner cmd/trashscanner/main.go
