@@ -1,7 +1,6 @@
 package models
 
 import (
-	"net/url"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,7 +12,7 @@ type User struct {
 	ID             uuid.UUID `json:"id"`
 	Login          string    `json:"login"`
 	HashedPassword string    `json:"-"`
-	Avatar         url.URL   `json:"avatar,omitempty" swaggertype:"string"`
+	Avatar         *string   `json:"avatar,omitempty"`
 	Stat           *Stat     `json:"stat,omitempty"`
 	Deleted        bool      `json:"-"`
 	CreatedAt      time.Time `json:"created_at"`
@@ -24,12 +23,7 @@ func (u *User) Model(user db.User) {
 	u.ID = user.ID
 	u.Login = user.Login
 	u.HashedPassword = user.HashedPassword
-	if user.Avatar != nil {
-		avatar, err := url.Parse(*user.Avatar)
-		if err == nil {
-			u.Avatar = *avatar
-		}
-	}
+	u.Avatar = user.Avatar
 	u.Deleted = user.Deleted
 	u.CreatedAt = user.CreatedAt
 	u.UpdatedAt = user.UpdatedAt

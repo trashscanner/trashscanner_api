@@ -24,7 +24,7 @@ import (
 
 func TestLoginMiddleware(t *testing.T) {
 	t.Run("invalid body", func(t *testing.T) {
-		server, _, _ := newTestServer(t)
+		server, _, _, _ := newTestServer(t)
 		body := loadJSONFixture(t, "login_empty_fields.json")
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewReader(body))
 		rr := httptest.NewRecorder()
@@ -45,7 +45,7 @@ func TestLoginMiddleware(t *testing.T) {
 	})
 
 	t.Run("user not found", func(t *testing.T) {
-		server, storeMock, _ := newTestServer(t)
+		server, storeMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewReader(body))
@@ -77,7 +77,7 @@ func TestLoginMiddleware(t *testing.T) {
 	})
 
 	t.Run("user exists", func(t *testing.T) {
-		server, storeMock, _ := newTestServer(t)
+		server, storeMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewReader(body))
@@ -109,7 +109,7 @@ func TestLoginMiddleware(t *testing.T) {
 	})
 
 	t.Run("store error", func(t *testing.T) {
-		server, storeMock, _ := newTestServer(t)
+		server, storeMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewReader(body))
@@ -133,7 +133,7 @@ func TestLoginMiddleware(t *testing.T) {
 
 func TestLoginHandler(t *testing.T) {
 	t.Run("creates new user", func(t *testing.T) {
-		server, storeMock, authMock := newTestServer(t)
+		server, storeMock, authMock, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.AuthRequest
@@ -182,7 +182,7 @@ func TestLoginHandler(t *testing.T) {
 	})
 
 	t.Run("existing user success", func(t *testing.T) {
-		server, storeMock, authMock := newTestServer(t)
+		server, storeMock, authMock, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.AuthRequest
@@ -227,7 +227,7 @@ func TestLoginHandler(t *testing.T) {
 	})
 
 	t.Run("invalid password", func(t *testing.T) {
-		server, storeMock, authMock := newTestServer(t)
+		server, storeMock, authMock, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_invalid_credentials.json")
 		var authReq dto.AuthRequest
@@ -263,7 +263,7 @@ func TestLoginHandler(t *testing.T) {
 	})
 
 	t.Run("create user error", func(t *testing.T) {
-		server, storeMock, authMock := newTestServer(t)
+		server, storeMock, authMock, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.AuthRequest
@@ -291,7 +291,7 @@ func TestLoginHandler(t *testing.T) {
 	})
 
 	t.Run("token creation error", func(t *testing.T) {
-		server, storeMock, authMock := newTestServer(t)
+		server, storeMock, authMock, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.AuthRequest
@@ -329,7 +329,7 @@ func TestLoginHandler(t *testing.T) {
 
 func TestRefreshHandler(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		server, _, authMock := newTestServer(t)
+		server, _, authMock, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "refresh_valid.json")
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/refresh", bytes.NewReader(body))
@@ -353,7 +353,7 @@ func TestRefreshHandler(t *testing.T) {
 	})
 
 	t.Run("invalid body", func(t *testing.T) {
-		server, _, _ := newTestServer(t)
+		server, _, _, _ := newTestServer(t)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/refresh", bytes.NewReader([]byte("{")))
 
 		rr := httptest.NewRecorder()
@@ -363,7 +363,7 @@ func TestRefreshHandler(t *testing.T) {
 	})
 
 	t.Run("token not found", func(t *testing.T) {
-		server, _, authMock := newTestServer(t)
+		server, _, authMock, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "refresh_invalid.json")
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/refresh", bytes.NewReader(body))
@@ -382,7 +382,7 @@ func TestRefreshHandler(t *testing.T) {
 	})
 
 	t.Run("token expired", func(t *testing.T) {
-		server, _, authMock := newTestServer(t)
+		server, _, authMock, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "refresh_valid.json")
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/refresh", bytes.NewReader(body))
@@ -401,7 +401,7 @@ func TestRefreshHandler(t *testing.T) {
 	})
 
 	t.Run("token revoked", func(t *testing.T) {
-		server, _, authMock := newTestServer(t)
+		server, _, authMock, _ := newTestServer(t)
 
 		refreshReq := dto.RefreshRequest{RefreshToken: "revoked.token"}
 		body, err := json.Marshal(refreshReq)
@@ -419,7 +419,7 @@ func TestRefreshHandler(t *testing.T) {
 	})
 
 	t.Run("internal error", func(t *testing.T) {
-		server, _, authMock := newTestServer(t)
+		server, _, authMock, _ := newTestServer(t)
 
 		refreshReq := dto.RefreshRequest{RefreshToken: "broken.token"}
 		body, err := json.Marshal(refreshReq)

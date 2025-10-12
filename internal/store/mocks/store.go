@@ -860,16 +860,16 @@ func (_c *Store_RevokeRefreshToken_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // UpdateAvatar provides a mock function for the type Store
-func (_mock *Store) UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL string) error {
-	ret := _mock.Called(ctx, id, avatarURL)
+func (_mock *Store) UpdateAvatar(ctx context.Context, user *models.User) error {
+	ret := _mock.Called(ctx, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateAvatar")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) error); ok {
-		r0 = returnFunc(ctx, id, avatarURL)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *models.User) error); ok {
+		r0 = returnFunc(ctx, user)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -883,30 +883,24 @@ type Store_UpdateAvatar_Call struct {
 
 // UpdateAvatar is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id uuid.UUID
-//   - avatarURL string
-func (_e *Store_Expecter) UpdateAvatar(ctx interface{}, id interface{}, avatarURL interface{}) *Store_UpdateAvatar_Call {
-	return &Store_UpdateAvatar_Call{Call: _e.mock.On("UpdateAvatar", ctx, id, avatarURL)}
+//   - user *models.User
+func (_e *Store_Expecter) UpdateAvatar(ctx interface{}, user interface{}) *Store_UpdateAvatar_Call {
+	return &Store_UpdateAvatar_Call{Call: _e.mock.On("UpdateAvatar", ctx, user)}
 }
 
-func (_c *Store_UpdateAvatar_Call) Run(run func(ctx context.Context, id uuid.UUID, avatarURL string)) *Store_UpdateAvatar_Call {
+func (_c *Store_UpdateAvatar_Call) Run(run func(ctx context.Context, user *models.User)) *Store_UpdateAvatar_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 uuid.UUID
+		var arg1 *models.User
 		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
+			arg1 = args[1].(*models.User)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -917,7 +911,7 @@ func (_c *Store_UpdateAvatar_Call) Return(err error) *Store_UpdateAvatar_Call {
 	return _c
 }
 
-func (_c *Store_UpdateAvatar_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, avatarURL string) error) *Store_UpdateAvatar_Call {
+func (_c *Store_UpdateAvatar_Call) RunAndReturn(run func(ctx context.Context, user *models.User) error) *Store_UpdateAvatar_Call {
 	_c.Call.Return(run)
 	return _c
 }

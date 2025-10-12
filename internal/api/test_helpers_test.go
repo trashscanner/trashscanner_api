@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -9,24 +11,65 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/require"
 	authmocks "github.com/trashscanner/trashscanner_api/internal/auth/mocks"
+	filestoremocks "github.com/trashscanner/trashscanner_api/internal/filestore/mocks"
 	storemocks "github.com/trashscanner/trashscanner_api/internal/store/mocks"
 )
 
-func newTestServer(t *testing.T) (*Server, *storemocks.Store, *authmocks.AuthManager) {
+func newTestServer(t *testing.T) (*Server, *storemocks.Store, *authmocks.AuthManager, *filestoremocks.FileStore) {
 	t.Helper()
 
 	store := storemocks.NewStore(t)
 	authManager := authmocks.NewAuthManager(t)
+	fileStore := filestoremocks.NewFileStore(t)
 
 	srv := &Server{
 		s:           &http.Server{},
 		router:      mux.NewRouter(),
 		store:       store,
 		authManager: authManager,
+		fileStore:   fileStore,
 	}
 
-	return srv, store, authManager
+	return srv, store, authManager, fileStore
+}
+
+// multipartFormData holds the created multipart form data
+type multipartFormData struct {
+	body        io.Reader
+	contentType string
+}
+
+// createMultipartFormWithAvatar creates a multipart form with an avatar file
+func createMultipartFormWithAvatar(t *testing.T, filename, contentType string, data []byte) multipartFormData {
+	t.Helper()
+	return createMultipartFormWithField(t, "avatar", filename, contentType, data)
+}
+
+// createMultipartFormWithField creates a multipart form with a custom field name
+func createMultipartFormWithField(t *testing.T, fieldName, filename, contentType string, data []byte) multipartFormData {
+	t.Helper()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	part, err := writer.CreatePart(map[string][]string{
+		"Content-Disposition": {`form-data; name="` + fieldName + `"; filename="` + filename + `"`},
+		"Content-Type":        {contentType},
+	})
+	require.NoError(t, err)
+
+	_, err = part.Write(data)
+	require.NoError(t, err)
+
+	err = writer.Close()
+	require.NoError(t, err)
+
+	return multipartFormData{
+		body:        body,
+		contentType: writer.FormDataContentType(),
+	}
 }
 
 func loadJSONFixture(t testing.TB, name string) []byte {

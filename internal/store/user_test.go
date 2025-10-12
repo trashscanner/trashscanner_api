@@ -456,12 +456,15 @@ func TestUpdateAvatar(t *testing.T) {
 			q: mockQ,
 		}
 
+		user := testdata.User1
+		user.Avatar = &testdata.AvatarURL
+
 		mockQ.EXPECT().UpdateUserAvatar(mock.Anything, db.UpdateUserAvatarParams{
 			ID:     testdata.User1ID,
 			Avatar: &testdata.AvatarURL,
 		}).Return(nil).Once()
 
-		err := store.UpdateAvatar(ctx, testdata.User1ID, testdata.AvatarURL)
+		err := store.UpdateAvatar(ctx, &user)
 
 		assert.NoError(t, err)
 	})
@@ -475,12 +478,15 @@ func TestUpdateAvatar(t *testing.T) {
 			q: mockQ,
 		}
 
+		user := testdata.User2
+		user.Avatar = &testdata.NewAvatarURL
+
 		mockQ.EXPECT().UpdateUserAvatar(mock.Anything, db.UpdateUserAvatarParams{
 			ID:     testdata.User2ID,
 			Avatar: &testdata.NewAvatarURL,
 		}).Return(nil).Once()
 
-		err := store.UpdateAvatar(ctx, testdata.User2ID, testdata.NewAvatarURL)
+		err := store.UpdateAvatar(ctx, &user)
 
 		assert.NoError(t, err)
 	})
@@ -499,7 +505,7 @@ func TestUpdateAvatar(t *testing.T) {
 		mockQ.EXPECT().UpdateUserAvatar(mock.Anything, mock.Anything).
 			Return(updateErr).Once()
 
-		err := store.UpdateAvatar(ctx, testdata.User1ID, testdata.AvatarURL)
+		err := store.UpdateAvatar(ctx, &testdata.User1)
 
 		assert.Error(t, err)
 		var localErr *errlocal.ErrInternal

@@ -167,3 +167,77 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 
 	s.WriteResponse(w, http.StatusOK, user)
 }
+
+// SetAvatar godoc
+// @Summary Set user avatar
+// @Description Upload and set a new avatar for the authenticated user
+// @Tags users
+// @Accept multipart/form-data
+// @Produce json
+// @Param avatar formData file true "Avatar image file (JPEG or PNG, max 10MB)"
+// @Success 202 {object} dto.UploadAvatarResponse "Avatar updated successfully"
+// @Failure 400 {object} errlocal.ErrBadRequest "Invalid avatar file"
+// @Failure 401 {object} errlocal.ErrUnauthorized "Unauthorized"
+// @Failure 500 {object} errlocal.ErrInternal "Internal server error"
+// @Security BearerAuth
+// @Router /users/me/avatar [put]
+func (s *Server) setAvatar(w http.ResponseWriter, r *http.Request) {
+	avatar, err := dto.GetAvatarFromMultipartForm(r)
+	if err != nil {
+		s.WriteError(w, errlocal.NewErrBadRequest("invalid avatar file", err.Error(), nil))
+		return
+	}
+	defer func() {
+		_ = avatar.Entry.Close()
+	}()
+
+	user := utils.GetUser(r.Context()).(models.User)
+	if err := s.fileStore.UpdateAvatar(r.Context(), &user, avatar); err != nil {
+		s.WriteError(w, err)
+		return
+	}
+
+	if err := s.store.UpdateAvatar(r.Context(), &user); err != nil {
+		s.WriteError(w, err)
+		return
+	}
+
+	s.WriteResponse(w, http.StatusAccepted, dto.UploadAvatarResponse{
+		AvatarURL: *user.Avatar,
+	})
+}
+
+// DeleteAvatar godoc
+// @Summary Delete user avatar
+// @Description Remove the avatar of the authenticated user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 204 "Avatar deleted successfully"
+// @Failure 400 {object} errlocal.ErrBadRequest "No avatar to delete"
+// @Failure 401 {object} errlocal.ErrUnauthorized "Unauthorized"
+// @Failure 403 {object} errlocal.ErrForbidden "Forbidden - user ID mismatch"
+// @Failure 404 {object} errlocal.ErrNotFound "User not found"
+// @Failure 500 {object} errlocal.ErrInternal "Internal server error"
+// @Security BearerAuth
+// @Router /users/me/avatar [delete]
+func (s *Server) deleteAvatar(w http.ResponseWriter, r *http.Request) {
+	user := utils.GetUser(r.Context()).(models.User)
+	if user.Avatar == nil {
+		s.WriteError(w, errlocal.NewErrBadRequest("no avatar to delete", "user has no avatar", nil))
+		return
+	}
+
+	if err := s.fileStore.DeleteAvatar(r.Context(), *user.Avatar); err != nil {
+		s.WriteError(w, err)
+		return
+	}
+
+	user.Avatar = nil
+	if err := s.store.UpdateAvatar(r.Context(), &user); err != nil {
+		s.WriteError(w, err)
+		return
+	}
+
+	s.WriteResponse(w, http.StatusNoContent, nil)
+}

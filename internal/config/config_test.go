@@ -12,13 +12,9 @@ import (
 func TestConfig(t *testing.T) {
 	os.Setenv("CONFIG_PATH", ".")
 	os.Setenv("CONFIG_NAME", "test_config")
-	os.Setenv("AUTH_MANAGER_PUBLIC_KEY", "public-key")
-	os.Setenv("AUTH_MANAGER_SECRET_PRIVATE_KEY", "private-key")
 	defer func() {
 		os.Unsetenv("CONFIG_PATH")
 		os.Unsetenv("CONFIG_NAME")
-		os.Unsetenv("AUTH_MANAGER_PUBLIC_KEY")
-		os.Unsetenv("AUTH_MANAGER_SECRET_PRIVATE_KEY")
 	}()
 
 	t.Run("successful config loading", func(t *testing.T) {
@@ -42,10 +38,18 @@ func TestConfig(t *testing.T) {
 				Host: "0.0.0.0",
 				Port: "8080",
 			},
+			Store: FileStoreConfig{
+				Endpoint:  "localhost:9000",
+				AccessKey: "minioadmin",
+				SecretKey: "minioadmin",
+				Bucket:    "trashscanner-images",
+				UseSSL:    false,
+			},
 		}
 		assert.NoError(t, err)
 		assert.Equal(t, expectedConfig, config)
 	})
+
 	t.Run("missing config file", func(t *testing.T) {
 		oldEnv := os.Getenv("CONFIG_PATH")
 		os.Setenv("CONFIG_PATH", "./nonexistent")
@@ -62,6 +66,11 @@ func TestConfig(t *testing.T) {
 		os.Setenv("DATABASE_USER", "envuser")
 		os.Setenv("DATABASE_PASSWORD", "envpassword")
 		os.Setenv("DATABASE_NAME", "envdb")
+		os.Setenv("FILESTORE_ENDPOINT", "minio.example.com:9000")
+		os.Setenv("FILESTORE_ACCESS_KEY", "envAccessKey")
+		os.Setenv("FILESTORE_SECRET_KEY", "envSecretKey")
+		os.Setenv("FILESTORE_BUCKET", "env-bucket")
+		os.Setenv("FILESTORE_USE_SSL", "true")
 
 		defer func() {
 			for _, curEnv := range os.Environ() {
@@ -85,5 +94,10 @@ func TestConfig(t *testing.T) {
 		assert.Equal(t, "envuser", config.DB.User)
 		assert.Equal(t, "envpassword", config.DB.Password)
 		assert.Equal(t, "envdb", config.DB.Name)
+		assert.Equal(t, "minio.example.com:9000", config.Store.Endpoint)
+		assert.Equal(t, "envAccessKey", config.Store.AccessKey)
+		assert.Equal(t, "envSecretKey", config.Store.SecretKey)
+		assert.Equal(t, "env-bucket", config.Store.Bucket)
+		assert.Equal(t, true, config.Store.UseSSL)
 	})
 }
