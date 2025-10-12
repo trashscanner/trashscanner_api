@@ -16,7 +16,7 @@ func (s *Server) loginMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b, err := dto.GetRequestBody[dto.AuthRequest](r)
 		if err != nil {
-			s.WriteError(w, errlocal.NewErrBadRequest("invalid request body", err.Error(), nil))
+			s.WriteError(w, r, errlocal.NewErrBadRequest("invalid request body", err.Error(), nil))
 			return
 		}
 		ctx := utils.SetRequestBody(r.Context(), b)
@@ -30,7 +30,7 @@ func (s *Server) loginMiddleware(next http.Handler) http.Handler {
 				return
 			}
 
-			s.WriteError(w, errlocal.NewErrInternal("failed check user", err.Error(),
+			s.WriteError(w, r, errlocal.NewErrInternal("failed check user", err.Error(),
 				map[string]any{"login": b.Login}))
 			return
 		}
@@ -69,7 +69,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 			statusCode = http.StatusInternalServerError
 			loginErr = errlocal.NewErrInternal("failed to create user", err.Error(),
 				map[string]any{"login": u.Login})
-			s.WriteError(w, loginErr)
+			s.WriteError(w, r, loginErr)
 			return
 		}
 
@@ -78,7 +78,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		if err := utils.CompareHashPass(u.HashedPassword, b.Password); err != nil {
 			statusCode = http.StatusUnauthorized
 			loginErr = errlocal.NewErrUnauthorized("invalid credentials", "", nil)
-			s.WriteError(w, loginErr)
+			s.WriteError(w, r, loginErr)
 			return
 		}
 		statusCode = http.StatusOK
@@ -89,11 +89,11 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		statusCode = http.StatusInternalServerError
 		loginErr = errlocal.NewErrInternal("failed to create tokens", tErr.Error(),
 			map[string]any{"user_id": u.ID.String(), "login": u.Login})
-		s.WriteError(w, loginErr)
+		s.WriteError(w, r, loginErr)
 		return
 	}
 
-	s.WriteResponse(w, statusCode, dto.NewAuthResponse(u, tokens.Access, tokens.Refresh))
+	s.WriteResponse(w, r, statusCode, dto.NewAuthResponse(u, tokens.Access, tokens.Refresh))
 }
 
 // Refresh godoc
@@ -111,7 +111,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 func (s *Server) refresh(w http.ResponseWriter, r *http.Request) {
 	b, err := dto.GetRequestBody[dto.RefreshRequest](r)
 	if err != nil {
-		s.WriteError(w, errlocal.NewErrBadRequest("invalid token", err.Error(), nil))
+		s.WriteError(w, r, errlocal.NewErrBadRequest("invalid token", err.Error(), nil))
 		return
 	}
 
@@ -119,17 +119,17 @@ func (s *Server) refresh(w http.ResponseWriter, r *http.Request) {
 	if tErr != nil {
 		var notFoundErr *errlocal.ErrNotFound
 		if errors.As(tErr, &notFoundErr) {
-			s.WriteError(w, errlocal.NewErrUnauthorized("token not found", "", nil))
+			s.WriteError(w, r, errlocal.NewErrUnauthorized("token not found", "", nil))
 			return
 		}
 		if errors.Is(tErr, jwt.ErrTokenExpired) {
-			s.WriteError(w, errlocal.NewErrUnauthorized("token expired", "", nil))
+			s.WriteError(w, r, errlocal.NewErrUnauthorized("token expired", "", nil))
 			return
 		}
-		s.WriteError(w, errlocal.NewErrInternal("failed to refresh tokens", tErr.Error(),
+		s.WriteError(w, r, errlocal.NewErrInternal("failed to refresh tokens", tErr.Error(),
 			map[string]any{"refresh_token": b.RefreshToken}))
 		return
 	}
 
-	s.WriteResponse(w, http.StatusCreated, dto.NewRefreshResponse(tokens.Access, tokens.Refresh))
+	s.WriteResponse(w, r, http.StatusCreated, dto.NewRefreshResponse(tokens.Access, tokens.Refresh))
 }
