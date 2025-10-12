@@ -415,7 +415,7 @@ func TestRefreshHandler(t *testing.T) {
 		rr := httptest.NewRecorder()
 		server.refresh(rr, req)
 
-		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
 
 	t.Run("internal error", func(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/gorilla/mux"
+	"github.com/trashscanner/trashscanner_api/internal/api/dto"
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
 	"github.com/trashscanner/trashscanner_api/internal/models"
 	"github.com/trashscanner/trashscanner_api/internal/utils"
@@ -42,16 +42,13 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 
 func (s *Server) userMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := mux.Vars(r)[userKey]
 		ctxUser, ok := utils.GetUser(r.Context()).(models.User)
-		if ok {
-			if ctxUser.ID.String() != userID {
-				s.WriteError(w, errlocal.NewErrForbidden("forbidden", "user ID does not match", nil))
-				return
-			}
+		if !ok {
+			s.WriteError(w, errlocal.NewErrUnauthorized("unauthorized", "user not found", nil))
+			return
 		}
 
-		user, err := s.store.GetUser(r.Context(), uuid.MustParse(userID), true)
+		user, err := s.store.GetUser(r.Context(), ctxUser.ID, true)
 		if err != nil {
 			var notFoundErr *errlocal.ErrNotFound
 			if errors.As(err, &notFoundErr) {
@@ -60,7 +57,7 @@ func (s *Server) userMiddleware(next http.Handler) http.Handler {
 			}
 
 			s.WriteError(w, errlocal.NewErrInternal("failed to get user", err.Error(),
-				map[string]any{"user_id": userID}))
+				map[string]any{"user_id": ctxUser.ID.String()}))
 			return
 		}
 
@@ -75,15 +72,98 @@ func (s *Server) userMiddleware(next http.Handler) http.Handler {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param user-id path string true "User ID"
 // @Success 200 {object} dto.UserResponse "User information"
 // @Failure 401 {object} errlocal.ErrUnauthorized "Unauthorized"
 // @Failure 403 {object} errlocal.ErrForbidden "Forbidden - user ID mismatch"
 // @Failure 404 {object} errlocal.ErrNotFound "User not found"
 // @Failure 500 {object} errlocal.ErrInternal "Internal server error"
 // @Security BearerAuth
-// @Router /users/{user-id} [get]
+// @Router /users/me [get]
 func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	user := utils.GetUser(r.Context()).(models.User)
+	s.WriteResponse(w, http.StatusOK, user)
+}
+
+// DeleteUser godoc
+// @Summary Delete user account
+// @Description Delete the authenticated user's account
+// @Tags users
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 204 "User deleted successfully"
+// @Failure 401 {object} errlocal.ErrUnauthorized "Unauthorized"
+// @Failure 403 {object} errlocal.ErrForbidden "Forbidden - user ID mismatch"
+// @Failure 404 {object} errlocal.ErrNotFound "User not found"
+// @Failure 500 {object} errlocal.ErrInternal "Internal server error"
+// @Router /users/me [delete]
+func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
+	user := utils.GetUser(r.Context()).(models.User)
+
+	if err := s.store.DeleteUser(r.Context(), user.ID); err != nil {
+		s.WriteError(w, err)
+		return
+	}
+
+	s.WriteResponse(w, http.StatusNoContent, nil)
+}
+
+// SwitchPassword godoc
+// @Summary Switch user password
+// @Description Change the password of the authenticated user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param switchPasswordRequest body dto.SwitchPasswordRequest true "New password details"
+// @Success 202 "Password changed successfully"
+// @Failure 400 {object} errlocal.ErrBadRequest "Invalid request body"
+// @Failure 401 {object} errlocal.ErrUnauthorized "Unauthorized"
+// @Failure 403 {object} errlocal.ErrForbidden "Forbidden - user ID mismatch"
+// @Failure 404 {object} errlocal.ErrNotFound "User not found"
+// @Failure 500 {object} errlocal.ErrInternal "Internal server error"
+// @Security BearerAuth
+// @Router /users/me/switch-password [put]
+func (s *Server) switchPassword(w http.ResponseWriter, r *http.Request) {
+	b, err := dto.GetRequestBody[dto.SwitchPasswordRequest](r)
+	if err != nil {
+		s.WriteError(w, errlocal.NewErrBadRequest("invalid request body", err.Error(), nil))
+		return
+	}
+
+	user := utils.GetUser(r.Context()).(models.User)
+	if err := utils.CompareHashPass(user.HashedPassword, b.OldPassword); err != nil {
+		s.WriteError(w, errlocal.NewErrForbidden("old password does not match", "", nil))
+		return
+	}
+
+	newHashedPass, _ := utils.HashPass(b.NewPassword)
+	if err := s.store.UpdateUserPass(r.Context(), user.ID, newHashedPass); err != nil {
+		s.WriteError(w, err)
+		return
+	}
+
+	s.WriteResponse(w, http.StatusAccepted, nil)
+}
+
+// Logout godoc
+// @Summary Logout user
+// @Description Revoke all tokens for the authenticated user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.UserResponse "User logged out successfully"
+// @Failure 401 {object} errlocal.ErrUnauthorized "Unauthorized"
+// @Failure 403 {object} errlocal.ErrForbidden "Forbidden - user ID mismatch"
+// @Failure 404 {object} errlocal.ErrNotFound "User not found"
+// @Failure 500 {object} errlocal.ErrInternal "Internal server error"
+// @Security BearerAuth
+// @Router /users/me/logout [post]
+func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
+	user := utils.GetUser(r.Context()).(models.User)
+	if err := s.authManager.RevokeAllUserTokens(r.Context(), user.ID); err != nil {
+		s.WriteError(w, errlocal.NewErrInternal("failed to revoke tokens", err.Error(), nil))
+		return
+	}
+
 	s.WriteResponse(w, http.StatusOK, user)
 }

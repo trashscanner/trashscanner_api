@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"context"
+	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/trashscanner/trashscanner_api/internal/auth"
 	"github.com/trashscanner/trashscanner_api/internal/models"
@@ -232,6 +233,63 @@ func (_c *AuthManager_Refresh_Call) Return(tokenPair *auth.TokenPair, err error)
 }
 
 func (_c *AuthManager_Refresh_Call) RunAndReturn(run func(ctx context.Context, refreshToken string) (*auth.TokenPair, error)) *AuthManager_Refresh_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RevokeAllUserTokens provides a mock function for the type AuthManager
+func (_mock *AuthManager) RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeAllUserTokens")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// AuthManager_RevokeAllUserTokens_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeAllUserTokens'
+type AuthManager_RevokeAllUserTokens_Call struct {
+	*mock.Call
+}
+
+// RevokeAllUserTokens is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+func (_e *AuthManager_Expecter) RevokeAllUserTokens(ctx interface{}, userID interface{}) *AuthManager_RevokeAllUserTokens_Call {
+	return &AuthManager_RevokeAllUserTokens_Call{Call: _e.mock.On("RevokeAllUserTokens", ctx, userID)}
+}
+
+func (_c *AuthManager_RevokeAllUserTokens_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *AuthManager_RevokeAllUserTokens_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *AuthManager_RevokeAllUserTokens_Call) Return(err error) *AuthManager_RevokeAllUserTokens_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *AuthManager_RevokeAllUserTokens_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) error) *AuthManager_RevokeAllUserTokens_Call {
 	_c.Call.Return(run)
 	return _c
 }

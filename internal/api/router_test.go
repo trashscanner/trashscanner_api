@@ -103,7 +103,7 @@ func TestInitRouter_GetUserFlow(t *testing.T) {
 		GetUser(mock.Anything, user.ID, true).
 		Return(&user, nil)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+user.ID.String(), nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	rr := httptest.NewRecorder()

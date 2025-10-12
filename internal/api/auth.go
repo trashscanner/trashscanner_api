@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -120,15 +119,11 @@ func (s *Server) refresh(w http.ResponseWriter, r *http.Request) {
 	if tErr != nil {
 		var notFoundErr *errlocal.ErrNotFound
 		if errors.As(tErr, &notFoundErr) {
-			s.WriteError(w, errlocal.NewErrUnauthorized("invalid token", tErr.Error(), nil))
+			s.WriteError(w, errlocal.NewErrUnauthorized("token not found", "", nil))
 			return
 		}
 		if errors.Is(tErr, jwt.ErrTokenExpired) {
-			s.WriteError(w, errlocal.NewErrUnauthorized("token expired", tErr.Error(), nil))
-			return
-		}
-		if strings.Contains(tErr.Error(), "revoked") {
-			s.WriteError(w, errlocal.NewErrUnauthorized("token revoked", tErr.Error(), nil))
+			s.WriteError(w, errlocal.NewErrUnauthorized("token expired", "", nil))
 			return
 		}
 		s.WriteError(w, errlocal.NewErrInternal("failed to refresh tokens", tErr.Error(),

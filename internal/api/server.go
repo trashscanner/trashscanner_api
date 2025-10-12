@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -29,7 +30,7 @@ type Server struct {
 	authManager auth.AuthManager
 }
 
-// @title Swagger TrashScanner API
+// @title TrashScanner API
 // @version 1.0
 // @description This is a sample server TrashScanner API.
 
@@ -83,6 +84,10 @@ func (s *Server) WriteResponse(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 
+	if data == nil && status != http.StatusNoContent {
+		data = map[string]string{"status": http.StatusText(status)}
+	}
+
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 
@@ -92,9 +97,14 @@ func (s *Server) WriteResponse(w http.ResponseWriter, status int, data any) {
 	}
 }
 
-func (s *Server) WriteError(w http.ResponseWriter, err errlocal.LocalError) {
+func (s *Server) WriteError(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(err.Code())
+	var errLocal errlocal.LocalError
+	if !errors.As(err, &errLocal) {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(errLocal.Code())
+	}
 
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")

@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -91,7 +90,6 @@ func TestUserMiddleware(t *testing.T) {
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+user.ID.String(), nil)
 		req = req.WithContext(utils.SetUser(req.Context(), models.User{ID: user.ID, Login: user.Login}))
-		req = mux.SetURLVars(req, map[string]string{userKey: user.ID.String()})
 
 		storeMock.EXPECT().
 			GetUser(mock.Anything, user.ID, true).
@@ -111,30 +109,11 @@ func TestUserMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rr.Code)
 	})
 
-	t.Run("forbidden when mismatch", func(t *testing.T) {
-		server, _, _ := newTestServer(t)
-
-		wrongUser := models.User{ID: testdata.User2.ID, Login: testdata.User2.Login}
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+testdata.User1.ID.String(), nil)
-		req = req.WithContext(utils.SetUser(req.Context(), wrongUser))
-		req = mux.SetURLVars(req, map[string]string{userKey: testdata.User1.ID.String()})
-
-		handler := server.userMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
-			t.Fatal("should not be called")
-		}))
-
-		rr := httptest.NewRecorder()
-		handler.ServeHTTP(rr, req)
-
-		assert.Equal(t, http.StatusForbidden, rr.Code)
-	})
-
 	t.Run("user not found", func(t *testing.T) {
 		server, storeMock, _ := newTestServer(t)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+testdata.User1.ID.String(), nil)
 		req = req.WithContext(utils.SetUser(req.Context(), models.User{ID: testdata.User1.ID, Login: testdata.User1.Login}))
-		req = mux.SetURLVars(req, map[string]string{userKey: testdata.User1.ID.String()})
 
 		storeMock.EXPECT().
 			GetUser(mock.Anything, testdata.User1.ID, true).
@@ -155,7 +134,6 @@ func TestUserMiddleware(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+testdata.User1.ID.String(), nil)
 		req = req.WithContext(utils.SetUser(req.Context(), models.User{ID: testdata.User1.ID, Login: testdata.User1.Login}))
-		req = mux.SetURLVars(req, map[string]string{userKey: testdata.User1.ID.String()})
 
 		storeMock.EXPECT().
 			GetUser(mock.Anything, testdata.User1.ID, true).
@@ -187,4 +165,161 @@ func TestGetUser(t *testing.T) {
 	var resp models.User
 	require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
 	assert.Equal(t, user.ID, resp.ID)
+}
+
+func TestDeleteUser(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		server, storeMock, _ := newTestServer(t)
+
+		user := testdata.User1
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/users/me", nil)
+		req = req.WithContext(utils.SetUser(req.Context(), user))
+
+		storeMock.EXPECT().
+			DeleteUser(mock.Anything, user.ID).
+			Return(nil)
+
+		rr := httptest.NewRecorder()
+		server.deleteUser(rr, req)
+
+		assert.Equal(t, http.StatusNoContent, rr.Code)
+	})
+
+	t.Run("delete error", func(t *testing.T) {
+		server, storeMock, _ := newTestServer(t)
+
+		user := testdata.User1
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/users/me", nil)
+		req = req.WithContext(utils.SetUser(req.Context(), user))
+
+		storeMock.EXPECT().
+			DeleteUser(mock.Anything, user.ID).
+			Return(errlocal.NewErrInternal("db error", "", nil))
+
+		rr := httptest.NewRecorder()
+		server.deleteUser(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
+}
+
+func TestSwitchPassword(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		server, storeMock, _ := newTestServer(t)
+
+		oldPassword := "oldpass123"
+		hashedOldPassword, _ := utils.HashPass(oldPassword)
+
+		user := testdata.User1
+		user.HashedPassword = hashedOldPassword
+
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/switch-password",
+			loadJSONFixtureReader(t, "switch_password_valid.json"))
+		req = req.WithContext(utils.SetUser(req.Context(), user))
+
+		storeMock.EXPECT().
+			UpdateUserPass(mock.Anything, user.ID, mock.AnythingOfType("string")).
+			Return(nil)
+
+		rr := httptest.NewRecorder()
+		server.switchPassword(rr, req)
+
+		assert.Equal(t, http.StatusAccepted, rr.Code)
+	})
+
+	t.Run("invalid body", func(t *testing.T) {
+		server, _, _ := newTestServer(t)
+
+		user := testdata.User1
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/switch-password",
+			loadJSONFixtureReader(t, "switch_password_empty.json"))
+		req = req.WithContext(utils.SetUser(req.Context(), user))
+
+		rr := httptest.NewRecorder()
+		server.switchPassword(rr, req)
+
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+	})
+
+	t.Run("old password mismatch", func(t *testing.T) {
+		server, _, _ := newTestServer(t)
+
+		oldPassword := "correctpass"
+		hashedOldPassword, _ := utils.HashPass(oldPassword)
+
+		user := testdata.User1
+		user.HashedPassword = hashedOldPassword
+
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/switch-password",
+			loadJSONFixtureReader(t, "switch_password_wrong_old.json"))
+		req = req.WithContext(utils.SetUser(req.Context(), user))
+
+		rr := httptest.NewRecorder()
+		server.switchPassword(rr, req)
+
+		assert.Equal(t, http.StatusForbidden, rr.Code)
+	})
+
+	t.Run("update error", func(t *testing.T) {
+		server, storeMock, _ := newTestServer(t)
+
+		oldPassword := "oldpass123"
+		hashedOldPassword, _ := utils.HashPass(oldPassword)
+
+		user := testdata.User1
+		user.HashedPassword = hashedOldPassword
+
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/switch-password",
+			loadJSONFixtureReader(t, "switch_password_valid.json"))
+		req = req.WithContext(utils.SetUser(req.Context(), user))
+
+		storeMock.EXPECT().
+			UpdateUserPass(mock.Anything, user.ID, mock.AnythingOfType("string")).
+			Return(errlocal.NewErrInternal("db error", "", nil))
+
+		rr := httptest.NewRecorder()
+		server.switchPassword(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
+}
+
+func TestLogout(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		server, _, authMock := newTestServer(t)
+
+		user := testdata.User1
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/logout", nil)
+		req = req.WithContext(utils.SetUser(req.Context(), user))
+
+		authMock.EXPECT().
+			RevokeAllUserTokens(mock.Anything, user.ID).
+			Return(nil)
+
+		rr := httptest.NewRecorder()
+		server.logout(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+
+		var resp models.User
+		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+		assert.Equal(t, user.ID, resp.ID)
+	})
+
+	t.Run("revoke tokens error", func(t *testing.T) {
+		server, _, authMock := newTestServer(t)
+
+		user := testdata.User1
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/logout", nil)
+		req = req.WithContext(utils.SetUser(req.Context(), user))
+
+		authMock.EXPECT().
+			RevokeAllUserTokens(mock.Anything, user.ID).
+			Return(errors.New("db error"))
+
+		rr := httptest.NewRecorder()
+		server.logout(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
 }

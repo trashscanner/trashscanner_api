@@ -56,3 +56,21 @@ func loadJSONFixture(t testing.TB, name string) []byte {
 
 	return data
 }
+
+func loadJSONFixtureReader(t testing.TB, name string) io.Reader {
+	t.Helper()
+
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("failed to determine caller path")
+	}
+
+	baseDir := filepath.Dir(filename)
+	path := filepath.Join(baseDir, "..", "testdata", "rest_data", name)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Fatalf("failed to open fixture %s: %v", name, err)
+	}
+
+	return f
+}
