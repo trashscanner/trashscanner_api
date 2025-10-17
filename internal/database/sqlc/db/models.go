@@ -50,6 +50,7 @@ type Stat struct {
 type User struct {
 	ID             uuid.UUID `json:"id"`
 	Login          string    `json:"login"`
+	Name           string    `json:"name"`
 	HashedPassword string    `json:"hashed_password"`
 	Avatar         *string   `json:"avatar"`
 	Deleted        bool      `json:"deleted"`

@@ -33,13 +33,17 @@ func TestAuthMiddleware(t *testing.T) {
 		nextCalled := false
 		handler := server.authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			nextCalled = true
-			user := utils.GetUser(r.Context()).(models.User)
+			user := utils.GetUser(r.Context())
+			require.NotNil(t, user)
 			assert.Equal(t, claims.UserID, user.ID.String())
 			assert.Equal(t, claims.Login, user.Login)
 		}))
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
+		req.AddCookie(&http.Cookie{
+			Name:  accessCookieName,
+			Value: token,
+		})
 
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
@@ -48,7 +52,7 @@ func TestAuthMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rr.Code)
 	})
 
-	t.Run("missing header", func(t *testing.T) {
+	t.Run("missing cookie", func(t *testing.T) {
 		server, _, _, _ := newTestServer(t)
 
 		handler := server.authMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
@@ -76,7 +80,10 @@ func TestAuthMiddleware(t *testing.T) {
 		}))
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
+		req.AddCookie(&http.Cookie{
+			Name:  accessCookieName,
+			Value: token,
+		})
 		rr := httptest.NewRecorder()
 
 		handler.ServeHTTP(rr, req)
@@ -91,7 +98,7 @@ func TestUserMiddleware(t *testing.T) {
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+user.ID.String(), nil)
-		req = req.WithContext(utils.SetUser(req.Context(), models.User{ID: user.ID, Login: user.Login}))
+		req = req.WithContext(utils.SetUser(req.Context(), &models.User{ID: user.ID, Login: user.Login}))
 
 		storeMock.EXPECT().
 			GetUser(mock.Anything, user.ID, true).
@@ -100,7 +107,8 @@ func TestUserMiddleware(t *testing.T) {
 		nextCalled := false
 		handler := server.userMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			nextCalled = true
-			stored := utils.GetUser(r.Context()).(models.User)
+			stored := utils.GetUser(r.Context())
+			require.NotNil(t, stored)
 			assert.Equal(t, user.ID, stored.ID)
 		}))
 
@@ -115,7 +123,7 @@ func TestUserMiddleware(t *testing.T) {
 		server, storeMock, _, _ := newTestServer(t)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+testdata.User1.ID.String(), nil)
-		req = req.WithContext(utils.SetUser(req.Context(), models.User{ID: testdata.User1.ID, Login: testdata.User1.Login}))
+		req = req.WithContext(utils.SetUser(req.Context(), &models.User{ID: testdata.User1.ID, Login: testdata.User1.Login}))
 
 		storeMock.EXPECT().
 			GetUser(mock.Anything, testdata.User1.ID, true).
@@ -135,7 +143,7 @@ func TestUserMiddleware(t *testing.T) {
 		server, storeMock, _, _ := newTestServer(t)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+testdata.User1.ID.String(), nil)
-		req = req.WithContext(utils.SetUser(req.Context(), models.User{ID: testdata.User1.ID, Login: testdata.User1.Login}))
+		req = req.WithContext(utils.SetUser(req.Context(), &models.User{ID: testdata.User1.ID, Login: testdata.User1.Login}))
 
 		storeMock.EXPECT().
 			GetUser(mock.Anything, testdata.User1.ID, true).
@@ -157,7 +165,7 @@ func TestGetUser(t *testing.T) {
 
 	user := testdata.User1
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+user.ID.String(), nil)
-	req = req.WithContext(utils.SetUser(req.Context(), user))
+	req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 	rr := httptest.NewRecorder()
 	server.getUser(rr, req)
@@ -175,7 +183,7 @@ func TestDeleteUser(t *testing.T) {
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/users/me", nil)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		storeMock.EXPECT().
 			DeleteUser(mock.Anything, user.ID).
@@ -192,7 +200,7 @@ func TestDeleteUser(t *testing.T) {
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/users/me", nil)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		storeMock.EXPECT().
 			DeleteUser(mock.Anything, user.ID).
@@ -205,7 +213,7 @@ func TestDeleteUser(t *testing.T) {
 	})
 }
 
-func TestSwitchPassword(t *testing.T) {
+func TestChangePassword(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		server, storeMock, _, _ := newTestServer(t)
 
@@ -215,16 +223,16 @@ func TestSwitchPassword(t *testing.T) {
 		user := testdata.User1
 		user.HashedPassword = hashedOldPassword
 
-		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/switch-password",
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/change-password",
 			loadJSONFixtureReader(t, "switch_password_valid.json"))
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		storeMock.EXPECT().
 			UpdateUserPass(mock.Anything, user.ID, mock.AnythingOfType("string")).
 			Return(nil)
 
 		rr := httptest.NewRecorder()
-		server.switchPassword(rr, req)
+		server.changePassword(rr, req)
 
 		assert.Equal(t, http.StatusAccepted, rr.Code)
 	})
@@ -233,12 +241,12 @@ func TestSwitchPassword(t *testing.T) {
 		server, _, _, _ := newTestServer(t)
 
 		user := testdata.User1
-		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/switch-password",
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/change-password",
 			loadJSONFixtureReader(t, "switch_password_empty.json"))
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		rr := httptest.NewRecorder()
-		server.switchPassword(rr, req)
+		server.changePassword(rr, req)
 
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
 	})
@@ -252,12 +260,12 @@ func TestSwitchPassword(t *testing.T) {
 		user := testdata.User1
 		user.HashedPassword = hashedOldPassword
 
-		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/switch-password",
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/change-password",
 			loadJSONFixtureReader(t, "switch_password_wrong_old.json"))
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		rr := httptest.NewRecorder()
-		server.switchPassword(rr, req)
+		server.changePassword(rr, req)
 
 		assert.Equal(t, http.StatusForbidden, rr.Code)
 	})
@@ -271,16 +279,16 @@ func TestSwitchPassword(t *testing.T) {
 		user := testdata.User1
 		user.HashedPassword = hashedOldPassword
 
-		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/switch-password",
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/change-password",
 			loadJSONFixtureReader(t, "switch_password_valid.json"))
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		storeMock.EXPECT().
 			UpdateUserPass(mock.Anything, user.ID, mock.AnythingOfType("string")).
 			Return(errlocal.NewErrInternal("db error", "", nil))
 
 		rr := httptest.NewRecorder()
-		server.switchPassword(rr, req)
+		server.changePassword(rr, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
@@ -292,7 +300,7 @@ func TestLogout(t *testing.T) {
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/logout", nil)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		authMock.EXPECT().
 			RevokeAllUserTokens(mock.Anything, user.ID).
@@ -301,11 +309,7 @@ func TestLogout(t *testing.T) {
 		rr := httptest.NewRecorder()
 		server.logout(rr, req)
 
-		assert.Equal(t, http.StatusOK, rr.Code)
-
-		var resp models.User
-		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
-		assert.Equal(t, user.ID, resp.ID)
+		assert.Equal(t, http.StatusNoContent, rr.Code)
 	})
 
 	t.Run("revoke tokens error", func(t *testing.T) {
@@ -313,7 +317,7 @@ func TestLogout(t *testing.T) {
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/logout", nil)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		authMock.EXPECT().
 			RevokeAllUserTokens(mock.Anything, user.ID).
@@ -336,7 +340,7 @@ func TestSetAvatar(t *testing.T) {
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/avatar", body.body)
 		req.Header.Set("Content-Type", body.contentType)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		avatarURL := "http://localhost:9000/bucket/user-id/avatars/test.jpg"
 
@@ -373,7 +377,7 @@ func TestSetAvatar(t *testing.T) {
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/avatar", strings.NewReader("invalid data"))
 		req.Header.Set("Content-Type", "multipart/form-data; boundary=invalid")
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		rr := httptest.NewRecorder()
 		server.setAvatar(rr, req)
@@ -389,7 +393,7 @@ func TestSetAvatar(t *testing.T) {
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/avatar", body.body)
 		req.Header.Set("Content-Type", body.contentType)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		rr := httptest.NewRecorder()
 		server.setAvatar(rr, req)
@@ -405,7 +409,7 @@ func TestSetAvatar(t *testing.T) {
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/avatar", body.body)
 		req.Header.Set("Content-Type", body.contentType)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		rr := httptest.NewRecorder()
 		server.setAvatar(rr, req)
@@ -422,7 +426,7 @@ func TestSetAvatar(t *testing.T) {
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/avatar", body.body)
 		req.Header.Set("Content-Type", body.contentType)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		rr := httptest.NewRecorder()
 		server.setAvatar(rr, req)
@@ -438,7 +442,7 @@ func TestSetAvatar(t *testing.T) {
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/avatar", body.body)
 		req.Header.Set("Content-Type", body.contentType)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		fileStoreMock.EXPECT().
 			UpdateAvatar(mock.Anything, mock.Anything, mock.Anything).
@@ -458,7 +462,7 @@ func TestSetAvatar(t *testing.T) {
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/avatar", body.body)
 		req.Header.Set("Content-Type", body.contentType)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		avatarURL := "http://localhost:9000/bucket/user-id/avatars/test.jpg"
 
@@ -489,7 +493,7 @@ func TestDeleteAvatar(t *testing.T) {
 		user.Avatar = &avatarURL
 
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/users/me/avatar", nil)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		fileStoreMock.EXPECT().
 			DeleteAvatar(mock.Anything, avatarURL).
@@ -514,7 +518,7 @@ func TestDeleteAvatar(t *testing.T) {
 		user.Avatar = nil
 
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/users/me/avatar", nil)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		rr := httptest.NewRecorder()
 		server.deleteAvatar(rr, req)
@@ -530,7 +534,7 @@ func TestDeleteAvatar(t *testing.T) {
 		user.Avatar = &avatarURL
 
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/users/me/avatar", nil)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		fileStoreMock.EXPECT().
 			DeleteAvatar(mock.Anything, avatarURL).
@@ -550,7 +554,7 @@ func TestDeleteAvatar(t *testing.T) {
 		user.Avatar = &avatarURL
 
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/users/me/avatar", nil)
-		req = req.WithContext(utils.SetUser(req.Context(), user))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
 
 		fileStoreMock.EXPECT().
 			DeleteAvatar(mock.Anything, avatarURL).

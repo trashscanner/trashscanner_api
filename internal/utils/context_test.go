@@ -15,12 +15,8 @@ func TestSetAndGetUser(t *testing.T) {
 	ctx := context.Background()
 	user := models.User{ID: uuid.New(), Login: "tester"}
 
-	ctxWithUser := SetUser(ctx, user)
-	assert.Nil(t, GetUser(ctx))
-
-	retrieved, ok := GetUser(ctxWithUser).(models.User)
-	require.True(t, ok)
-	assert.Equal(t, user, retrieved)
+	ctxWithUser := SetUser(ctx, &user)
+	assert.Equal(t, &user, GetUser(ctxWithUser))
 }
 
 func TestSetAndGetRequestBody(t *testing.T) {

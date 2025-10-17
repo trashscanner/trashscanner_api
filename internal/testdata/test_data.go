@@ -11,12 +11,14 @@ import (
 
 var (
 	NewUser = models.User{
+		Name:           "test_name",
 		Login:          "test_user",
 		HashedPassword: "hashed_password",
 	}
 	User1ID = uuid.MustParse("04ae379a-31a6-4b32-a6d7-f6cdd844f81a")
 	User1   = models.User{
 		ID:             User1ID,
+		Name:           "test_name_1",
 		Login:          "test_user_1",
 		HashedPassword: "hashed_password_1",
 		Deleted:        false,
@@ -25,6 +27,7 @@ var (
 	User2ID = uuid.MustParse("13ae379a-31a6-4b32-a6d7-f6cdd844f82b")
 	User2   = models.User{
 		ID:             User2ID,
+		Name:           "test_name_2",
 		Login:          "test_user_2",
 		HashedPassword: "hashed_password_2",
 		Deleted:        false,

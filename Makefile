@@ -21,8 +21,7 @@ test:
 	cat coverage.out | grep -v "internal/database/sqlc" > coverage.txt || true
 
 test-all:
-	go test $$(go list ./... | grep -v '/mocks') -coverprofile=coverage.out --race --timeout 2m
-	cat coverage.out | grep -v "internal/database/sqlc" > coverage.txt || true
+	go test $$(go list ./... | grep -v '/mocks') -v --race --timeout 2m
 
 test-db:
 	go test ./internal/database/... -v --race --timeout 2m

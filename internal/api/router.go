@@ -21,11 +21,12 @@ func (s *Server) initRouter() {
 
 	root.Use(mux.CORSMethodMiddleware(root), s.commonMiddleware)
 
-	loginRouter := root.PathPrefix("/login").Subrouter()
-	loginRouter.Use(s.loginMiddleware)
-	loginRouter.HandleFunc("", s.login).Methods(http.MethodPost)
-
 	root.HandleFunc("/refresh", s.refresh).Methods(http.MethodPost)
+
+	authRouter := root.PathPrefix("").Subrouter()
+	authRouter.Use(s.loginMiddleware)
+	authRouter.HandleFunc("/login", s.login).Methods(http.MethodPost)
+	authRouter.HandleFunc("/register", s.register).Methods(http.MethodPost)
 
 	userRouter := root.PathPrefix("/users/me").Subrouter()
 	userRouter.Use(s.authMiddleware, s.userMiddleware)
@@ -34,5 +35,5 @@ func (s *Server) initRouter() {
 	userRouter.HandleFunc("/avatar", s.setAvatar).Methods(http.MethodPut)
 	userRouter.HandleFunc("/avatar", s.deleteAvatar).Methods(http.MethodDelete)
 	userRouter.HandleFunc("/logout", s.logout).Methods(http.MethodPost)
-	userRouter.HandleFunc("/switch-password", s.switchPassword).Methods(http.MethodPut)
+	userRouter.HandleFunc("/change-password", s.changePassword).Methods(http.MethodPut)
 }

@@ -11,8 +11,8 @@ import (
 )
 
 func (s *Server) writeLoginHistory(r *http.Request, statusCode int, err error) {
-	u, ok := utils.GetUser(r.Context()).(models.User)
-	if !ok || u.ID == uuid.Nil {
+	u := utils.GetUser(r.Context())
+	if u.ID == uuid.Nil {
 		return
 	}
 
@@ -59,5 +59,5 @@ func (s *Server) writeLoginHistory(r *http.Request, statusCode int, err error) {
 		loginHistory.FailureReason = &str
 	}
 
-_ = s.store.InsertLoginHistory(r.Context(), loginHistory)
+	_ = s.store.InsertLoginHistory(r.Context(), loginHistory)
 }

@@ -8,7 +8,7 @@ import (
 const (
 	messagePrefix = "message: "
 	systemPrefix  = "system: "
-	detailsPrefix = "details:\n"
+	detailsPrefix = "details: "
 )
 
 type LocalError interface {
@@ -29,10 +29,11 @@ type BaseError struct {
 func (e *BaseError) Error() string {
 	b := strings.Builder{}
 	if e.Msg != "" {
-		b.WriteString(messagePrefix + e.Msg + "\n")
+		b.WriteString(messagePrefix + e.Msg)
 	}
 	if e.Sys != "" {
-		b.WriteString(systemPrefix + e.Sys + "\n")
+		b.WriteByte(' ')
+		b.WriteString(systemPrefix + e.Sys + " ")
 	}
 	if len(e.DetailsMap) > 0 {
 		b.WriteString(detailsPrefix)

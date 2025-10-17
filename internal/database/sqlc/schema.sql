@@ -1,6 +1,7 @@
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     login TEXT NOT NULL,
+    name TEXT NOT NULL,
     hashed_password TEXT NOT NULL,
     avatar TEXT,
     deleted BOOLEAN NOT NULL DEFAULT FALSE,

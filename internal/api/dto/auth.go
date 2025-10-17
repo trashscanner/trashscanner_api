@@ -6,13 +6,20 @@ import (
 )
 
 type AuthRequest struct {
-	Login    string `json:"login" validate:"required,min=3,max=32,alphanum"`
-	Password string `json:"password" validate:"required,min=8,max=64"`
+	Login    string `json:"login"`
+	Password string `json:"password"`
 }
 
-func (r *AuthRequest) ToModel() models.User {
+type LoginUserRequest struct {
+	Login    string `json:"login" validate:"required,min=3,max=32,alphanum"`
+	Password string `json:"password" validate:"required,min=8,max=64"`
+	Name     string `json:"name,omitempty" validate:"omitempty,min=3,max=64,alphanum"`
+}
+
+func (r *LoginUserRequest) ToModel() models.User {
 	hp, _ := utils.HashPass(r.Password)
 	return models.User{
+		Name:           r.Name,
 		Login:          r.Login,
 		HashedPassword: hp,
 	}
@@ -23,12 +30,6 @@ type AuthResponse struct {
 		ID    string `json:"id"`
 		Login string `json:"login"`
 	} `json:"user"`
-	Tokens Tokens `json:"tokens"`
-}
-
-type Tokens struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
 }
 
 func NewAuthResponse(user models.User, access, refresh string) AuthResponse {
@@ -39,27 +40,6 @@ func NewAuthResponse(user models.User, access, refresh string) AuthResponse {
 		}{
 			ID:    user.ID.String(),
 			Login: user.Login,
-		},
-		Tokens: Tokens{
-			AccessToken:  access,
-			RefreshToken: refresh,
-		},
-	}
-}
-
-type RefreshRequest struct {
-	RefreshToken string `json:"refresh_token" validate:"required"`
-}
-
-type RefreshResponse struct {
-	Tokens Tokens `json:"tokens"`
-}
-
-func NewRefreshResponse(access, refresh string) RefreshResponse {
-	return RefreshResponse{
-		Tokens: Tokens{
-			AccessToken:  access,
-			RefreshToken: refresh,
 		},
 	}
 }
