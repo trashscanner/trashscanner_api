@@ -3,6 +3,8 @@ package utils
 import (
 	"context"
 	"time"
+
+	"github.com/trashscanner/trashscanner_api/internal/models"
 )
 
 type ContextKey string
@@ -25,12 +27,12 @@ var ContextKeys = map[ContextKey]struct{}{
 	MethodKey:      {},
 }
 
-func SetUser(ctx context.Context, user any) context.Context {
+func SetUser(ctx context.Context, user *models.User) context.Context {
 	return context.WithValue(ctx, UserCtxKey, user)
 }
 
-func GetUser(ctx context.Context) any {
-	return ctx.Value(UserCtxKey)
+func GetUser(ctx context.Context) *models.User {
+	return ctx.Value(UserCtxKey).(*models.User)
 }
 
 func SetRequestBody(ctx context.Context, body any) context.Context {

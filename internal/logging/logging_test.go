@@ -189,7 +189,7 @@ func TestLogger_WithContext_User(t *testing.T) {
 		Login: "testuser",
 	}
 
-	ctx := utils.SetUser(context.Background(), user)
+	ctx := utils.SetUser(context.Background(), &user)
 	l := logger.WithContext(ctx)
 
 	assert.NotNil(t, l)
@@ -252,7 +252,7 @@ func TestLogger_WithContext_AllFields(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ctx = utils.SetUser(ctx, user)
+	ctx = utils.SetUser(ctx, &user)
 	ctx = context.WithValue(ctx, utils.RequestIDKey, "test-request-id")
 	ctx = context.WithValue(ctx, utils.PathKey, "/api/v1/users")
 	ctx = context.WithValue(ctx, utils.MethodKey, "POST")

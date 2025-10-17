@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/trashscanner/trashscanner_api/internal/api/dto"
@@ -12,25 +11,20 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/utils"
 )
 
-const (
-	authHeaderPrefix = "Bearer "
-)
-
 func (s *Server) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := strings.TrimPrefix(r.Header.Get("Authorization"), authHeaderPrefix)
-		if token == "" {
-			s.WriteError(w, r, errlocal.NewErrUnauthorized("missing or invalid authorization", "", nil))
+		access, err := getAccessCookie(r)
+		if err != nil || access == "" {
+			s.WriteError(w, r, errlocal.NewErrUnauthorized("missing or invalid authorization", err.Error(), nil))
 			return
 		}
-
-		claims, err := s.authManager.Parse(token)
+		claims, err := s.authManager.Parse(access)
 		if err != nil {
 			s.WriteError(w, r, errlocal.NewErrUnauthorized("invalid token", err.Error(), nil))
 			return
 		}
 
-		user := models.User{
+		user := &models.User{
 			ID:    uuid.MustParse(claims.UserID),
 			Login: claims.Login,
 		}
@@ -42,8 +36,8 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 
 func (s *Server) userMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctxUser, ok := utils.GetUser(r.Context()).(models.User)
-		if !ok {
+		ctxUser := utils.GetUser(r.Context())
+		if ctxUser == nil {
 			s.WriteError(w, r, errlocal.NewErrUnauthorized("unauthorized", "user not found", nil))
 			return
 		}
@@ -61,7 +55,7 @@ func (s *Server) userMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := utils.SetUser(r.Context(), *user)
+		ctx := utils.SetUser(r.Context(), user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -80,8 +74,7 @@ func (s *Server) userMiddleware(next http.Handler) http.Handler {
 // @Security BearerAuth
 // @Router /users/me [get]
 func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
-	user := utils.GetUser(r.Context()).(models.User)
-	s.WriteResponse(w, r, http.StatusOK, user)
+	s.WriteResponse(w, r, http.StatusOK, utils.GetUser(r.Context()))
 }
 
 // DeleteUser godoc
@@ -98,7 +91,7 @@ func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} errlocal.ErrInternal "Internal server error"
 // @Router /users/me [delete]
 func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
-	user := utils.GetUser(r.Context()).(models.User)
+	user := utils.GetUser(r.Context())
 
 	if err := s.store.DeleteUser(r.Context(), user.ID); err != nil {
 		s.WriteError(w, r, err)
@@ -108,13 +101,13 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 	s.WriteResponse(w, r, http.StatusNoContent, nil)
 }
 
-// SwitchPassword godoc
-// @Summary Switch user password
+// changePassword godoc
+// @Summary Change user password
 // @Description Change the password of the authenticated user
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param switchPasswordRequest body dto.SwitchPasswordRequest true "New password details"
+// @Param changePasswordRequest body dto.ChangePasswordRequest true "New password details"
 // @Success 202 "Password changed successfully"
 // @Failure 400 {object} errlocal.ErrBadRequest "Invalid request body"
 // @Failure 401 {object} errlocal.ErrUnauthorized "Unauthorized"
@@ -122,15 +115,15 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} errlocal.ErrNotFound "User not found"
 // @Failure 500 {object} errlocal.ErrInternal "Internal server error"
 // @Security BearerAuth
-// @Router /users/me/switch-password [put]
-func (s *Server) switchPassword(w http.ResponseWriter, r *http.Request) {
-	b, err := dto.GetRequestBody[dto.SwitchPasswordRequest](r)
+// @Router /users/me/change-password [put]
+func (s *Server) changePassword(w http.ResponseWriter, r *http.Request) {
+	b, err := dto.GetRequestBody[dto.ChangePasswordRequest](r)
 	if err != nil {
 		s.WriteError(w, r, errlocal.NewErrBadRequest("invalid request body", err.Error(), nil))
 		return
 	}
 
-	user := utils.GetUser(r.Context()).(models.User)
+	user := utils.GetUser(r.Context())
 	if err := utils.CompareHashPass(user.HashedPassword, b.OldPassword); err != nil {
 		s.WriteError(w, r, errlocal.NewErrForbidden("old password does not match", "", nil))
 		return
@@ -151,7 +144,7 @@ func (s *Server) switchPassword(w http.ResponseWriter, r *http.Request) {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Success 200 {object} dto.UserResponse "User logged out successfully"
+// @Success 204 "User logged out successfully"
 // @Failure 401 {object} errlocal.ErrUnauthorized "Unauthorized"
 // @Failure 403 {object} errlocal.ErrForbidden "Forbidden - user ID mismatch"
 // @Failure 404 {object} errlocal.ErrNotFound "User not found"
@@ -159,13 +152,14 @@ func (s *Server) switchPassword(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /users/me/logout [post]
 func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
-	user := utils.GetUser(r.Context()).(models.User)
+	user := utils.GetUser(r.Context())
 	if err := s.authManager.RevokeAllUserTokens(r.Context(), user.ID); err != nil {
 		s.WriteError(w, r, errlocal.NewErrInternal("failed to revoke tokens", err.Error(), nil))
 		return
 	}
 
-	s.WriteResponse(w, r, http.StatusOK, user)
+	clearAuthCookies(w)
+	s.WriteResponse(w, r, http.StatusNoContent, nil)
 }
 
 // SetAvatar godoc
@@ -191,13 +185,13 @@ func (s *Server) setAvatar(w http.ResponseWriter, r *http.Request) {
 		_ = avatar.Entry.Close()
 	}()
 
-	user := utils.GetUser(r.Context()).(models.User)
-	if err := s.fileStore.UpdateAvatar(r.Context(), &user, avatar); err != nil {
+	user := utils.GetUser(r.Context())
+	if err := s.fileStore.UpdateAvatar(r.Context(), user, avatar); err != nil {
 		s.WriteError(w, r, err)
 		return
 	}
 
-	if err := s.store.UpdateAvatar(r.Context(), &user); err != nil {
+	if err := s.store.UpdateAvatar(r.Context(), user); err != nil {
 		s.WriteError(w, r, err)
 		return
 	}
@@ -222,7 +216,7 @@ func (s *Server) setAvatar(w http.ResponseWriter, r *http.Request) {
 // @Security BearerAuth
 // @Router /users/me/avatar [delete]
 func (s *Server) deleteAvatar(w http.ResponseWriter, r *http.Request) {
-	user := utils.GetUser(r.Context()).(models.User)
+	user := utils.GetUser(r.Context())
 	if user.Avatar == nil {
 		s.WriteError(w, r, errlocal.NewErrBadRequest("no avatar to delete", "user has no avatar", nil))
 		return
@@ -234,7 +228,7 @@ func (s *Server) deleteAvatar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user.Avatar = nil
-	if err := s.store.UpdateAvatar(r.Context(), &user); err != nil {
+	if err := s.store.UpdateAvatar(r.Context(), user); err != nil {
 		s.WriteError(w, r, err)
 		return
 	}

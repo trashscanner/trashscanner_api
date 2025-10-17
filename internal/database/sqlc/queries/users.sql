@@ -1,9 +1,10 @@
 -- name: CreateUser :one
 INSERT INTO users (
+    name,
     login,
     hashed_password
 ) VALUES (
-    $1, $2
+    $1, $2, $3
 ) RETURNING id;
 
 -- name: GetUserByID :one
@@ -13,6 +14,11 @@ WHERE id = $1 AND deleted = FALSE;
 -- name: GetUserByLogin :one
 SELECT * FROM users
 WHERE login = $1 AND deleted = FALSE;
+
+-- name: UpdateUser :exec
+UPDATE users
+SET name = $1, updated_at = now()
+WHERE id = $2;
 
 -- name: UpdateUserPassword :exec
 UPDATE users

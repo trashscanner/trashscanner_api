@@ -92,7 +92,7 @@ func (l *Logger) WithContext(ctx context.Context) *Logger {
 		if val, ok := utils.GetContextValue(ctx, key); ok && val != nil {
 			switch key {
 			case utils.UserCtxKey:
-				if user, ok := val.(models.User); ok {
+				if user, ok := val.(*models.User); ok {
 					fields["user_id"] = user.ID.String()
 					fields["user_login"] = user.Login
 				}

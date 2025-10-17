@@ -11,6 +11,7 @@ import (
 type User struct {
 	ID             uuid.UUID `json:"id"`
 	Login          string    `json:"login"`
+	Name           string    `json:"name"`
 	HashedPassword string    `json:"-"`
 	Avatar         *string   `json:"avatar,omitempty"`
 	Stat           *Stat     `json:"stat,omitempty"`
@@ -21,6 +22,7 @@ type User struct {
 
 func (u *User) Model(user db.User) {
 	u.ID = user.ID
+	u.Name = user.Name
 	u.Login = user.Login
 	u.HashedPassword = user.HashedPassword
 	u.Avatar = user.Avatar

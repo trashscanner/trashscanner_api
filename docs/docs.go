@@ -54,12 +54,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/dto.AuthResponse"
                         }
                     },
-                    "201": {
-                        "description": "Tokens for newly created user",
-                        "schema": {
-                            "$ref": "#/definitions/dto.AuthResponse"
-                        }
-                    },
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
@@ -94,23 +88,9 @@ const docTemplate = `{
                     "auth"
                 ],
                 "summary": "Refresh access token",
-                "parameters": [
-                    {
-                        "description": "Refresh token",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.RefreshRequest"
-                        }
-                    }
-                ],
                 "responses": {
                     "201": {
-                        "description": "New tokens",
-                        "schema": {
-                            "$ref": "#/definitions/dto.RefreshResponse"
-                        }
+                        "description": "New access token set in HttpOnly cookie"
                     },
                     "400": {
                         "description": "Invalid request body",
@@ -120,6 +100,58 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Invalid or expired token",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrUnauthorized"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrInternal"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Authenticate user and return JWT tokens",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "User registration",
+                "parameters": [
+                    {
+                        "description": "Login credentials",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.LoginUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "User registered and tokens returned",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AuthResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrBadRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
                         "schema": {
                             "$ref": "#/definitions/errlocal.ErrUnauthorized"
                         }
@@ -340,6 +372,72 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/me/change-password": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Change the password of the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Change user password",
+                "parameters": [
+                    {
+                        "description": "New password details",
+                        "name": "changePasswordRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Password changed successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrBadRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrUnauthorized"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - user ID mismatch",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrForbidden"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrNotFound"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrInternal"
+                        }
+                    }
+                }
+            }
+        },
         "/users/me/logout": {
             "post": {
                 "security": [
@@ -391,100 +489,23 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/users/me/switch-password": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Change the password of the authenticated user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Switch user password",
-                "parameters": [
-                    {
-                        "description": "New password details",
-                        "name": "switchPasswordRequest",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.SwitchPasswordRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "202": {
-                        "description": "Password changed successfully"
-                    },
-                    "400": {
-                        "description": "Invalid request body",
-                        "schema": {
-                            "$ref": "#/definitions/errlocal.ErrBadRequest"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/errlocal.ErrUnauthorized"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden - user ID mismatch",
-                        "schema": {
-                            "$ref": "#/definitions/errlocal.ErrForbidden"
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "schema": {
-                            "$ref": "#/definitions/errlocal.ErrNotFound"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/errlocal.ErrInternal"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
         "dto.AuthRequest": {
             "type": "object",
-            "required": [
-                "login",
-                "password"
-            ],
             "properties": {
                 "login": {
-                    "type": "string",
-                    "maxLength": 32,
-                    "minLength": 3
+                    "type": "string"
                 },
                 "password": {
-                    "type": "string",
-                    "maxLength": 64,
-                    "minLength": 8
+                    "type": "string"
                 }
             }
         },
         "dto.AuthResponse": {
             "type": "object",
             "properties": {
-                "tokens": {
-                    "$ref": "#/definitions/dto.Tokens"
-                },
                 "user": {
                     "type": "object",
                     "properties": {
@@ -498,26 +519,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.RefreshRequest": {
-            "type": "object",
-            "required": [
-                "refresh_token"
-            ],
-            "properties": {
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.RefreshResponse": {
-            "type": "object",
-            "properties": {
-                "tokens": {
-                    "$ref": "#/definitions/dto.Tokens"
-                }
-            }
-        },
-        "dto.SwitchPasswordRequest": {
+        "dto.ChangePasswordRequest": {
             "type": "object",
             "required": [
                 "new_password",
@@ -536,14 +538,27 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.Tokens": {
+        "dto.LoginUserRequest": {
             "type": "object",
+            "required": [
+                "login",
+                "password"
+            ],
             "properties": {
-                "access_token": {
-                    "type": "string"
+                "login": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "minLength": 3
                 },
-                "refresh_token": {
-                    "type": "string"
+                "name": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 3
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "minLength": 8
                 }
             }
         },
@@ -569,6 +584,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "login": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "stat": {

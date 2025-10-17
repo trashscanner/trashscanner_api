@@ -25,6 +25,7 @@ type Querier interface {
 	RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error
 	RevokeRefreshToken(ctx context.Context, tokenHash string) error
 	UpdateStats(ctx context.Context, arg UpdateStatsParams) error
+	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }

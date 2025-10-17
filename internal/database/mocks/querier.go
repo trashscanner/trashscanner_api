@@ -938,6 +938,63 @@ func (_c *Querier_UpdateStats_Call) RunAndReturn(run func(ctx context.Context, a
 	return _c
 }
 
+// UpdateUser provides a mock function for the type Querier
+func (_mock *Querier) UpdateUser(ctx context.Context, arg db.UpdateUserParams) error {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUser")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, db.UpdateUserParams) error); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Querier_UpdateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUser'
+type Querier_UpdateUser_Call struct {
+	*mock.Call
+}
+
+// UpdateUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg db.UpdateUserParams
+func (_e *Querier_Expecter) UpdateUser(ctx interface{}, arg interface{}) *Querier_UpdateUser_Call {
+	return &Querier_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, arg)}
+}
+
+func (_c *Querier_UpdateUser_Call) Run(run func(ctx context.Context, arg db.UpdateUserParams)) *Querier_UpdateUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 db.UpdateUserParams
+		if args[1] != nil {
+			arg1 = args[1].(db.UpdateUserParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Querier_UpdateUser_Call) Return(err error) *Querier_UpdateUser_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Querier_UpdateUser_Call) RunAndReturn(run func(ctx context.Context, arg db.UpdateUserParams) error) *Querier_UpdateUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateUserAvatar provides a mock function for the type Querier
 func (_mock *Querier) UpdateUserAvatar(ctx context.Context, arg db.UpdateUserAvatarParams) error {
 	ret := _mock.Called(ctx, arg)

@@ -13,20 +13,22 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
+    name,
     login,
     hashed_password
 ) VALUES (
-    $1, $2
+    $1, $2, $3
 ) RETURNING id
 `
 
 type CreateUserParams struct {
+	Name           string `json:"name"`
 	Login          string `json:"login"`
 	HashedPassword string `json:"hashed_password"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Login, arg.HashedPassword)
+	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Login, arg.HashedPassword)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
@@ -44,7 +46,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, login, hashed_password, avatar, deleted, created_at, updated_at FROM users
+SELECT id, login, name, hashed_password, avatar, deleted, created_at, updated_at FROM users
 WHERE id = $1 AND deleted = FALSE
 `
 
@@ -54,6 +56,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.Login,
+		&i.Name,
 		&i.HashedPassword,
 		&i.Avatar,
 		&i.Deleted,
@@ -64,7 +67,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const getUserByLogin = `-- name: GetUserByLogin :one
-SELECT id, login, hashed_password, avatar, deleted, created_at, updated_at FROM users
+SELECT id, login, name, hashed_password, avatar, deleted, created_at, updated_at FROM users
 WHERE login = $1 AND deleted = FALSE
 `
 
@@ -74,6 +77,7 @@ func (q *Queries) GetUserByLogin(ctx context.Context, login string) (User, error
 	err := row.Scan(
 		&i.ID,
 		&i.Login,
+		&i.Name,
 		&i.HashedPassword,
 		&i.Avatar,
 		&i.Deleted,
@@ -81,6 +85,22 @@ func (q *Queries) GetUserByLogin(ctx context.Context, login string) (User, error
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const updateUser = `-- name: UpdateUser :exec
+UPDATE users
+SET name = $1, updated_at = now()
+WHERE id = $2
+`
+
+type UpdateUserParams struct {
+	Name string    `json:"name"`
+	ID   uuid.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
+	_, err := q.db.Exec(ctx, updateUser, arg.Name, arg.ID)
+	return err
 }
 
 const updateUserAvatar = `-- name: UpdateUserAvatar :exec

@@ -20,6 +20,7 @@ func TestWriteLoginHistory_NoUser(t *testing.T) {
 	server, storeMock, _, _ := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/login", nil)
+	req = req.WithContext(context.WithValue(req.Context(), utils.UserCtxKey, &models.User{}))
 
 	server.writeLoginHistory(req, http.StatusOK, nil)
 
@@ -31,7 +32,7 @@ func TestWriteLoginHistory_Success(t *testing.T) {
 
 	user := testdata.User1
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/login", nil)
-	req = req.WithContext(utils.SetUser(req.Context(), user))
+	req = req.WithContext(utils.SetUser(req.Context(), &user))
 	req.Header.Set("X-Real-IP", testdata.TestIPAddress.String())
 	req.Header.Set("X-Location", testdata.TestLocation)
 	req.Header.Set("User-Agent", testdata.TestUserAgent)
@@ -58,7 +59,7 @@ func TestWriteLoginHistory_WithFailure(t *testing.T) {
 	server, storeMock, _, _ := newTestServer(t)
 
 	user := testdata.User1
-	ctx := utils.SetUser(context.Background(), user)
+	ctx := utils.SetUser(context.Background(), &user)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/login", nil).WithContext(ctx)
 	req.Header.Set("X-Forwarded-For", "198.51.100.10, 203.0.113.5")
 	req.RemoteAddr = "198.51.100.30:9999"
