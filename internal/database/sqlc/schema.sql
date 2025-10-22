@@ -1,6 +1,6 @@
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    login TEXT NOT NULL,
+    login TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
     hashed_password TEXT NOT NULL,
     avatar TEXT,
@@ -45,6 +45,18 @@ CREATE TABLE stats (
     achievements JSONB,
     trash_by_types JSONB,
     
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS predictions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid,
+    user_id UUID NOT NULL REFERENCES users(id),
+    trash_scan TEXT NOT NULL,
+    status TEXT NOT NULL,
+    result TEXT,
+    error TEXT,
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

@@ -136,6 +136,69 @@ func (_c *Store_Close_Call) RunAndReturn(run func()) *Store_Close_Call {
 	return _c
 }
 
+// CompletePrediction provides a mock function for the type Store
+func (_mock *Store) CompletePrediction(ctx context.Context, id uuid.UUID, result any) error {
+	ret := _mock.Called(ctx, id, result)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CompletePrediction")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, any) error); ok {
+		r0 = returnFunc(ctx, id, result)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Store_CompletePrediction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CompletePrediction'
+type Store_CompletePrediction_Call struct {
+	*mock.Call
+}
+
+// CompletePrediction is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+//   - result any
+func (_e *Store_Expecter) CompletePrediction(ctx interface{}, id interface{}, result interface{}) *Store_CompletePrediction_Call {
+	return &Store_CompletePrediction_Call{Call: _e.mock.On("CompletePrediction", ctx, id, result)}
+}
+
+func (_c *Store_CompletePrediction_Call) Run(run func(ctx context.Context, id uuid.UUID, result any)) *Store_CompletePrediction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 any
+		if args[2] != nil {
+			arg2 = args[2].(any)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_CompletePrediction_Call) Return(err error) *Store_CompletePrediction_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Store_CompletePrediction_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, result any) error) *Store_CompletePrediction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Conn provides a mock function for the type Store
 func (_mock *Store) Conn() *pgxpool.Pool {
 	ret := _mock.Called()
@@ -417,6 +480,154 @@ func (_c *Store_GetLoginHistory_Call) Return(loginHistorys []models.LoginHistory
 }
 
 func (_c *Store_GetLoginHistory_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) ([]models.LoginHistory, error)) *Store_GetLoginHistory_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPrediction provides a mock function for the type Store
+func (_mock *Store) GetPrediction(ctx context.Context, id uuid.UUID) (*models.Prediction, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPrediction")
+	}
+
+	var r0 *models.Prediction
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*models.Prediction, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *models.Prediction); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Prediction)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Store_GetPrediction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPrediction'
+type Store_GetPrediction_Call struct {
+	*mock.Call
+}
+
+// GetPrediction is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+func (_e *Store_Expecter) GetPrediction(ctx interface{}, id interface{}) *Store_GetPrediction_Call {
+	return &Store_GetPrediction_Call{Call: _e.mock.On("GetPrediction", ctx, id)}
+}
+
+func (_c *Store_GetPrediction_Call) Run(run func(ctx context.Context, id uuid.UUID)) *Store_GetPrediction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_GetPrediction_Call) Return(prediction *models.Prediction, err error) *Store_GetPrediction_Call {
+	_c.Call.Return(prediction, err)
+	return _c
+}
+
+func (_c *Store_GetPrediction_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*models.Prediction, error)) *Store_GetPrediction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPredictionsByUserID provides a mock function for the type Store
+func (_mock *Store) GetPredictionsByUserID(ctx context.Context, userID uuid.UUID, offset int, limit int) ([]*models.Prediction, error) {
+	ret := _mock.Called(ctx, userID, offset, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPredictionsByUserID")
+	}
+
+	var r0 []*models.Prediction
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, int, int) ([]*models.Prediction, error)); ok {
+		return returnFunc(ctx, userID, offset, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, int, int) []*models.Prediction); ok {
+		r0 = returnFunc(ctx, userID, offset, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*models.Prediction)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, int, int) error); ok {
+		r1 = returnFunc(ctx, userID, offset, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Store_GetPredictionsByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPredictionsByUserID'
+type Store_GetPredictionsByUserID_Call struct {
+	*mock.Call
+}
+
+// GetPredictionsByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - offset int
+//   - limit int
+func (_e *Store_Expecter) GetPredictionsByUserID(ctx interface{}, userID interface{}, offset interface{}, limit interface{}) *Store_GetPredictionsByUserID_Call {
+	return &Store_GetPredictionsByUserID_Call{Call: _e.mock.On("GetPredictionsByUserID", ctx, userID, offset, limit)}
+}
+
+func (_c *Store_GetPredictionsByUserID_Call) Run(run func(ctx context.Context, userID uuid.UUID, offset int, limit int)) *Store_GetPredictionsByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		var arg3 int
+		if args[3] != nil {
+			arg3 = args[3].(int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_GetPredictionsByUserID_Call) Return(predictions []*models.Prediction, err error) *Store_GetPredictionsByUserID_Call {
+	_c.Call.Return(predictions, err)
+	return _c
+}
+
+func (_c *Store_GetPredictionsByUserID_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, offset int, limit int) ([]*models.Prediction, error)) *Store_GetPredictionsByUserID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -855,6 +1066,80 @@ func (_c *Store_RevokeRefreshToken_Call) Return(err error) *Store_RevokeRefreshT
 }
 
 func (_c *Store_RevokeRefreshToken_Call) RunAndReturn(run func(ctx context.Context, tokenHash string) error) *Store_RevokeRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// StartPrediction provides a mock function for the type Store
+func (_mock *Store) StartPrediction(ctx context.Context, userID uuid.UUID, scanURL string) (*uuid.UUID, error) {
+	ret := _mock.Called(ctx, userID, scanURL)
+
+	if len(ret) == 0 {
+		panic("no return value specified for StartPrediction")
+	}
+
+	var r0 *uuid.UUID
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) (*uuid.UUID, error)); ok {
+		return returnFunc(ctx, userID, scanURL)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) *uuid.UUID); ok {
+		r0 = returnFunc(ctx, userID, scanURL)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*uuid.UUID)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, string) error); ok {
+		r1 = returnFunc(ctx, userID, scanURL)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Store_StartPrediction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StartPrediction'
+type Store_StartPrediction_Call struct {
+	*mock.Call
+}
+
+// StartPrediction is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - scanURL string
+func (_e *Store_Expecter) StartPrediction(ctx interface{}, userID interface{}, scanURL interface{}) *Store_StartPrediction_Call {
+	return &Store_StartPrediction_Call{Call: _e.mock.On("StartPrediction", ctx, userID, scanURL)}
+}
+
+func (_c *Store_StartPrediction_Call) Run(run func(ctx context.Context, userID uuid.UUID, scanURL string)) *Store_StartPrediction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_StartPrediction_Call) Return(uUID *uuid.UUID, err error) *Store_StartPrediction_Call {
+	_c.Call.Return(uUID, err)
+	return _c
+}
+
+func (_c *Store_StartPrediction_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, scanURL string) (*uuid.UUID, error)) *Store_StartPrediction_Call {
 	_c.Call.Return(run)
 	return _c
 }

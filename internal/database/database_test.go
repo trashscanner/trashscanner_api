@@ -427,3 +427,67 @@ func (s *databaseTestSuite) TestDuplicateStatsForUser() {
 	_, err = s.store.CreateStats(s.ctx, userID)
 	s.Error(err)
 }
+
+func (s *databaseTestSuite) createTestPrediction(userID uuid.UUID) uuid.UUID {
+	testImgUrl := "/test/scan/" + uuid.NewString()
+	status := "processing"
+
+	id, err := s.store.CreateNewPrediction(s.ctx, db.CreateNewPredictionParams{
+		UserID:    userID,
+		TrashScan: testImgUrl,
+		Status:    status,
+	})
+	s.NoError(err)
+	s.NotZero(id)
+
+	newPrediction, err := s.store.GetPrediction(s.ctx, id)
+	s.NoError(err)
+	s.Equal(id, newPrediction.ID)
+	s.Equal(userID, newPrediction.UserID)
+	s.NotZero(newPrediction.CreatedAt)
+	s.NotZero(newPrediction.UpdatedAt)
+
+	return id
+}
+
+func (s *databaseTestSuite) TestCompletePrediction() {
+	userID := s.createTestUser("testCompletePrediction")
+	predictionID := s.createTestPrediction(userID)
+
+	result := "plastic"
+
+	err := s.store.CompletePrediction(s.ctx, db.CompletePredictionParams{
+		Status: "completed",
+		Result: &result,
+		ID:     predictionID,
+	})
+	s.NoError(err)
+
+	updated, err := s.store.GetPrediction(s.ctx, predictionID)
+	s.NoError(err)
+	s.Equal("completed", updated.Status)
+	s.Equal("plastic", *updated.Result)
+	s.Zero(updated.Error)
+}
+
+func (s *databaseTestSuite) TestListPredictions() {
+	userID := s.createTestUser("testCompletePrediction")
+	predictions := make(uuid.UUIDs, 5)
+	for i := range 5 {
+		predictions[i] = s.createTestPrediction(userID)
+	}
+
+	existed, err := s.store.GetPredictionsByUserID(s.ctx, db.GetPredictionsByUserIDParams{
+		UserID: userID,
+		Limit:  10,
+		Offset: 0,
+	})
+	s.NoError(err)
+	s.Len(existed, 5)
+	existedIDs := make(uuid.UUIDs, 5)
+	for i, ex := range existed {
+		existedIDs[i] = ex.ID
+	}
+
+	s.ElementsMatch(predictions, existedIDs)
+}

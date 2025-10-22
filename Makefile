@@ -15,7 +15,7 @@ lint:
 	golangci-lint run --timeout 5m --config golang-ci.yaml
 
 test:
-	go test $$(go list ./... | grep -v '/internal/database' | grep -v '/docs' | \
+	go test $$(go list ./... | grep -v '/internal/database' | grep -v '/docs' | grep -v '/models' | \
 		grep -v '/internal/api/dto'  | grep -v '/mocks' | grep -v '/filestore' | grep -v '/cmd/') \
 		-coverprofile=coverage.out --race --timeout 2m
 	cat coverage.out | grep -v "internal/database/sqlc" > coverage.txt || true

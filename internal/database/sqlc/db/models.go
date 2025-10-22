@@ -23,6 +23,17 @@ type LoginHistory struct {
 	CreatedAt     time.Time   `json:"created_at"`
 }
 
+type Prediction struct {
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	TrashScan string    `json:"trash_scan"`
+	Status    string    `json:"status"`
+	Result    *string   `json:"result"`
+	Error     *string   `json:"error"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type RefreshToken struct {
 	ID        uuid.UUID          `json:"id"`
 	UserID    uuid.UUID          `json:"user_id"`
