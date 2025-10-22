@@ -20,6 +20,11 @@ const (
 )
 
 type Store interface {
+	StartPrediction(ctx context.Context, userID uuid.UUID, scanURL string) (*uuid.UUID, error)
+	CompletePrediction(ctx context.Context, id uuid.UUID, result any) error
+	GetPrediction(ctx context.Context, id uuid.UUID) (*models.Prediction, error)
+	GetPredictionsByUserID(ctx context.Context, userID uuid.UUID, offset, limit int) ([]*models.Prediction, error)
+
 	CreateUser(ctx context.Context, user *models.User) error
 	GetUser(ctx context.Context, id uuid.UUID, withStats bool) (*models.User, error)
 	GetUserByLogin(ctx context.Context, login string) (*models.User, error)

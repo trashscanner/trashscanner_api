@@ -38,6 +38,63 @@ func (_m *Querier) EXPECT() *Querier_Expecter {
 	return &Querier_Expecter{mock: &_m.Mock}
 }
 
+// CompletePrediction provides a mock function for the type Querier
+func (_mock *Querier) CompletePrediction(ctx context.Context, arg db.CompletePredictionParams) error {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CompletePrediction")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, db.CompletePredictionParams) error); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Querier_CompletePrediction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CompletePrediction'
+type Querier_CompletePrediction_Call struct {
+	*mock.Call
+}
+
+// CompletePrediction is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg db.CompletePredictionParams
+func (_e *Querier_Expecter) CompletePrediction(ctx interface{}, arg interface{}) *Querier_CompletePrediction_Call {
+	return &Querier_CompletePrediction_Call{Call: _e.mock.On("CompletePrediction", ctx, arg)}
+}
+
+func (_c *Querier_CompletePrediction_Call) Run(run func(ctx context.Context, arg db.CompletePredictionParams)) *Querier_CompletePrediction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 db.CompletePredictionParams
+		if args[1] != nil {
+			arg1 = args[1].(db.CompletePredictionParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Querier_CompletePrediction_Call) Return(err error) *Querier_CompletePrediction_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Querier_CompletePrediction_Call) RunAndReturn(run func(ctx context.Context, arg db.CompletePredictionParams) error) *Querier_CompletePrediction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateLoginHistory provides a mock function for the type Querier
 func (_mock *Querier) CreateLoginHistory(ctx context.Context, arg db.CreateLoginHistoryParams) (uuid.UUID, error) {
 	ret := _mock.Called(ctx, arg)
@@ -102,6 +159,74 @@ func (_c *Querier_CreateLoginHistory_Call) Return(uUID uuid.UUID, err error) *Qu
 }
 
 func (_c *Querier_CreateLoginHistory_Call) RunAndReturn(run func(ctx context.Context, arg db.CreateLoginHistoryParams) (uuid.UUID, error)) *Querier_CreateLoginHistory_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateNewPrediction provides a mock function for the type Querier
+func (_mock *Querier) CreateNewPrediction(ctx context.Context, arg db.CreateNewPredictionParams) (uuid.UUID, error) {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateNewPrediction")
+	}
+
+	var r0 uuid.UUID
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, db.CreateNewPredictionParams) (uuid.UUID, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, db.CreateNewPredictionParams) uuid.UUID); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(uuid.UUID)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, db.CreateNewPredictionParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Querier_CreateNewPrediction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateNewPrediction'
+type Querier_CreateNewPrediction_Call struct {
+	*mock.Call
+}
+
+// CreateNewPrediction is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg db.CreateNewPredictionParams
+func (_e *Querier_Expecter) CreateNewPrediction(ctx interface{}, arg interface{}) *Querier_CreateNewPrediction_Call {
+	return &Querier_CreateNewPrediction_Call{Call: _e.mock.On("CreateNewPrediction", ctx, arg)}
+}
+
+func (_c *Querier_CreateNewPrediction_Call) Run(run func(ctx context.Context, arg db.CreateNewPredictionParams)) *Querier_CreateNewPrediction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 db.CreateNewPredictionParams
+		if args[1] != nil {
+			arg1 = args[1].(db.CreateNewPredictionParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Querier_CreateNewPrediction_Call) Return(uUID uuid.UUID, err error) *Querier_CreateNewPrediction_Call {
+	_c.Call.Return(uUID, err)
+	return _c
+}
+
+func (_c *Querier_CreateNewPrediction_Call) RunAndReturn(run func(ctx context.Context, arg db.CreateNewPredictionParams) (uuid.UUID, error)) *Querier_CreateNewPrediction_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -499,6 +624,140 @@ func (_c *Querier_GetLoginHistoryByUser_Call) Return(loginHistorys []db.LoginHis
 }
 
 func (_c *Querier_GetLoginHistoryByUser_Call) RunAndReturn(run func(ctx context.Context, arg db.GetLoginHistoryByUserParams) ([]db.LoginHistory, error)) *Querier_GetLoginHistoryByUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPrediction provides a mock function for the type Querier
+func (_mock *Querier) GetPrediction(ctx context.Context, id uuid.UUID) (db.Prediction, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPrediction")
+	}
+
+	var r0 db.Prediction
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (db.Prediction, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) db.Prediction); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Get(0).(db.Prediction)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Querier_GetPrediction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPrediction'
+type Querier_GetPrediction_Call struct {
+	*mock.Call
+}
+
+// GetPrediction is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+func (_e *Querier_Expecter) GetPrediction(ctx interface{}, id interface{}) *Querier_GetPrediction_Call {
+	return &Querier_GetPrediction_Call{Call: _e.mock.On("GetPrediction", ctx, id)}
+}
+
+func (_c *Querier_GetPrediction_Call) Run(run func(ctx context.Context, id uuid.UUID)) *Querier_GetPrediction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Querier_GetPrediction_Call) Return(prediction db.Prediction, err error) *Querier_GetPrediction_Call {
+	_c.Call.Return(prediction, err)
+	return _c
+}
+
+func (_c *Querier_GetPrediction_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (db.Prediction, error)) *Querier_GetPrediction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPredictionsByUserID provides a mock function for the type Querier
+func (_mock *Querier) GetPredictionsByUserID(ctx context.Context, arg db.GetPredictionsByUserIDParams) ([]db.Prediction, error) {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPredictionsByUserID")
+	}
+
+	var r0 []db.Prediction
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, db.GetPredictionsByUserIDParams) ([]db.Prediction, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, db.GetPredictionsByUserIDParams) []db.Prediction); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Prediction)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, db.GetPredictionsByUserIDParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Querier_GetPredictionsByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPredictionsByUserID'
+type Querier_GetPredictionsByUserID_Call struct {
+	*mock.Call
+}
+
+// GetPredictionsByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg db.GetPredictionsByUserIDParams
+func (_e *Querier_Expecter) GetPredictionsByUserID(ctx interface{}, arg interface{}) *Querier_GetPredictionsByUserID_Call {
+	return &Querier_GetPredictionsByUserID_Call{Call: _e.mock.On("GetPredictionsByUserID", ctx, arg)}
+}
+
+func (_c *Querier_GetPredictionsByUserID_Call) Run(run func(ctx context.Context, arg db.GetPredictionsByUserIDParams)) *Querier_GetPredictionsByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 db.GetPredictionsByUserIDParams
+		if args[1] != nil {
+			arg1 = args[1].(db.GetPredictionsByUserIDParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Querier_GetPredictionsByUserID_Call) Return(predictions []db.Prediction, err error) *Querier_GetPredictionsByUserID_Call {
+	_c.Call.Return(predictions, err)
+	return _c
+}
+
+func (_c *Querier_GetPredictionsByUserID_Call) RunAndReturn(run func(ctx context.Context, arg db.GetPredictionsByUserIDParams) ([]db.Prediction, error)) *Querier_GetPredictionsByUserID_Call {
 	_c.Call.Return(run)
 	return _c
 }

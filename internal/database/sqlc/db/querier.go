@@ -11,13 +11,17 @@ import (
 )
 
 type Querier interface {
+	CompletePrediction(ctx context.Context, arg CompletePredictionParams) error
 	CreateLoginHistory(ctx context.Context, arg CreateLoginHistoryParams) (uuid.UUID, error)
+	CreateNewPrediction(ctx context.Context, arg CreateNewPredictionParams) (uuid.UUID, error)
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (uuid.UUID, error)
 	CreateStats(ctx context.Context, userID uuid.UUID) (uuid.UUID, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (uuid.UUID, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetActiveTokensByUser(ctx context.Context, userID uuid.UUID) ([]RefreshToken, error)
 	GetLoginHistoryByUser(ctx context.Context, arg GetLoginHistoryByUserParams) ([]LoginHistory, error)
+	GetPrediction(ctx context.Context, id uuid.UUID) (Prediction, error)
+	GetPredictionsByUserID(ctx context.Context, arg GetPredictionsByUserIDParams) ([]Prediction, error)
 	GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error)
 	GetStatsByUserID(ctx context.Context, userID uuid.UUID) (Stat, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
