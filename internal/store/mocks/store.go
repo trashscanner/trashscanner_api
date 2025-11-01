@@ -1071,23 +1071,23 @@ func (_c *Store_RevokeRefreshToken_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // StartPrediction provides a mock function for the type Store
-func (_mock *Store) StartPrediction(ctx context.Context, userID uuid.UUID, scanURL string) (*uuid.UUID, error) {
+func (_mock *Store) StartPrediction(ctx context.Context, userID uuid.UUID, scanURL string) (*models.Prediction, error) {
 	ret := _mock.Called(ctx, userID, scanURL)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StartPrediction")
 	}
 
-	var r0 *uuid.UUID
+	var r0 *models.Prediction
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) (*uuid.UUID, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) (*models.Prediction, error)); ok {
 		return returnFunc(ctx, userID, scanURL)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) *uuid.UUID); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) *models.Prediction); ok {
 		r0 = returnFunc(ctx, userID, scanURL)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*uuid.UUID)
+			r0 = ret.Get(0).(*models.Prediction)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, string) error); ok {
@@ -1134,12 +1134,12 @@ func (_c *Store_StartPrediction_Call) Run(run func(ctx context.Context, userID u
 	return _c
 }
 
-func (_c *Store_StartPrediction_Call) Return(uUID *uuid.UUID, err error) *Store_StartPrediction_Call {
-	_c.Call.Return(uUID, err)
+func (_c *Store_StartPrediction_Call) Return(prediction *models.Prediction, err error) *Store_StartPrediction_Call {
+	_c.Call.Return(prediction, err)
 	return _c
 }
 
-func (_c *Store_StartPrediction_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, scanURL string) (*uuid.UUID, error)) *Store_StartPrediction_Call {
+func (_c *Store_StartPrediction_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, scanURL string) (*models.Prediction, error)) *Store_StartPrediction_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1197,6 +1197,69 @@ func (_c *Store_UpdateAvatar_Call) Return(err error) *Store_UpdateAvatar_Call {
 }
 
 func (_c *Store_UpdateAvatar_Call) RunAndReturn(run func(ctx context.Context, user *models.User) error) *Store_UpdateAvatar_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateStats provides a mock function for the type Store
+func (_mock *Store) UpdateStats(ctx context.Context, userID uuid.UUID, stat models.Stat) error {
+	ret := _mock.Called(ctx, userID, stat)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateStats")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, models.Stat) error); ok {
+		r0 = returnFunc(ctx, userID, stat)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Store_UpdateStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateStats'
+type Store_UpdateStats_Call struct {
+	*mock.Call
+}
+
+// UpdateStats is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uuid.UUID
+//   - stat models.Stat
+func (_e *Store_Expecter) UpdateStats(ctx interface{}, userID interface{}, stat interface{}) *Store_UpdateStats_Call {
+	return &Store_UpdateStats_Call{Call: _e.mock.On("UpdateStats", ctx, userID, stat)}
+}
+
+func (_c *Store_UpdateStats_Call) Run(run func(ctx context.Context, userID uuid.UUID, stat models.Stat)) *Store_UpdateStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		var arg2 models.Stat
+		if args[2] != nil {
+			arg2 = args[2].(models.Stat)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_UpdateStats_Call) Return(err error) *Store_UpdateStats_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Store_UpdateStats_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, stat models.Stat) error) *Store_UpdateStats_Call {
 	_c.Call.Return(run)
 	return _c
 }

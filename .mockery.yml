@@ -43,3 +43,11 @@ packages:
         config:
           dir: 'internal/filestore/mocks'
           filename: 'file_store.go'
+  github.com/trashscanner/trashscanner_api/internal/predictor:
+    interfaces:
+      predictRequester:
+        config:
+          dir: 'internal/predictor/'
+          filename: 'predictor_client_mock.go'
+          structname: 'mockPredictRequester'
+          pkgname: 'predictor'

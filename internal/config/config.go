@@ -52,6 +52,12 @@ type AuthManagerConfig struct {
 	Algorithm       string        `mapstructure:"signing_algorithm" validate:"required,oneof=EdDSA"`
 }
 
+type PredictorConfig struct {
+	Host                       string
+	Token                      string
+	MaxPredictionsInProcessing int
+}
+
 type LogConfig struct {
 	Level  string `mapstructure:"level"`
 	Format string `mapstructure:"format"`

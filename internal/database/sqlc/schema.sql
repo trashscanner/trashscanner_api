@@ -49,12 +49,12 @@ CREATE TABLE stats (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS predictions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid,
+CREATE TABLE predictions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES users(id),
     trash_scan TEXT NOT NULL,
     status TEXT NOT NULL,
-    result TEXT,
+    result JSONB,
     error TEXT,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

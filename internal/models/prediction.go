@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
 	"strings"
 	"time"
@@ -42,20 +43,30 @@ const (
 	Undefined
 )
 
+const (
+	TrashTypeCardboard = "cardboard"
+	TrashTypeGlass     = "glass"
+	TrashTypeMetal     = "metal"
+	TrashTypePaper     = "paper"
+	TrashTypePlastic   = "plastic"
+	TrashTypeTrash     = "trash"
+	TrashTypeUndefined = "undefined"
+)
+
 func (tr TrashType) String() string {
 	switch tr {
 	case Cardboard:
-		return "cardboard"
+		return TrashTypeCardboard
 	case Glass:
-		return "glass"
+		return TrashTypeGlass
 	case Metal:
-		return "metal"
+		return TrashTypeMetal
 	case Paper:
-		return "paper"
+		return TrashTypePaper
 	case Plastic:
-		return "plastic"
+		return TrashTypePlastic
 	case Trash:
-		return "trash"
+		return TrashTypeTrash
 	}
 
 	return ""
@@ -68,30 +79,41 @@ func (tr TrashType) StringPtr() *string {
 
 func NewTrashType(val string) TrashType {
 	switch strings.ToLower(val) {
-	case "cardboard":
+	case TrashTypeCardboard:
 		return Cardboard
-	case "glass":
+	case TrashTypeGlass:
 		return Glass
-	case "metal":
+	case TrashTypeMetal:
 		return Metal
-	case "paper":
+	case TrashTypePaper:
 		return Paper
-	case "plastic":
+	case TrashTypePlastic:
 		return Plastic
-	case "trash":
+	case TrashTypeTrash:
 		return Trash
 	}
 
 	return Undefined
 }
 
+type PredictionResult map[string]float64
+
+func NewPredictionResult(m map[uint8]float64) PredictionResult {
+	result := make(PredictionResult, len(m))
+	for k, v := range m {
+		trashType := TrashType(k)
+		result[trashType.String()] = v
+	}
+	return result
+}
+
 type Prediction struct {
-	ID         uuid.UUID
-	User_id    uuid.UUID
-	Trash_scan string
-	Status     PredictionStatus
-	Result     TrashType
-	Error      error
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	TrashScan string
+	Status    PredictionStatus
+	Result    PredictionResult
+	Error     error
 
 	CreatedAt, UpdatedAt time.Time
 }
@@ -102,12 +124,12 @@ func (pr Prediction) IsValid() bool {
 
 func (pr *Prediction) Model(prediction db.Prediction) {
 	pr.ID = prediction.ID
-	pr.User_id = prediction.UserID
-	pr.Trash_scan = prediction.TrashScan
+	pr.UserID = prediction.UserID
+	pr.TrashScan = prediction.TrashScan
 	pr.Status = PredictionStatus(prediction.Status)
-	pr.Result = Undefined
+	pr.Result = nil
 	if prediction.Result != nil {
-		pr.Result = NewTrashType(*prediction.Result)
+		_ = json.Unmarshal(prediction.Result, &pr.Result)
 	}
 	if prediction.Error != nil {
 		pr.Error = errors.New(*prediction.Error)

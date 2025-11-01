@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS predictions (
     user_id UUID REFERENCES users(id),
     trash_scan TEXT NOT NULL UNIQUE,
     status TEXT NOT NULL,
-    result TEXT,
+    result JSONB,
     error TEXT,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

@@ -25,8 +25,7 @@ func TestNewServer(t *testing.T) {
 	store := storemocks.NewStore(t)
 	fileStore := filestoremocks.NewFileStore(t)
 	authManager := mocks.NewAuthManager(t)
-	logger, err := logging.NewLogger(cfg)
-	require.NoError(t, err)
+	logger := logging.NewLogger(cfg)
 
 	server := NewServer(cfg, store, fileStore, authManager, logger)
 

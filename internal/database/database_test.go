@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
@@ -14,6 +15,7 @@ import (
 	su "github.com/stretchr/testify/suite"
 	"github.com/trashscanner/trashscanner_api/internal/config"
 	"github.com/trashscanner/trashscanner_api/internal/database/sqlc/db"
+	"github.com/trashscanner/trashscanner_api/internal/models"
 )
 
 var testStore db.Querier
@@ -432,33 +434,34 @@ func (s *databaseTestSuite) createTestPrediction(userID uuid.UUID) uuid.UUID {
 	testImgUrl := "/test/scan/" + uuid.NewString()
 	status := "processing"
 
-	id, err := s.store.CreateNewPrediction(s.ctx, db.CreateNewPredictionParams{
+	prediction, err := s.store.CreateNewPrediction(s.ctx, db.CreateNewPredictionParams{
 		UserID:    userID,
 		TrashScan: testImgUrl,
 		Status:    status,
 	})
 	s.NoError(err)
-	s.NotZero(id)
+	s.NotZero(prediction)
 
-	newPrediction, err := s.store.GetPrediction(s.ctx, id)
+	newPrediction, err := s.store.GetPrediction(s.ctx, prediction.ID)
 	s.NoError(err)
-	s.Equal(id, newPrediction.ID)
+	s.Equal(prediction.ID, newPrediction.ID)
 	s.Equal(userID, newPrediction.UserID)
 	s.NotZero(newPrediction.CreatedAt)
 	s.NotZero(newPrediction.UpdatedAt)
 
-	return id
+	return prediction.ID
 }
 
 func (s *databaseTestSuite) TestCompletePrediction() {
 	userID := s.createTestUser("testCompletePrediction")
 	predictionID := s.createTestPrediction(userID)
 
-	result := "plastic"
+	resultInput := models.PredictionResult{"plastic": 0.99}
+	input, _ := json.Marshal(resultInput)
 
 	err := s.store.CompletePrediction(s.ctx, db.CompletePredictionParams{
 		Status: "completed",
-		Result: &result,
+		Result: input,
 		ID:     predictionID,
 	})
 	s.NoError(err)
@@ -466,7 +469,12 @@ func (s *databaseTestSuite) TestCompletePrediction() {
 	updated, err := s.store.GetPrediction(s.ctx, predictionID)
 	s.NoError(err)
 	s.Equal("completed", updated.Status)
-	s.Equal("plastic", *updated.Result)
+
+	resultOutput := models.PredictionResult{}
+	err = json.Unmarshal(updated.Result, &resultOutput)
+	s.NoError(err)
+
+	s.Equal(resultInput, resultOutput)
 	s.Zero(updated.Error)
 }
 
