@@ -11,21 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const createStats = `-- name: CreateStats :one
-INSERT INTO stats (
-    user_id
-) VALUES (
-    $1
-) RETURNING id
-`
-
-func (q *Queries) CreateStats(ctx context.Context, userID uuid.UUID) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, createStats, userID)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
-}
-
 const getStatsByUserID = `-- name: GetStatsByUserID :one
 SELECT id, user_id, status, rating, files_scanned, total_weight, achievements, trash_by_types, created_at, updated_at FROM stats
 WHERE user_id = $1

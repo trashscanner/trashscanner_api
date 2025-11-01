@@ -15,7 +15,6 @@ type Querier interface {
 	CreateLoginHistory(ctx context.Context, arg CreateLoginHistoryParams) (uuid.UUID, error)
 	CreateNewPrediction(ctx context.Context, arg CreateNewPredictionParams) (Prediction, error)
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (uuid.UUID, error)
-	CreateStats(ctx context.Context, userID uuid.UUID) (uuid.UUID, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (uuid.UUID, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetActiveTokensByUser(ctx context.Context, userID uuid.UUID) ([]RefreshToken, error)

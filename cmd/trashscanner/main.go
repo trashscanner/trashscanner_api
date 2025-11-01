@@ -26,7 +26,7 @@ func main() {
 	logger := logging.NewLogger(cfg)
 	logger.Infof("logger initialized with level %s", cfg.Log.Level)
 
-	store, err := store.NewPGStore(cfg)
+	store, err := store.CreatePgStore(cfg)
 	if err != nil {
 		logger.Fatalf("failed to create store: %v", err)
 	}

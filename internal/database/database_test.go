@@ -76,13 +76,13 @@ func TestDatabaseSuite(t *testing.T) {
 }
 
 func (s *databaseTestSuite) createTestUser(login string) uuid.UUID {
-	userID, err := s.store.CreateUser(s.ctx, db.CreateUserParams{
+	result, err := s.store.CreateUser(s.ctx, db.CreateUserParams{
 		Login:          login,
 		HashedPassword: "hashedpassword",
 	})
 	s.Require().NoError(err)
-	s.Require().NotEqual(uuid.Nil, userID)
-	return userID
+	s.Require().NotZero(result)
+	return result
 }
 
 func (s *databaseTestSuite) TestCreateUser() {
@@ -365,10 +365,7 @@ func (s *databaseTestSuite) TestGetLoginHistoryByUser_NoHistory() {
 func (s *databaseTestSuite) TestCreateStats() {
 	userID := s.createTestUser("testCreateStats")
 
-	statsID, err := s.store.CreateStats(s.ctx, userID)
-	s.NoError(err)
-	s.NotEqual(uuid.Nil, statsID)
-
+	// Stats are automatically created with the user via CTE
 	stats, err := s.store.GetStatsByUserID(s.ctx, userID)
 	s.NoError(err)
 	s.Equal(userID, stats.UserID)
@@ -383,9 +380,7 @@ func (s *databaseTestSuite) TestCreateStats() {
 func (s *databaseTestSuite) TestGetStatsByUserID() {
 	userID := s.createTestUser("testGetStats")
 
-	_, err := s.store.CreateStats(s.ctx, userID)
-	s.NoError(err)
-
+	// Stats are automatically created with the user via CTE
 	stats, err := s.store.GetStatsByUserID(s.ctx, userID)
 	s.NoError(err)
 	s.Equal(userID, stats.UserID)
@@ -400,10 +395,8 @@ func (s *databaseTestSuite) TestGetStatsByUserID_NotFound() {
 func (s *databaseTestSuite) TestUpdateStats() {
 	userID := s.createTestUser("testUpdateStats")
 
-	_, err := s.store.CreateStats(s.ctx, userID)
-	s.NoError(err)
-
-	err = s.store.UpdateStats(s.ctx, db.UpdateStatsParams{
+	// Stats are automatically created with the user via CTE
+	err := s.store.UpdateStats(s.ctx, db.UpdateStatsParams{
 		UserID:       userID,
 		Status:       "eco_warrior",
 		Rating:       150,
@@ -418,16 +411,6 @@ func (s *databaseTestSuite) TestUpdateStats() {
 	s.Equal(int32(150), stats.Rating)
 	s.Equal(int32(25), stats.FilesScanned)
 	s.Equal(75.5, stats.TotalWeight)
-}
-
-func (s *databaseTestSuite) TestDuplicateStatsForUser() {
-	userID := s.createTestUser("testDuplicateStats")
-
-	_, err := s.store.CreateStats(s.ctx, userID)
-	s.NoError(err)
-
-	_, err = s.store.CreateStats(s.ctx, userID)
-	s.Error(err)
 }
 
 func (s *databaseTestSuite) createTestPrediction(userID uuid.UUID) uuid.UUID {

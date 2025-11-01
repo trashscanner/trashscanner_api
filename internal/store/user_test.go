@@ -11,7 +11,6 @@ import (
 	dbMock "github.com/trashscanner/trashscanner_api/internal/database/mocks"
 	"github.com/trashscanner/trashscanner_api/internal/database/sqlc/db"
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
-	"github.com/trashscanner/trashscanner_api/internal/store/mocks"
 	"github.com/trashscanner/trashscanner_api/internal/testdata"
 )
 
@@ -20,34 +19,20 @@ func TestUserCreate(t *testing.T) {
 		ctx := context.Background()
 
 		mockQ := dbMock.NewQuerier(t)
-		mockQTx := dbMock.NewQuerier(t)
-		mockConn := mocks.NewConnection(t)
-		mockTx := mocks.NewTx(t)
 
 		store := &pgStore{
-			q:    mockQ,
-			pool: mockConn,
-			qf: func(tx db.DBTX) db.Querier {
-				return mockQTx
-			},
+			q: mockQ,
 		}
 
 		id := uuid.New()
-		statsID := uuid.New()
 		user := testdata.NewUser
 
 		mockQ.EXPECT().GetUserByLogin(mock.Anything, user.Login).Return(db.User{}, pgx.ErrNoRows).Once()
 
-		mockConn.EXPECT().Begin(mock.Anything).Return(mockTx, nil).Once()
-		mockTx.EXPECT().Rollback(mock.Anything).Return(nil).Once()
-		mockTx.EXPECT().Commit(mock.Anything).Return(nil).Once()
-
-		mockQTx.EXPECT().CreateUser(mock.Anything, db.CreateUserParams{
+		mockQ.EXPECT().CreateUser(mock.Anything, db.CreateUserParams{
 			Login:          user.Login,
 			HashedPassword: user.HashedPassword,
 		}).Return(id, nil).Once()
-
-		mockQTx.EXPECT().CreateStats(mock.Anything, id).Return(statsID, nil).Once()
 
 		err := store.CreateUser(ctx, &user)
 
@@ -59,11 +44,9 @@ func TestUserCreate(t *testing.T) {
 		ctx := context.Background()
 
 		mockQ := dbMock.NewQuerier(t)
-		mockConn := mocks.NewConnection(t)
 
 		store := &pgStore{
-			q:    mockQ,
-			pool: mockConn,
+			q: mockQ,
 		}
 
 		user := testdata.NewUser
@@ -85,11 +68,9 @@ func TestUserCreate(t *testing.T) {
 		ctx := context.Background()
 
 		mockQ := dbMock.NewQuerier(t)
-		mockConn := mocks.NewConnection(t)
 
 		store := &pgStore{
-			q:    mockQ,
-			pool: mockConn,
+			q: mockQ,
 		}
 
 		user := testdata.NewUser
@@ -104,44 +85,13 @@ func TestUserCreate(t *testing.T) {
 		assert.Contains(t, err.Error(), "failed to check existing user")
 	})
 
-	t.Run("Transaction begin fails", func(t *testing.T) {
+	t.Run("CreateUser fails", func(t *testing.T) {
 		ctx := context.Background()
 
 		mockQ := dbMock.NewQuerier(t)
-		mockConn := mocks.NewConnection(t)
 
 		store := &pgStore{
-			q:    mockQ,
-			pool: mockConn,
-		}
-
-		user := testdata.NewUser
-		txErr := assert.AnError
-
-		mockQ.EXPECT().GetUserByLogin(mock.Anything, user.Login).
-			Return(db.User{}, pgx.ErrNoRows).Once()
-
-		mockConn.EXPECT().Begin(mock.Anything).Return(nil, txErr).Once()
-
-		err := store.CreateUser(ctx, &user)
-
-		assert.ErrorIs(t, err, txErr)
-	})
-
-	t.Run("CreateUser in transaction fails", func(t *testing.T) {
-		ctx := context.Background()
-
-		mockQ := dbMock.NewQuerier(t)
-		mockQTx := dbMock.NewQuerier(t)
-		mockConn := mocks.NewConnection(t)
-		mockTx := mocks.NewTx(t)
-
-		store := &pgStore{
-			q:    mockQ,
-			pool: mockConn,
-			qf: func(tx db.DBTX) db.Querier {
-				return mockQTx
-			},
+			q: mockQ,
 		}
 
 		user := testdata.NewUser
@@ -150,54 +100,13 @@ func TestUserCreate(t *testing.T) {
 		mockQ.EXPECT().GetUserByLogin(mock.Anything, user.Login).
 			Return(db.User{}, pgx.ErrNoRows).Once()
 
-		mockConn.EXPECT().Begin(mock.Anything).Return(mockTx, nil).Once()
-		mockTx.EXPECT().Rollback(mock.Anything).Return(nil).Once()
-
-		mockQTx.EXPECT().CreateUser(mock.Anything, mock.Anything).
+		mockQ.EXPECT().CreateUser(mock.Anything, mock.Anything).
 			Return(uuid.Nil, createErr).Once()
 
 		err := store.CreateUser(ctx, &user)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to create user")
-	})
-
-	t.Run("CreateStats in transaction fails", func(t *testing.T) {
-		ctx := context.Background()
-
-		mockQ := dbMock.NewQuerier(t)
-		mockQTx := dbMock.NewQuerier(t)
-		mockConn := mocks.NewConnection(t)
-		mockTx := mocks.NewTx(t)
-
-		store := &pgStore{
-			q:    mockQ,
-			pool: mockConn,
-			qf: func(tx db.DBTX) db.Querier {
-				return mockQTx
-			},
-		}
-
-		id := uuid.New()
-		user := testdata.NewUser
-		statsErr := assert.AnError
-
-		mockQ.EXPECT().GetUserByLogin(mock.Anything, user.Login).
-			Return(db.User{}, pgx.ErrNoRows).Once()
-
-		mockConn.EXPECT().Begin(mock.Anything).Return(mockTx, nil).Once()
-		mockTx.EXPECT().Rollback(mock.Anything).Return(nil).Once()
-
-		mockQTx.EXPECT().CreateUser(mock.Anything, mock.Anything).
-			Return(id, nil).Once()
-
-		mockQTx.EXPECT().CreateStats(mock.Anything, id).
-			Return(uuid.Nil, statsErr).Once()
-
-		err := store.CreateUser(ctx, &user)
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to create user stats")
 	})
 }
 
@@ -573,171 +482,5 @@ func TestDeleteUser(t *testing.T) {
 		assert.Error(t, err)
 		var localErr *errlocal.ErrNotFound
 		assert.ErrorAs(t, err, &localErr)
-	})
-}
-
-func TestExecTx(t *testing.T) {
-	t.Run("Execute transaction successfully", func(t *testing.T) {
-		ctx := context.Background()
-
-		mockQ := dbMock.NewQuerier(t)
-		mockQTx := dbMock.NewQuerier(t)
-		mockConn := mocks.NewConnection(t)
-		mockTx := mocks.NewTx(t)
-
-		store := &pgStore{
-			q:    mockQ,
-			pool: mockConn,
-			qf: func(tx db.DBTX) db.Querier {
-				return mockQTx
-			},
-		}
-
-		dbUser := db.User{
-			ID:             testdata.User1ID,
-			Login:          testdata.User1.Login,
-			HashedPassword: testdata.User1.HashedPassword,
-		}
-
-		mockConn.EXPECT().Begin(mock.Anything).Return(mockTx, nil).Once()
-		mockTx.EXPECT().Rollback(mock.Anything).Return(nil).Once()
-		mockTx.EXPECT().Commit(mock.Anything).Return(nil).Once()
-
-		mockQTx.EXPECT().GetUserByID(mock.Anything, testdata.User1ID).
-			Return(dbUser, nil).Once()
-
-		var capturedUser db.User
-		err := store.ExecTx(ctx, func(q db.Querier) error {
-			user, err := q.GetUserByID(ctx, testdata.User1ID)
-			capturedUser = user
-			return err
-		})
-
-		assert.NoError(t, err)
-		assert.Equal(t, testdata.User1ID, capturedUser.ID)
-		assert.Equal(t, testdata.User1.Login, capturedUser.Login)
-	})
-
-	t.Run("Transaction begin fails", func(t *testing.T) {
-		ctx := context.Background()
-
-		mockConn := mocks.NewConnection(t)
-
-		store := &pgStore{
-			pool: mockConn,
-		}
-
-		txErr := assert.AnError
-
-		mockConn.EXPECT().Begin(mock.Anything).Return(nil, txErr).Once()
-
-		err := store.ExecTx(ctx, func(q db.Querier) error {
-			return nil
-		})
-
-		assert.ErrorIs(t, err, txErr)
-	})
-
-	t.Run("Function returns error and rollback", func(t *testing.T) {
-		ctx := context.Background()
-
-		mockQTx := dbMock.NewQuerier(t)
-		mockConn := mocks.NewConnection(t)
-		mockTx := mocks.NewTx(t)
-
-		store := &pgStore{
-			pool: mockConn,
-			qf: func(tx db.DBTX) db.Querier {
-				return mockQTx
-			},
-		}
-
-		fnErr := assert.AnError
-
-		mockConn.EXPECT().Begin(mock.Anything).Return(mockTx, nil).Once()
-		mockTx.EXPECT().Rollback(mock.Anything).Return(nil).Once()
-
-		err := store.ExecTx(ctx, func(q db.Querier) error {
-			return fnErr
-		})
-
-		assert.ErrorIs(t, err, fnErr)
-		// Commit не должен вызываться при ошибке
-	})
-
-	t.Run("Commit fails", func(t *testing.T) {
-		ctx := context.Background()
-
-		mockQTx := dbMock.NewQuerier(t)
-		mockConn := mocks.NewConnection(t)
-		mockTx := mocks.NewTx(t)
-
-		store := &pgStore{
-			pool: mockConn,
-			qf: func(tx db.DBTX) db.Querier {
-				return mockQTx
-			},
-		}
-
-		commitErr := assert.AnError
-
-		mockConn.EXPECT().Begin(mock.Anything).Return(mockTx, nil).Once()
-		mockTx.EXPECT().Rollback(mock.Anything).Return(nil).Once()
-		mockTx.EXPECT().Commit(mock.Anything).Return(commitErr).Once()
-
-		err := store.ExecTx(ctx, func(q db.Querier) error {
-			return nil
-		})
-
-		assert.ErrorIs(t, err, commitErr)
-	})
-
-	t.Run("Complex transaction with multiple operations", func(t *testing.T) {
-		ctx := context.Background()
-
-		mockQTx := dbMock.NewQuerier(t)
-		mockConn := mocks.NewConnection(t)
-		mockTx := mocks.NewTx(t)
-
-		store := &pgStore{
-			pool: mockConn,
-			qf: func(tx db.DBTX) db.Querier {
-				return mockQTx
-			},
-		}
-
-		newID := uuid.New()
-		statsID := uuid.New()
-
-		mockConn.EXPECT().Begin(mock.Anything).Return(mockTx, nil).Once()
-		mockTx.EXPECT().Rollback(mock.Anything).Return(nil).Once()
-		mockTx.EXPECT().Commit(mock.Anything).Return(nil).Once()
-
-		// Симулируем создание пользователя и статистики
-		mockQTx.EXPECT().CreateUser(mock.Anything, db.CreateUserParams{
-			Login:          "new_user",
-			HashedPassword: "new_password",
-		}).Return(newID, nil).Once()
-
-		mockQTx.EXPECT().CreateStats(mock.Anything, newID).
-			Return(statsID, nil).Once()
-
-		var createdUserID uuid.UUID
-		err := store.ExecTx(ctx, func(q db.Querier) error {
-			id, err := q.CreateUser(ctx, db.CreateUserParams{
-				Login:          "new_user",
-				HashedPassword: "new_password",
-			})
-			if err != nil {
-				return err
-			}
-			createdUserID = id
-
-			_, err = q.CreateStats(ctx, id)
-			return err
-		})
-
-		assert.NoError(t, err)
-		assert.Equal(t, newID, createdUserID)
 	})
 }

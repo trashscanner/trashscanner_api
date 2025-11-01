@@ -44,9 +44,9 @@ type Store interface {
 
 	Close()
 	Conn() *pgxpool.Pool
-	WithTx(tx pgx.Tx) db.Querier
+	WithTx(tx pgx.Tx) Store
 	BeginTx(ctx context.Context) (pgx.Tx, error)
-	ExecTx(ctx context.Context, fn func(db.Querier) error) error
+	ExecTx(ctx context.Context, fn func(Store) error) error
 }
 
 type Connection interface {
@@ -62,7 +62,7 @@ type pgStore struct {
 	pool Connection
 }
 
-func NewPGStore(conf config.Config) (Store, error) {
+func CreatePgStore(conf config.Config) (Store, error) {
 	dsn := url.URL{
 		Scheme: "postgres",
 		Host:   fmt.Sprintf("%s:%s", conf.DB.Host, conf.DB.Port),
@@ -85,29 +85,39 @@ func NewPGStore(conf config.Config) (Store, error) {
 	return &pgStore{
 		pool: conn,
 		q:    db.New(conn),
-		qf: func(tx db.DBTX) db.Querier {
-			return db.New(tx)
-		},
+		qf:   func(tx db.DBTX) db.Querier { return db.New(tx) },
 	}, nil
 }
 
-func (s *pgStore) Close() {
-	s.pool.Close()
-}
-
-func (s *pgStore) WithTx(tx pgx.Tx) db.Querier {
-	return s.qf(tx)
-}
-
-func (s *pgStore) BeginTx(ctx context.Context) (pgx.Tx, error) {
-	return s.pool.Begin(ctx)
+func NewPgStore(q db.Querier, qf QuerierFactory, pool Connection) Store {
+	return &pgStore{
+		q:    q,
+		qf:   qf,
+		pool: pool,
+	}
 }
 
 func (s *pgStore) Conn() *pgxpool.Pool {
 	return s.pool.(*pgxpool.Pool)
 }
 
-func (s *pgStore) ExecTx(ctx context.Context, fn func(db.Querier) error) error {
+func (s *pgStore) Close() {
+	s.pool.Close()
+}
+
+func (s *pgStore) WithTx(tx pgx.Tx) Store {
+	return &pgStore{
+		q:    s.qf(tx),
+		qf:   s.qf,
+		pool: s.pool,
+	}
+}
+
+func (s *pgStore) BeginTx(ctx context.Context) (pgx.Tx, error) {
+	return s.pool.Begin(ctx)
+}
+
+func (s *pgStore) ExecTx(ctx context.Context, fn func(Store) error) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -116,7 +126,7 @@ func (s *pgStore) ExecTx(ctx context.Context, fn func(db.Querier) error) error {
 		_ = tx.Rollback(ctx)
 	}()
 
-	if err := fn(s.qf(tx)); err != nil {
+	if err := fn(s.WithTx(tx)); err != nil {
 		return err
 	}
 

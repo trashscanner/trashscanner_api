@@ -12,13 +12,22 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (
-    name,
-    login,
-    hashed_password
-) VALUES (
-    $1, $2, $3
-) RETURNING id
+WITH new_user AS (
+    INSERT INTO users (
+        name,
+        login,
+        hashed_password
+    ) VALUES (
+        $1, $2, $3
+    ) RETURNING id
+),
+new_stats AS (
+    INSERT INTO stats (user_id)
+    SELECT id FROM new_user
+    RETURNING id
+)
+SELECT new_user.id as user_id
+FROM new_user
 `
 
 type CreateUserParams struct {
@@ -29,9 +38,9 @@ type CreateUserParams struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Login, arg.HashedPassword)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	var user_id uuid.UUID
+	err := row.Scan(&user_id)
+	return user_id, err
 }
 
 const deleteUser = `-- name: DeleteUser :exec

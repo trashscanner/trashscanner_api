@@ -25,30 +25,17 @@ func (s *pgStore) CreateUser(ctx context.Context, user *models.User) error {
 			map[string]any{"login": user.Login})
 	}
 
-	tx, err := s.BeginTx(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = tx.Rollback(ctx)
-	}()
-
-	id, mErr := s.WithTx(tx).CreateUser(ctx, db.CreateUserParams{
+	id, cErr := s.q.CreateUser(ctx, db.CreateUserParams{
 		Login:          user.Login,
 		HashedPassword: user.HashedPassword,
 	})
-	if mErr != nil {
-		return errlocal.NewErrInternal("failed to create user", mErr.Error(),
+	if cErr != nil {
+		return errlocal.NewErrInternal("failed to create user", cErr.Error(),
 			map[string]any{"login": user.Login})
 	}
 	user.ID = id
 
-	if _, err := s.WithTx(tx).CreateStats(ctx, id); err != nil {
-		return errlocal.NewErrInternal("failed to create user stats", err.Error(),
-			map[string]any{"user_id": id})
-	}
-
-	return tx.Commit(ctx)
+	return nil
 }
 
 func (s *pgStore) GetUser(ctx context.Context, id uuid.UUID, withStats bool) (*models.User, error) {
