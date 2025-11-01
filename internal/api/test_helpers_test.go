@@ -26,7 +26,7 @@ func newTestServer(t *testing.T) (*Server, *storemocks.Store, *authmocks.AuthMan
 	authManager := authmocks.NewAuthManager(t)
 	fileStore := filestoremocks.NewFileStore(t)
 	cfg := config.Config{Log: config.LogConfig{Level: "error", Format: "text"}}
-	logger, _ := logging.NewLogger(cfg)
+	logger := logging.NewLogger(cfg)
 
 	srv := &Server{
 		s:           &http.Server{},

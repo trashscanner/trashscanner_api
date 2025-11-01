@@ -15,15 +15,17 @@ import (
 type Component string
 
 const (
-	MainComponent Component = "MAIN"
-	ApiComponent  Component = "API"
+	MainComponent            Component = "MAIN"
+	ApiComponent             Component = "API"
+	PredictorClientComponent Component = "PREDICTOR_CLIENT"
+	PredictorComponent       Component = "PREDICTOR"
 )
 
 type Logger struct {
 	*logrus.Entry
 }
 
-func NewLogger(cfg config.Config) (*Logger, error) {
+func NewLogger(cfg config.Config) *Logger {
 	log := logrus.New()
 
 	level, err := logrus.ParseLevel(cfg.Log.Level)
@@ -56,17 +58,18 @@ func NewLogger(cfg config.Config) (*Logger, error) {
 
 	if cfg.Log.File != "" {
 		file, err := os.OpenFile(cfg.Log.File, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-		if err != nil {
-			return nil, err
+		if err == nil {
+			log.SetOutput(io.MultiWriter(os.Stdout, file))
+		} else {
+			log.SetOutput(os.Stdout)
 		}
-		log.SetOutput(io.MultiWriter(os.Stdout, file))
 	} else {
 		log.SetOutput(os.Stdout)
 	}
 
 	return &Logger{
 		Entry: logrus.NewEntry(log).WithField("component", MainComponent),
-	}, nil
+	}
 }
 
 func (l *Logger) WithComponent(component Component) *Logger {
@@ -77,6 +80,14 @@ func (l *Logger) WithComponent(component Component) *Logger {
 
 func (l *Logger) WithApiTag() *Logger {
 	return l.WithComponent(ApiComponent)
+}
+
+func (l *Logger) WithPredictorClientTag() *Logger {
+	return l.WithComponent(PredictorClientComponent)
+}
+
+func (l *Logger) WithPredictorTag() *Logger {
+	return l.WithComponent(PredictorComponent)
 }
 
 func (l *Logger) WithField(key string, value any) *Logger {

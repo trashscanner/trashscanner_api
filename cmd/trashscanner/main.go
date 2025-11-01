@@ -22,10 +22,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
-	logger, err := logging.NewLogger(cfg)
-	if err != nil {
-		log.Fatalf("failed to create logger: %v", err)
-	}
+
+	logger := logging.NewLogger(cfg)
 	logger.Infof("logger initialized with level %s", cfg.Log.Level)
 
 	store, err := store.NewPGStore(cfg)

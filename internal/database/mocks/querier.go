@@ -164,24 +164,22 @@ func (_c *Querier_CreateLoginHistory_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // CreateNewPrediction provides a mock function for the type Querier
-func (_mock *Querier) CreateNewPrediction(ctx context.Context, arg db.CreateNewPredictionParams) (uuid.UUID, error) {
+func (_mock *Querier) CreateNewPrediction(ctx context.Context, arg db.CreateNewPredictionParams) (db.Prediction, error) {
 	ret := _mock.Called(ctx, arg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateNewPrediction")
 	}
 
-	var r0 uuid.UUID
+	var r0 db.Prediction
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, db.CreateNewPredictionParams) (uuid.UUID, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, db.CreateNewPredictionParams) (db.Prediction, error)); ok {
 		return returnFunc(ctx, arg)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, db.CreateNewPredictionParams) uuid.UUID); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, db.CreateNewPredictionParams) db.Prediction); ok {
 		r0 = returnFunc(ctx, arg)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(uuid.UUID)
-		}
+		r0 = ret.Get(0).(db.Prediction)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, db.CreateNewPredictionParams) error); ok {
 		r1 = returnFunc(ctx, arg)
@@ -221,12 +219,12 @@ func (_c *Querier_CreateNewPrediction_Call) Run(run func(ctx context.Context, ar
 	return _c
 }
 
-func (_c *Querier_CreateNewPrediction_Call) Return(uUID uuid.UUID, err error) *Querier_CreateNewPrediction_Call {
-	_c.Call.Return(uUID, err)
+func (_c *Querier_CreateNewPrediction_Call) Return(prediction db.Prediction, err error) *Querier_CreateNewPrediction_Call {
+	_c.Call.Return(prediction, err)
 	return _c
 }
 
-func (_c *Querier_CreateNewPrediction_Call) RunAndReturn(run func(ctx context.Context, arg db.CreateNewPredictionParams) (uuid.UUID, error)) *Querier_CreateNewPrediction_Call {
+func (_c *Querier_CreateNewPrediction_Call) RunAndReturn(run func(ctx context.Context, arg db.CreateNewPredictionParams) (db.Prediction, error)) *Querier_CreateNewPrediction_Call {
 	_c.Call.Return(run)
 	return _c
 }

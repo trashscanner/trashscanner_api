@@ -151,6 +151,17 @@ var (
 		ExpiresAt: time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
 		Revoked:   true,
 	}
+
+	ScanID        = uuid.MustParse("a34d8ee6-fe5f-4795-ba7e-6e127ec2aa02")
+	ScanURL       = User1ID.String() + "/scans/" + ScanID.String()
+	PredictionID  = uuid.MustParse("00e0cc2f-47e0-4e0d-a0f5-401fe9f0f5d6")
+	NewPrediction = models.Prediction{
+		UserID:    User1ID,
+		TrashScan: ScanURL,
+		Status:    models.PredictionProcessingStatus,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
 )
 
 func stringPtr(s string) *string {

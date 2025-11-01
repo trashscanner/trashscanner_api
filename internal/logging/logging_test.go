@@ -18,9 +18,8 @@ import (
 
 func TestNewLogger(t *testing.T) {
 	tests := []struct {
-		name        string
-		cfg         config.Config
-		expectError bool
+		name string
+		cfg  config.Config
 	}{
 		{
 			name: "json format with debug level",
@@ -30,7 +29,6 @@ func TestNewLogger(t *testing.T) {
 					Format: "json",
 				},
 			},
-			expectError: false,
 		},
 		{
 			name: "text format with info level",
@@ -40,7 +38,6 @@ func TestNewLogger(t *testing.T) {
 					Format: "text",
 				},
 			},
-			expectError: false,
 		},
 		{
 			name: "invalid level defaults to info",
@@ -50,7 +47,6 @@ func TestNewLogger(t *testing.T) {
 					Format: "json",
 				},
 			},
-			expectError: false,
 		},
 		{
 			name: "default format (empty)",
@@ -60,18 +56,12 @@ func TestNewLogger(t *testing.T) {
 					Format: "",
 				},
 			},
-			expectError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			logger, err := NewLogger(tt.cfg)
-			if tt.expectError {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
+			logger := NewLogger(tt.cfg)
 			assert.NotNil(t, logger)
 			assert.NotNil(t, logger.Entry)
 		})
@@ -90,27 +80,13 @@ func TestNewLogger_WithFile(t *testing.T) {
 		},
 	}
 
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 	assert.NotNil(t, logger)
 
 	logger.Info("test message")
 
-	_, err = os.Stat(logFile)
+	_, err := os.Stat(logFile)
 	assert.NoError(t, err, "log file should be created")
-}
-
-func TestNewLogger_WithInvalidFile(t *testing.T) {
-	cfg := config.Config{
-		Log: config.LogConfig{
-			Level:  "info",
-			Format: "json",
-			File:   "/invalid/path/that/does/not/exist/test.log",
-		},
-	}
-
-	_, err := NewLogger(cfg)
-	assert.Error(t, err)
 }
 
 func TestLogger_WithComponent(t *testing.T) {
@@ -120,8 +96,7 @@ func TestLogger_WithComponent(t *testing.T) {
 			Format: "json",
 		},
 	}
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 
 	tests := []struct {
 		name      string
@@ -148,8 +123,7 @@ func TestLogger_WithTags(t *testing.T) {
 			Format: "json",
 		},
 	}
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 
 	t.Run("api tag", func(t *testing.T) {
 		l := logger.WithApiTag()
@@ -165,8 +139,7 @@ func TestLogger_WithField(t *testing.T) {
 			Format: "json",
 		},
 	}
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 
 	l := logger.WithField("test_key", "test_value")
 	assert.NotNil(t, l)
@@ -180,8 +153,7 @@ func TestLogger_WithContext_User(t *testing.T) {
 			Format: "json",
 		},
 	}
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 
 	userID := uuid.New()
 	user := models.User{
@@ -204,8 +176,7 @@ func TestLogger_WithContext_RequestID(t *testing.T) {
 			Format: "json",
 		},
 	}
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 
 	ctx := context.WithValue(context.Background(), utils.RequestIDKey, "test-request-id")
 	l := logger.WithContext(ctx)
@@ -221,8 +192,7 @@ func TestLogger_WithContext_PathAndMethod(t *testing.T) {
 			Format: "json",
 		},
 	}
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, utils.PathKey, "/api/v1/users")
@@ -242,8 +212,7 @@ func TestLogger_WithContext_AllFields(t *testing.T) {
 			Format: "json",
 		},
 	}
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 
 	userID := uuid.New()
 	user := models.User{
@@ -274,8 +243,7 @@ func TestLogger_WithContext_EmptyContext(t *testing.T) {
 			Format: "json",
 		},
 	}
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 
 	ctx := context.Background()
 	l := logger.WithContext(ctx)
@@ -292,8 +260,7 @@ func TestLogger_WithContext_IgnoresTimeAndRequestBody(t *testing.T) {
 			Format: "json",
 		},
 	}
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, utils.TimeKey, "some-time")
@@ -318,15 +285,14 @@ func TestLogger_LogOutput(t *testing.T) {
 		},
 	}
 
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 
 	logger.Logger.SetOutput(&buf)
 
 	logger.Info("test message")
 
 	var logEntry map[string]interface{}
-	err = json.Unmarshal(buf.Bytes(), &logEntry)
+	err := json.Unmarshal(buf.Bytes(), &logEntry)
 	require.NoError(t, err)
 
 	assert.Equal(t, "test message", logEntry["message"])
@@ -344,8 +310,7 @@ func TestLogger_DifferentLogLevels(t *testing.T) {
 		},
 	}
 
-	logger, err := NewLogger(cfg)
-	require.NoError(t, err)
+	logger := NewLogger(cfg)
 	logger.Logger.SetOutput(&buf)
 
 	logger.Debug("debug message")

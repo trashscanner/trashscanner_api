@@ -28,7 +28,7 @@ type Prediction struct {
 	UserID    uuid.UUID `json:"user_id"`
 	TrashScan string    `json:"trash_scan"`
 	Status    string    `json:"status"`
-	Result    *string   `json:"result"`
+	Result    []byte    `json:"result"`
 	Error     *string   `json:"error"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

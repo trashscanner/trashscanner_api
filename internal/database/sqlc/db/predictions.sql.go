@@ -19,7 +19,7 @@ WHERE id = $4
 
 type CompletePredictionParams struct {
 	Status string    `json:"status"`
-	Result *string   `json:"result"`
+	Result []byte    `json:"result"`
 	Error  *string   `json:"error"`
 	ID     uuid.UUID `json:"id"`
 }
@@ -41,7 +41,7 @@ INSERT INTO predictions (
     status
 ) VALUES (
     $1, $2, $3
-) RETURNING id
+) RETURNING id, user_id, trash_scan, status, result, error, created_at, updated_at
 `
 
 type CreateNewPredictionParams struct {
@@ -50,11 +50,20 @@ type CreateNewPredictionParams struct {
 	Status    string    `json:"status"`
 }
 
-func (q *Queries) CreateNewPrediction(ctx context.Context, arg CreateNewPredictionParams) (uuid.UUID, error) {
+func (q *Queries) CreateNewPrediction(ctx context.Context, arg CreateNewPredictionParams) (Prediction, error) {
 	row := q.db.QueryRow(ctx, createNewPrediction, arg.UserID, arg.TrashScan, arg.Status)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i Prediction
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.TrashScan,
+		&i.Status,
+		&i.Result,
+		&i.Error,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getPrediction = `-- name: GetPrediction :one
