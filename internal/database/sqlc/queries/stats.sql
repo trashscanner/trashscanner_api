@@ -1,10 +1,3 @@
--- name: CreateStats :one
-INSERT INTO stats (
-    user_id
-) VALUES (
-    $1
-) RETURNING id;
-
 -- name: GetStatsByUserID :one
 SELECT * FROM stats
 WHERE user_id = $1;

@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	mock "github.com/stretchr/testify/mock"
-	"github.com/trashscanner/trashscanner_api/internal/database/sqlc/db"
 	"github.com/trashscanner/trashscanner_api/internal/models"
+	"github.com/trashscanner/trashscanner_api/internal/store"
 )
 
 // NewStore creates a new instance of Store. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -360,7 +360,7 @@ func (_c *Store_DeleteUser_Call) RunAndReturn(run func(ctx context.Context, id u
 }
 
 // ExecTx provides a mock function for the type Store
-func (_mock *Store) ExecTx(ctx context.Context, fn func(db.Querier) error) error {
+func (_mock *Store) ExecTx(ctx context.Context, fn func(store.Store) error) error {
 	ret := _mock.Called(ctx, fn)
 
 	if len(ret) == 0 {
@@ -368,7 +368,7 @@ func (_mock *Store) ExecTx(ctx context.Context, fn func(db.Querier) error) error
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, func(db.Querier) error) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, func(store.Store) error) error); ok {
 		r0 = returnFunc(ctx, fn)
 	} else {
 		r0 = ret.Error(0)
@@ -383,20 +383,20 @@ type Store_ExecTx_Call struct {
 
 // ExecTx is a helper method to define mock.On call
 //   - ctx context.Context
-//   - fn func(db.Querier) error
+//   - fn func(store.Store) error
 func (_e *Store_Expecter) ExecTx(ctx interface{}, fn interface{}) *Store_ExecTx_Call {
 	return &Store_ExecTx_Call{Call: _e.mock.On("ExecTx", ctx, fn)}
 }
 
-func (_c *Store_ExecTx_Call) Run(run func(ctx context.Context, fn func(db.Querier) error)) *Store_ExecTx_Call {
+func (_c *Store_ExecTx_Call) Run(run func(ctx context.Context, fn func(store.Store) error)) *Store_ExecTx_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 func(db.Querier) error
+		var arg1 func(store.Store) error
 		if args[1] != nil {
-			arg1 = args[1].(func(db.Querier) error)
+			arg1 = args[1].(func(store.Store) error)
 		}
 		run(
 			arg0,
@@ -411,7 +411,7 @@ func (_c *Store_ExecTx_Call) Return(err error) *Store_ExecTx_Call {
 	return _c
 }
 
-func (_c *Store_ExecTx_Call) RunAndReturn(run func(ctx context.Context, fn func(db.Querier) error) error) *Store_ExecTx_Call {
+func (_c *Store_ExecTx_Call) RunAndReturn(run func(ctx context.Context, fn func(store.Store) error) error) *Store_ExecTx_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1328,19 +1328,19 @@ func (_c *Store_UpdateUserPass_Call) RunAndReturn(run func(ctx context.Context, 
 }
 
 // WithTx provides a mock function for the type Store
-func (_mock *Store) WithTx(tx pgx.Tx) db.Querier {
+func (_mock *Store) WithTx(tx pgx.Tx) store.Store {
 	ret := _mock.Called(tx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for WithTx")
 	}
 
-	var r0 db.Querier
-	if returnFunc, ok := ret.Get(0).(func(pgx.Tx) db.Querier); ok {
+	var r0 store.Store
+	if returnFunc, ok := ret.Get(0).(func(pgx.Tx) store.Store); ok {
 		r0 = returnFunc(tx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(db.Querier)
+			r0 = ret.Get(0).(store.Store)
 		}
 	}
 	return r0
@@ -1370,12 +1370,12 @@ func (_c *Store_WithTx_Call) Run(run func(tx pgx.Tx)) *Store_WithTx_Call {
 	return _c
 }
 
-func (_c *Store_WithTx_Call) Return(querier db.Querier) *Store_WithTx_Call {
-	_c.Call.Return(querier)
+func (_c *Store_WithTx_Call) Return(store1 store.Store) *Store_WithTx_Call {
+	_c.Call.Return(store1)
 	return _c
 }
 
-func (_c *Store_WithTx_Call) RunAndReturn(run func(tx pgx.Tx) db.Querier) *Store_WithTx_Call {
+func (_c *Store_WithTx_Call) RunAndReturn(run func(tx pgx.Tx) store.Store) *Store_WithTx_Call {
 	_c.Call.Return(run)
 	return _c
 }
