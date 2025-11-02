@@ -394,10 +394,12 @@ func (s *databaseTestSuite) TestGetStatsByUserID_NotFound() {
 
 func (s *databaseTestSuite) TestUpdateStats() {
 	userID := s.createTestUser("testUpdateStats")
+	stats, err := s.store.GetStatsByUserID(s.ctx, userID)
+	s.NoError(err)
 
 	// Stats are automatically created with the user via CTE
-	err := s.store.UpdateStats(s.ctx, db.UpdateStatsParams{
-		UserID:       userID,
+	err = s.store.UpdateStats(s.ctx, db.UpdateStatsParams{
+		ID:           stats.ID,
 		Status:       "eco_warrior",
 		Rating:       150,
 		FilesScanned: 25,
@@ -405,7 +407,7 @@ func (s *databaseTestSuite) TestUpdateStats() {
 	})
 	s.NoError(err)
 
-	stats, err := s.store.GetStatsByUserID(s.ctx, userID)
+	stats, err = s.store.GetStatsByUserID(s.ctx, userID)
 	s.NoError(err)
 	s.Equal("eco_warrior", stats.Status)
 	s.Equal(int32(150), stats.Rating)

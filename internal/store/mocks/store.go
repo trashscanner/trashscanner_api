@@ -137,16 +137,16 @@ func (_c *Store_Close_Call) RunAndReturn(run func()) *Store_Close_Call {
 }
 
 // CompletePrediction provides a mock function for the type Store
-func (_mock *Store) CompletePrediction(ctx context.Context, id uuid.UUID, result any) error {
-	ret := _mock.Called(ctx, id, result)
+func (_mock *Store) CompletePrediction(ctx context.Context, id uuid.UUID, result models.PredictionResult, err error) error {
+	ret := _mock.Called(ctx, id, result, err)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CompletePrediction")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, any) error); ok {
-		r0 = returnFunc(ctx, id, result)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, models.PredictionResult, error) error); ok {
+		r0 = returnFunc(ctx, id, result, err)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -161,12 +161,13 @@ type Store_CompletePrediction_Call struct {
 // CompletePrediction is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-//   - result any
-func (_e *Store_Expecter) CompletePrediction(ctx interface{}, id interface{}, result interface{}) *Store_CompletePrediction_Call {
-	return &Store_CompletePrediction_Call{Call: _e.mock.On("CompletePrediction", ctx, id, result)}
+//   - result models.PredictionResult
+//   - err error
+func (_e *Store_Expecter) CompletePrediction(ctx interface{}, id interface{}, result interface{}, err interface{}) *Store_CompletePrediction_Call {
+	return &Store_CompletePrediction_Call{Call: _e.mock.On("CompletePrediction", ctx, id, result, err)}
 }
 
-func (_c *Store_CompletePrediction_Call) Run(run func(ctx context.Context, id uuid.UUID, result any)) *Store_CompletePrediction_Call {
+func (_c *Store_CompletePrediction_Call) Run(run func(ctx context.Context, id uuid.UUID, result models.PredictionResult, err error)) *Store_CompletePrediction_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -176,25 +177,30 @@ func (_c *Store_CompletePrediction_Call) Run(run func(ctx context.Context, id uu
 		if args[1] != nil {
 			arg1 = args[1].(uuid.UUID)
 		}
-		var arg2 any
+		var arg2 models.PredictionResult
 		if args[2] != nil {
-			arg2 = args[2].(any)
+			arg2 = args[2].(models.PredictionResult)
+		}
+		var arg3 error
+		if args[3] != nil {
+			arg3 = args[3].(error)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *Store_CompletePrediction_Call) Return(err error) *Store_CompletePrediction_Call {
-	_c.Call.Return(err)
+func (_c *Store_CompletePrediction_Call) Return(err1 error) *Store_CompletePrediction_Call {
+	_c.Call.Return(err1)
 	return _c
 }
 
-func (_c *Store_CompletePrediction_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, result any) error) *Store_CompletePrediction_Call {
+func (_c *Store_CompletePrediction_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, result models.PredictionResult, err error) error) *Store_CompletePrediction_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1202,16 +1208,16 @@ func (_c *Store_UpdateAvatar_Call) RunAndReturn(run func(ctx context.Context, us
 }
 
 // UpdateStats provides a mock function for the type Store
-func (_mock *Store) UpdateStats(ctx context.Context, userID uuid.UUID, stat models.Stat) error {
-	ret := _mock.Called(ctx, userID, stat)
+func (_mock *Store) UpdateStats(ctx context.Context, stat *models.Stat) error {
+	ret := _mock.Called(ctx, stat)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateStats")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, models.Stat) error); ok {
-		r0 = returnFunc(ctx, userID, stat)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *models.Stat) error); ok {
+		r0 = returnFunc(ctx, stat)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1225,30 +1231,24 @@ type Store_UpdateStats_Call struct {
 
 // UpdateStats is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userID uuid.UUID
-//   - stat models.Stat
-func (_e *Store_Expecter) UpdateStats(ctx interface{}, userID interface{}, stat interface{}) *Store_UpdateStats_Call {
-	return &Store_UpdateStats_Call{Call: _e.mock.On("UpdateStats", ctx, userID, stat)}
+//   - stat *models.Stat
+func (_e *Store_Expecter) UpdateStats(ctx interface{}, stat interface{}) *Store_UpdateStats_Call {
+	return &Store_UpdateStats_Call{Call: _e.mock.On("UpdateStats", ctx, stat)}
 }
 
-func (_c *Store_UpdateStats_Call) Run(run func(ctx context.Context, userID uuid.UUID, stat models.Stat)) *Store_UpdateStats_Call {
+func (_c *Store_UpdateStats_Call) Run(run func(ctx context.Context, stat *models.Stat)) *Store_UpdateStats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 uuid.UUID
+		var arg1 *models.Stat
 		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
-		}
-		var arg2 models.Stat
-		if args[2] != nil {
-			arg2 = args[2].(models.Stat)
+			arg1 = args[1].(*models.Stat)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -1259,7 +1259,7 @@ func (_c *Store_UpdateStats_Call) Return(err error) *Store_UpdateStats_Call {
 	return _c
 }
 
-func (_c *Store_UpdateStats_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID, stat models.Stat) error) *Store_UpdateStats_Call {
+func (_c *Store_UpdateStats_Call) RunAndReturn(run func(ctx context.Context, stat *models.Stat) error) *Store_UpdateStats_Call {
 	_c.Call.Return(run)
 	return _c
 }

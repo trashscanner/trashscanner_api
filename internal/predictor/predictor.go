@@ -11,6 +11,7 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
 	"github.com/trashscanner/trashscanner_api/internal/logging"
 	"github.com/trashscanner/trashscanner_api/internal/models"
+	"github.com/trashscanner/trashscanner_api/internal/stats.go"
 	"github.com/trashscanner/trashscanner_api/internal/store"
 	"github.com/trashscanner/trashscanner_api/internal/utils"
 )
@@ -76,19 +77,24 @@ func (pr *Predictor) processPrediction(ctx context.Context, scanURL string, pred
 		optsHeader.Add("X-Request-ID", requestID)
 	}
 
-	var result any
 	resp, reqErr := pr.client.RequestPredict(ctx, scanURL, prediction.ID, optsHeader)
 	if reqErr != nil {
 		logger.Errorf("error while process prediction %s: %v", prediction.ID.String(), reqErr)
-		result = reqErr
+		prediction.Error = reqErr
 	} else {
 		logger.Debugf("result of process prediction %s: %v", prediction.ID.String(),
 			models.NewPredictionResult(resp.Probabilities))
-		result = models.NewPredictionResult(resp.Result)
+		prediction.Result = models.NewPredictionResult(resp.Result)
 	}
 
-	if storeErr := pr.store.CompletePrediction(ctx, prediction.ID, result); storeErr != nil {
-		logger.Errorf("error while complete prediction: %v", storeErr)
+	if completeErr := pr.store.ExecTx(ctx, func(s store.Store) error {
+		if err := s.CompletePrediction(ctx, prediction.ID, prediction.Result, prediction.Error); err != nil {
+			return err
+		}
+
+		return stats.UpdateStats(ctx, s, prediction)
+	}); completeErr != nil {
+		logger.Errorf("error while complete prediction %s: %v", prediction.ID.String(), completeErr)
 	}
 }
 

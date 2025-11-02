@@ -50,7 +50,7 @@ func TestCompletePrediction(t *testing.T) {
 			string(params.Result) == string(expectedJSON)
 	})).Return(nil).Once()
 
-	err := store.CompletePrediction(ctx, predictionID, result)
+	err := store.CompletePrediction(ctx, predictionID, result, nil)
 	assert.NoError(t, err)
 }
 
@@ -175,21 +175,8 @@ func TestCompletePrediction_WithError(t *testing.T) {
 		Status: models.PredictionFailedStatus.String(),
 	}).Return(nil).Once()
 
-	err := store.CompletePrediction(ctx, predictionID, resultErr)
+	err := store.CompletePrediction(ctx, predictionID, nil, resultErr)
 	assert.NoError(t, err)
-}
-
-func TestCompletePrediction_InvalidResultType(t *testing.T) {
-	ctx := context.Background()
-
-	mockQ := dbMock.NewQuerier(t)
-	store := &pgStore{q: mockQ}
-	predictionID := uuid.New()
-	invalidResult := 123
-
-	err := store.CompletePrediction(ctx, predictionID, invalidResult)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "invalid prediction result type")
 }
 
 func TestCompletePrediction_DatabaseError(t *testing.T) {
@@ -205,7 +192,7 @@ func TestCompletePrediction_DatabaseError(t *testing.T) {
 			params.Status == models.PredictionCompletedStatus.String()
 	})).Return(errors.New("connection refused")).Once()
 
-	err := store.CompletePrediction(ctx, predictionID, result)
+	err := store.CompletePrediction(ctx, predictionID, result, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "database error")
 }

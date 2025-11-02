@@ -36,9 +36,14 @@ var (
 
 	Stats1ID = uuid.MustParse("24ae379a-31a6-4b32-a6d7-f6cdd844f83c")
 	Stats1   = models.Stat{
-		ID:     Stats1ID,
-		Status: models.UserStatusEcoWarrior,
-		Rating: 1000,
+		ID:           Stats1ID,
+		Status:       models.UserStatusNatureHero,
+		Rating:       1100,
+		FilesScanned: 15,
+		TrashByTypes: map[string]int{
+			"plastic": 10,
+			"paper":   5,
+		},
 	}
 	Stats2ID = uuid.MustParse("34ae379a-31a6-4b32-a6d7-f6cdd844f84d")
 	Stats2   = models.Stat{
@@ -161,6 +166,12 @@ var (
 		Status:    models.PredictionProcessingStatus,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+	}
+	PredictionCompleted = models.Prediction{
+		UserID:    User1ID,
+		TrashScan: ScanURL,
+		Status:    models.PredictionCompletedStatus,
+		Result:    models.PredictionResult{models.TrashTypeMetal: 0.9},
 	}
 )
 

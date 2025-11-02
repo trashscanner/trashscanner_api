@@ -65,9 +65,7 @@ func (s *predictorTestSuite) TestSuccessPredict() {
 			Probabilities: map[uint8]float64{1: 0.9, 2: 0.1, 3: 0.0},
 		}, nil).Once()
 
-	s.mStore.EXPECT().
-		CompletePrediction(mock.Anything, predictionID, models.NewPredictionResult(map[uint8]float64{1: 0.9})).
-		Return(nil).Once()
+	s.mStore.EXPECT().ExecTx(mock.Anything, mock.Anything).Return(nil).Once()
 
 	result, err := s.predictor.Predict(s.ctx, testdata.ScanURL)
 	s.NoError(err)
@@ -94,9 +92,7 @@ func (s *predictorTestSuite) TestTooManyRequests() {
 				Result:        map[uint8]float64{1: 0.9},
 				Probabilities: map[uint8]float64{1: 0.9, 2: 0.1, 3: 0.0},
 			}, nil).Once()
-		s.mStore.EXPECT().
-			CompletePrediction(mock.Anything, prediction, models.NewPredictionResult(map[uint8]float64{1: 0.9})).
-			Return(nil).Once()
+		s.mStore.EXPECT().ExecTx(mock.Anything, mock.Anything).Return(nil).Once()
 
 		res, err := s.predictor.Predict(s.ctx, scanURL)
 		s.NoError(err)
@@ -128,9 +124,8 @@ func (s *predictorTestSuite) TestAlreadyProcessing() {
 			Result:        map[uint8]float64{1: 0.9},
 			Probabilities: map[uint8]float64{1: 0.9, 2: 0.1, 3: 0.0},
 		}, nil).Once()
-	s.mStore.EXPECT().
-		CompletePrediction(mock.Anything, prediction, models.NewPredictionResult(map[uint8]float64{1: 0.9})).
-		Return(nil).Once()
+
+	s.mStore.EXPECT().ExecTx(mock.Anything, mock.Anything).Return(nil).Once()
 
 	res, err := s.predictor.Predict(s.ctx, scanURL)
 	s.NoError(err)
