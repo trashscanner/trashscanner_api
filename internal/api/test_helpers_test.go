@@ -19,12 +19,13 @@ import (
 	storemocks "github.com/trashscanner/trashscanner_api/internal/store/mocks"
 )
 
-func newTestServer(t *testing.T) (*Server, *storemocks.Store, *authmocks.AuthManager, *filestoremocks.FileStore) {
+func newTestServer(t *testing.T) (*Server, *storemocks.Store, *authmocks.AuthManager, *filestoremocks.FileStore, *mockPredictor) {
 	t.Helper()
 
 	store := storemocks.NewStore(t)
 	authManager := authmocks.NewAuthManager(t)
 	fileStore := filestoremocks.NewFileStore(t)
+	predictor := newMockPredictor(t)
 	cfg := config.Config{Log: config.LogConfig{Level: "error", Format: "text"}}
 	logger := logging.NewLogger(cfg)
 
@@ -34,10 +35,11 @@ func newTestServer(t *testing.T) (*Server, *storemocks.Store, *authmocks.AuthMan
 		store:       store,
 		authManager: authManager,
 		fileStore:   fileStore,
+		predictor:   predictor,
 		logger:      logger,
 	}
 
-	return srv, store, authManager, fileStore
+	return srv, store, authManager, fileStore, predictor
 }
 
 // multipartFormData holds the created multipart form data

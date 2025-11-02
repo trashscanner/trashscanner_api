@@ -93,7 +93,7 @@ func (m *minioStore) UploadScan(ctx context.Context, userID string, file *models
 
 	uploadInfo, err := m.client.PutObject(
 		ctx, m.bucket,
-		fmt.Sprintf(scansPathTmpl, userID, file.Name),
+		fmt.Sprintf(scansPathTmpl, userID, file.ID.String()),
 		file.Entry, file.Size, minio.PutObjectOptions{},
 	)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/trashscanner/trashscanner_api/internal/config"
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
 	"github.com/trashscanner/trashscanner_api/internal/logging"
 	"github.com/trashscanner/trashscanner_api/internal/testdata"
@@ -44,14 +45,16 @@ type predictorClientTestSuite struct {
 
 func (s *predictorClientTestSuite) SetupTest() {
 	s.client = &predictorClient{
-		logger: &logging.Logger{},
+		logger: logging.NewLogger(config.Config{}),
 		c:      http.DefaultClient,
 		token:  "test-token",
 	}
 }
 
 func (s *predictorClientTestSuite) TearDownTest() {
-	s.testServer.Close()
+	if s.testServer != nil {
+		s.testServer.Close()
+	}
 }
 
 func TestPredictorClientTestSuite(t *testing.T) {
@@ -111,4 +114,87 @@ func (s *predictorClientTestSuite) TestRequestPredict() {
 		var notFoundErr *errlocal.ErrNotFound
 		s.ErrorAs(err, &notFoundErr)
 	})
+
+	s.Run("error bad request", func() {
+		s.setupTestServer(testErrorResponse, http.StatusBadRequest)
+
+		res, err := s.client.RequestPredict(ctx, url, testdata.PredictionID)
+		s.Nil(res)
+
+		var badRequestErr *errlocal.ErrBadRequest
+		s.ErrorAs(err, &badRequestErr)
+	})
+
+	s.Run("error forbidden", func() {
+		s.setupTestServer(testErrorResponse, http.StatusForbidden)
+
+		res, err := s.client.RequestPredict(ctx, url, testdata.PredictionID)
+		s.Nil(res)
+
+		var forbiddenErr *errlocal.ErrForbidden
+		s.ErrorAs(err, &forbiddenErr)
+	})
+
+	s.Run("error internal server error", func() {
+		s.setupTestServer(testErrorResponse, http.StatusInternalServerError)
+
+		res, err := s.client.RequestPredict(ctx, url, testdata.PredictionID)
+		s.Nil(res)
+
+		var internalErr *errlocal.ErrInternal
+		s.ErrorAs(err, &internalErr)
+	})
+
+	s.Run("with custom headers", func() {
+		s.testServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			s.Equal("test-token", r.Header.Get(tokenKey))
+			s.Equal("test-request-id", r.Header.Get("X-Request-ID"))
+			s.Equal("test-value", r.Header.Get("X-Custom-Header"))
+
+			w.WriteHeader(http.StatusAccepted)
+			w.Write(testSuccessPredictResponse)
+		}))
+		s.client.host = s.testServer.URL
+
+		headers := http.Header{}
+		headers.Add("X-Request-ID", "test-request-id")
+		headers.Add("X-Custom-Header", "test-value")
+
+		res, err := s.client.RequestPredict(ctx, url, testdata.PredictionID, headers)
+		s.NoError(err)
+		s.NotNil(res)
+	})
+}
+
+func (s *predictorClientTestSuite) TestNewPredictorClient() {
+	logger := logging.NewLogger(config.Config{})
+	cfg := config.PredictorConfig{
+		Host:  "http://test-host",
+		Token: "test-token",
+	}
+
+	client := newPredictorClient(cfg, logger)
+
+	s.NotNil(client)
+	s.Equal("http://test-host", client.host)
+	s.Equal("test-token", client.token)
+	s.NotNil(client.c)
+	s.Equal(predictorClientRequestTimeout, client.c.Timeout)
+	s.NotNil(client.logger)
+}
+
+func (s *predictorClientTestSuite) TestPredictRequestBodyReader() {
+	body := &predictRequestBody{
+		ScanURL:      "test/scan/url",
+		PredictionID: testdata.PredictionID.String(),
+	}
+
+	reader := body.Reader()
+	s.NotNil(reader)
+
+	var decoded predictRequestBody
+	err := json.NewDecoder(reader).Decode(&decoded)
+	s.NoError(err)
+	s.Equal(body.ScanURL, decoded.ScanURL)
+	s.Equal(body.PredictionID, decoded.PredictionID)
 }

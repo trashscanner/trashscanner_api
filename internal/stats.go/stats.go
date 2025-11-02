@@ -23,7 +23,7 @@ func UpdateStats(
 	currentStats.FilesScanned++
 	currentStats.LastScannedAt = time.Now()
 
-	if newPrediction.Error == nil {
+	if newPrediction.Error == "" {
 		currentStats.Rating += 10
 
 		for k := range newPrediction.Result {

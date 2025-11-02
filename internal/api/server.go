@@ -15,6 +15,7 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
 	"github.com/trashscanner/trashscanner_api/internal/filestore"
 	"github.com/trashscanner/trashscanner_api/internal/logging"
+	"github.com/trashscanner/trashscanner_api/internal/models"
 	"github.com/trashscanner/trashscanner_api/internal/store"
 )
 
@@ -31,7 +32,12 @@ type Server struct {
 	store       store.Store
 	fileStore   filestore.FileStore
 	authManager auth.AuthManager
+	predictor   predictor
 	logger      *logging.Logger
+}
+
+type predictor interface {
+	Predict(ctx context.Context, scanURL string) (*models.Prediction, error)
 }
 
 // @title TrashScanner API
@@ -57,6 +63,7 @@ func NewServer(
 	store store.Store,
 	fileStore filestore.FileStore,
 	authManager auth.AuthManager,
+	predictor predictor,
 	logger *logging.Logger,
 ) *Server {
 	r := mux.NewRouter()
@@ -72,6 +79,7 @@ func NewServer(
 		store:       store,
 		fileStore:   fileStore,
 		authManager: authManager,
+		predictor:   predictor,
 		logger:      logger.WithApiTag(),
 	}
 }

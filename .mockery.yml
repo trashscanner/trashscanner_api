@@ -51,3 +51,11 @@ packages:
           filename: 'predictor_client_mock.go'
           structname: 'mockPredictRequester'
           pkgname: 'predictor'
+  github.com/trashscanner/trashscanner_api/internal/api:
+    interfaces:
+      predictor:
+        config:
+          dir: 'internal/api/'
+          filename: 'predictor_mock.go'
+          structname: 'mockPredictor'
+          pkgname: 'api'

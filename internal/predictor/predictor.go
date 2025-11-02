@@ -63,7 +63,7 @@ func (pr *Predictor) Predict(ctx context.Context, scanURL string) (*models.Predi
 		return nil, err
 	}
 
-	go pr.processPrediction(ctx, scanURL, prediction)
+	go pr.processPrediction(utils.CopyContext(ctx), scanURL, prediction)
 
 	return prediction, nil
 }
@@ -80,7 +80,7 @@ func (pr *Predictor) processPrediction(ctx context.Context, scanURL string, pred
 	resp, reqErr := pr.client.RequestPredict(ctx, scanURL, prediction.ID, optsHeader)
 	if reqErr != nil {
 		logger.Errorf("error while process prediction %s: %v", prediction.ID.String(), reqErr)
-		prediction.Error = reqErr
+		prediction.Error = reqErr.Error()
 	} else {
 		logger.Debugf("result of process prediction %s: %v", prediction.ID.String(),
 			models.NewPredictionResult(resp.Probabilities))
@@ -88,7 +88,7 @@ func (pr *Predictor) processPrediction(ctx context.Context, scanURL string, pred
 	}
 
 	if completeErr := pr.store.ExecTx(ctx, func(s store.Store) error {
-		if err := s.CompletePrediction(ctx, prediction.ID, prediction.Result, prediction.Error); err != nil {
+		if err := s.CompletePrediction(ctx, prediction.ID, prediction.Result, reqErr); err != nil {
 			return err
 		}
 

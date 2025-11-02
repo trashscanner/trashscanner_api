@@ -16,6 +16,7 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/config"
 	"github.com/trashscanner/trashscanner_api/internal/database/sqlc/db"
 	"github.com/trashscanner/trashscanner_api/internal/models"
+	"github.com/trashscanner/trashscanner_api/internal/utils"
 )
 
 var testStore db.Querier
@@ -461,6 +462,24 @@ func (s *databaseTestSuite) TestCompletePrediction() {
 
 	s.Equal(resultInput, resultOutput)
 	s.Zero(updated.Error)
+}
+
+func (s *databaseTestSuite) TestCompletePrediction_WithError() {
+	userID := s.createTestUser("testCompletePrediction")
+	predictionID := s.createTestPrediction(userID)
+
+	err := s.store.CompletePrediction(s.ctx, db.CompletePredictionParams{
+		Status: "failed",
+		Error:  utils.Ptr("some error occurred"),
+		ID:     predictionID,
+	})
+	s.NoError(err)
+
+	updated, err := s.store.GetPrediction(s.ctx, predictionID)
+	s.NoError(err)
+	s.Equal("failed", updated.Status)
+	s.Equal("some error occurred", *updated.Error)
+	s.Zero(updated.Result)
 }
 
 func (s *databaseTestSuite) TestListPredictions() {

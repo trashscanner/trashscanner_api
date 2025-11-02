@@ -16,6 +16,10 @@ auth_manager:
   access_token_ttl: 15m
   refresh_token_ttl: 168h
   signing_algorithm: EdDSA
+predictor:
+  host: localhost
+  token: test_token
+  max_predictions_in_processing: 10
 server:
   host: localhost
   port: "8080"

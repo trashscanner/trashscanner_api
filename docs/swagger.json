@@ -69,6 +69,189 @@
                 }
             }
         },
+        "/predictions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of predictions for a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "predictions"
+                ],
+                "summary": "Get a list of predictions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Prediction result",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.PredictionResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrUnauthorized"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - user ID mismatch",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrForbidden"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrInternal"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Start a new prediction for a user",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "predictions"
+                ],
+                "summary": "Start a new prediction",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "File to upload",
+                        "name": "scan",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Prediction result",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PredictionResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrUnauthorized"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - user ID mismatch",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrForbidden"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrNotFound"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrInternal"
+                        }
+                    }
+                }
+            }
+        },
+        "/predictions/{PredictionID}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a prediction by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "predictions"
+                ],
+                "summary": "Get a prediction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Prediction ID UUID format",
+                        "name": "PredictionID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Prediction result",
+                        "schema": {
+                            "$ref": "#/definitions/dto.PredictionResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrUnauthorized"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - user ID mismatch",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrForbidden"
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrNotFound"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrInternal"
+                        }
+                    }
+                }
+            }
+        },
         "/refresh": {
             "post": {
                 "description": "Get new access token using refresh token",
@@ -451,11 +634,8 @@
                 ],
                 "summary": "Logout user",
                 "responses": {
-                    "200": {
-                        "description": "User logged out successfully",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UserResponse"
-                        }
+                    "204": {
+                        "description": "User logged out successfully"
                     },
                     "401": {
                         "description": "Unauthorized",
@@ -553,6 +733,33 @@
                     "type": "string",
                     "maxLength": 64,
                     "minLength": 8
+                }
+            }
+        },
+        "dto.PredictionResponse": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "error": {},
+                "id": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/models.PredictionResult"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.PredictionStatus"
+                },
+                "trashScan": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "userID": {
+                    "type": "string"
                 }
             }
         },
@@ -666,6 +873,26 @@
                 }
             }
         },
+        "models.PredictionResult": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "number",
+                "format": "float64"
+            }
+        },
+        "models.PredictionStatus": {
+            "type": "string",
+            "enum": [
+                "processing",
+                "completed",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "PredictionProcessingStatus",
+                "PredictionCompletedStatus",
+                "PredictionFailedStatus"
+            ]
+        },
         "models.Stat": {
             "type": "object",
             "properties": {
@@ -715,26 +942,26 @@
                 "eco_legend"
             ],
             "x-enum-comments": {
-                "UserStatusEarthDefend": "Защитник Земли",
-                "UserStatusEcoChampion": "Эко-чемпион",
-                "UserStatusEcoLegend": "Эко-легенда",
-                "UserStatusEcoScout": "Эко-разведчик",
-                "UserStatusEcoWarrior": "Эко-воин",
-                "UserStatusGreenGuard": "Зеленый страж",
-                "UserStatusNatureHero": "Герой природы",
-                "UserStatusNewbie": "Новичок",
-                "UserStatusPlanetGuard": "Хранитель планеты"
+                "UserStatusEarthDefend": "Защитник Земли 1500+",
+                "UserStatusEcoChampion": "Эко-чемпион 3000+",
+                "UserStatusEcoLegend": "Эко-легенда 10000+",
+                "UserStatusEcoScout": "Эко-разведчик 100+",
+                "UserStatusEcoWarrior": "Эко-воин 500+",
+                "UserStatusGreenGuard": "Зеленый страж 300+",
+                "UserStatusNatureHero": "Герой природы 1000+",
+                "UserStatusNewbie": "Новичок 0",
+                "UserStatusPlanetGuard": "Хранитель планеты 5000+"
             },
             "x-enum-descriptions": [
-                "Новичок",
-                "Эко-разведчик",
-                "Зеленый страж",
-                "Эко-воин",
-                "Герой природы",
-                "Защитник Земли",
-                "Эко-чемпион",
-                "Хранитель планеты",
-                "Эко-легенда"
+                "Новичок 0",
+                "Эко-разведчик 100+",
+                "Зеленый страж 300+",
+                "Эко-воин 500+",
+                "Герой природы 1000+",
+                "Защитник Земли 1500+",
+                "Эко-чемпион 3000+",
+                "Хранитель планеты 5000+",
+                "Эко-легенда 10000+"
             ],
             "x-enum-varnames": [
                 "UserStatusNewbie",

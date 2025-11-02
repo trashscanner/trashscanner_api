@@ -16,3 +16,7 @@ filestore:
   secret_key: minioadmin
   bucket: trashscanner-images
   use_ssl: false
+predictor:
+  host: 10.10.10.10
+  token: token
+  max_predictions_in_processing: 10
