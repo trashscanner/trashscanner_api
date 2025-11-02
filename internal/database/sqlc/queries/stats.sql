@@ -12,4 +12,4 @@ SET
     achievements = $5,
     trash_by_types = $6,
     updated_at = now()
-WHERE user_id = $7;
+WHERE id = $7;

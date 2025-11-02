@@ -21,7 +21,7 @@ const (
 
 type Store interface {
 	StartPrediction(ctx context.Context, userID uuid.UUID, scanURL string) (*models.Prediction, error)
-	CompletePrediction(ctx context.Context, id uuid.UUID, result any) error
+	CompletePrediction(ctx context.Context, id uuid.UUID, result models.PredictionResult, err error) error
 	GetPrediction(ctx context.Context, id uuid.UUID) (*models.Prediction, error)
 	GetPredictionsByUserID(ctx context.Context, userID uuid.UUID, offset, limit int) ([]*models.Prediction, error)
 
@@ -37,7 +37,7 @@ type Store interface {
 	RevokeRefreshToken(ctx context.Context, tokenHash string) error
 	RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error
 
-	UpdateStats(ctx context.Context, userID uuid.UUID, stat models.Stat) error
+	UpdateStats(ctx context.Context, stat *models.Stat) error
 
 	InsertLoginHistory(ctx context.Context, loginHistory *models.LoginHistory) error
 	GetLoginHistory(ctx context.Context, userID uuid.UUID) ([]models.LoginHistory, error)

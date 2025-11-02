@@ -5,13 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"reflect"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/trashscanner/trashscanner_api/internal/database/sqlc/db"
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
 	"github.com/trashscanner/trashscanner_api/internal/models"
+	"github.com/trashscanner/trashscanner_api/internal/utils"
 )
 
 func (s *pgStore) StartPrediction(ctx context.Context, userID uuid.UUID, scanURL string) (*models.Prediction, error) {
@@ -46,27 +46,26 @@ func (s *pgStore) StartPrediction(ctx context.Context, userID uuid.UUID, scanURL
 }
 
 // result should be error or models.PredictionResult
-func (s *pgStore) CompletePrediction(ctx context.Context, id uuid.UUID, result any) error {
+func (s *pgStore) CompletePrediction(
+	ctx context.Context,
+	id uuid.UUID,
+	result models.PredictionResult,
+	err error,
+) error {
 	ctx, cancel := context.WithTimeout(ctx, connTimeout)
 	defer cancel()
 
 	params := db.CompletePredictionParams{ID: id}
-
-	switch res := result.(type) {
-	case error:
-		errString := res.Error()
-		params.Error = &errString
+	if err != nil {
+		params.Error = utils.Ptr(err.Error())
 		params.Status = models.PredictionFailedStatus.String()
-	case models.PredictionResult:
-		raw, err := json.Marshal(res)
+	} else {
+		raw, err := json.Marshal(result)
 		if err != nil {
 			return errlocal.NewErrInternal("failed to marshal prediction result", err.Error(), nil)
 		}
 		params.Result = raw
 		params.Status = models.PredictionCompletedStatus.String()
-	default:
-		return errlocal.NewErrInternal("invalid prediction result type", "",
-			map[string]any{"type": reflect.TypeOf(result).String()})
 	}
 
 	if dbErr := s.q.CompletePrediction(ctx, params); dbErr != nil {

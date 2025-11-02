@@ -44,7 +44,7 @@ SET
     achievements = $5,
     trash_by_types = $6,
     updated_at = now()
-WHERE user_id = $7
+WHERE id = $7
 `
 
 type UpdateStatsParams struct {
@@ -54,7 +54,7 @@ type UpdateStatsParams struct {
 	TotalWeight  float64   `json:"total_weight"`
 	Achievements []byte    `json:"achievements"`
 	TrashByTypes []byte    `json:"trash_by_types"`
-	UserID       uuid.UUID `json:"user_id"`
+	ID           uuid.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateStats(ctx context.Context, arg UpdateStatsParams) error {
@@ -65,7 +65,7 @@ func (q *Queries) UpdateStats(ctx context.Context, arg UpdateStatsParams) error 
 		arg.TotalWeight,
 		arg.Achievements,
 		arg.TrashByTypes,
-		arg.UserID,
+		arg.ID,
 	)
 	return err
 }

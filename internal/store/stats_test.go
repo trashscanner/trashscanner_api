@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,16 +26,19 @@ func TestUpdateStats(t *testing.T) {
 		stats.Status = "Eco Hero"
 		stats.FilesScanned = 42
 		stats.TotalWeight = 123.45
+		stats.TrashByTypes = map[string]int{"plastic": 10, "metal": 5}
+		rawTrashByTypes, _ := json.Marshal(stats.TrashByTypes)
 
 		mockQ.EXPECT().UpdateStats(mock.Anything, db.UpdateStatsParams{
-			UserID:       user.ID,
+			ID:           stats.ID,
 			Status:       string(stats.Status),
 			Rating:       int32(stats.Rating),
 			FilesScanned: int32(stats.FilesScanned),
 			TotalWeight:  float64(stats.TotalWeight),
+			TrashByTypes: rawTrashByTypes,
 		}).Return(nil).Once()
 
-		assert.NoError(t, store.UpdateStats(ctx, user.ID, stats))
+		assert.NoError(t, store.UpdateStats(ctx, &stats))
 	})
 
 	t.Run("database error", func(t *testing.T) {
@@ -50,7 +54,7 @@ func TestUpdateStats(t *testing.T) {
 			Return(dbErr).
 			Once()
 
-		err := store.UpdateStats(ctx, testdata.User1ID, stats)
+		err := store.UpdateStats(ctx, &stats)
 
 		assert.Error(t, err)
 		var internalErr *errlocal.ErrInternal

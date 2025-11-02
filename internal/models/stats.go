@@ -10,15 +10,15 @@ import (
 type UserStatus string
 
 const (
-	UserStatusNewbie      UserStatus = "newbie"          // Новичок
-	UserStatusEcoScout    UserStatus = "eco_scout"       // Эко-разведчик
-	UserStatusGreenGuard  UserStatus = "green_guard"     // Зеленый страж
-	UserStatusEcoWarrior  UserStatus = "eco_warrior"     // Эко-воин
-	UserStatusNatureHero  UserStatus = "nature_hero"     // Герой природы
-	UserStatusEarthDefend UserStatus = "earth_defender"  // Защитник Земли
-	UserStatusEcoChampion UserStatus = "eco_champion"    // Эко-чемпион
-	UserStatusPlanetGuard UserStatus = "planet_guardian" // Хранитель планеты
-	UserStatusEcoLegend   UserStatus = "eco_legend"      // Эко-легенда
+	UserStatusNewbie      UserStatus = "newbie"          // Новичок 0
+	UserStatusEcoScout    UserStatus = "eco_scout"       // Эко-разведчик 100+
+	UserStatusGreenGuard  UserStatus = "green_guard"     // Зеленый страж 300+
+	UserStatusEcoWarrior  UserStatus = "eco_warrior"     // Эко-воин 500+
+	UserStatusNatureHero  UserStatus = "nature_hero"     // Герой природы 1000+
+	UserStatusEarthDefend UserStatus = "earth_defender"  // Защитник Земли 1500+
+	UserStatusEcoChampion UserStatus = "eco_champion"    // Эко-чемпион 3000+
+	UserStatusPlanetGuard UserStatus = "planet_guardian" // Хранитель планеты 5000+
+	UserStatusEcoLegend   UserStatus = "eco_legend"      // Эко-легенда 10000+
 )
 
 func (s UserStatus) Valid() bool {
@@ -31,37 +31,17 @@ func (s UserStatus) Valid() bool {
 	return false
 }
 
-type TrashKind string
-
-const (
-	TrashKindPlastic TrashKind = "plastic"
-	TrashKindPaper   TrashKind = "paper"
-	TrashKindMetal   TrashKind = "metal"
-	TrashKindGlass   TrashKind = "glass"
-	TrashKindOrganic TrashKind = "organic"
-	TrashKindOther   TrashKind = "other"
-)
-
-func (k TrashKind) Valid() bool {
-	switch k {
-	case TrashKindPlastic, TrashKindPaper, TrashKindMetal,
-		TrashKindGlass, TrashKindOrganic, TrashKindOther:
-		return true
-	}
-	return false
-}
-
 type Stat struct {
-	ID            uuid.UUID         `json:"id"`
-	Status        UserStatus        `json:"status"`
-	Rating        int               `json:"rating"`
-	FilesScanned  int               `json:"files_scanned"`
-	TotalWeight   float64           `json:"total_weight"`
-	LastScannedAt time.Time         `json:"last_scanned_at,omitempty"`
-	Achievements  []Achievement     `json:"-"`
-	TrashByTypes  map[TrashKind]int `json:"trash_by_types"`
-	CreatedAt     time.Time         `json:"created_at"`
-	UpdatedAt     time.Time         `json:"updated_at"`
+	ID            uuid.UUID      `json:"id"`
+	Status        UserStatus     `json:"status"`
+	Rating        int            `json:"rating"`
+	FilesScanned  int            `json:"files_scanned"`
+	TotalWeight   float64        `json:"total_weight"`
+	LastScannedAt time.Time      `json:"last_scanned_at,omitempty"`
+	Achievements  []Achievement  `json:"-"`
+	TrashByTypes  map[string]int `json:"trash_by_types"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
 func (s *Stat) Model(stat db.Stat) {
