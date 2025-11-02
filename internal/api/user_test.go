@@ -21,7 +21,7 @@ import (
 
 func TestAuthMiddleware(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		server, _, authMock, _ := newTestServer(t)
+		server, _, authMock, _, _ := newTestServer(t)
 
 		token := "access.token"
 		claims := &auth.Claims{UserID: testdata.User1.ID.String(), Login: testdata.User1.Login}
@@ -53,7 +53,7 @@ func TestAuthMiddleware(t *testing.T) {
 	})
 
 	t.Run("missing cookie", func(t *testing.T) {
-		server, _, _, _ := newTestServer(t)
+		server, _, _, _, _ := newTestServer(t)
 
 		handler := server.authMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 			t.Fatal("should not be called")
@@ -68,7 +68,7 @@ func TestAuthMiddleware(t *testing.T) {
 	})
 
 	t.Run("invalid token", func(t *testing.T) {
-		server, _, authMock, _ := newTestServer(t)
+		server, _, authMock, _, _ := newTestServer(t)
 
 		token := "bad.token"
 		authMock.EXPECT().
@@ -94,7 +94,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 func TestUserMiddleware(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		server, storeMock, _, _ := newTestServer(t)
+		server, storeMock, _, _, _ := newTestServer(t)
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+user.ID.String(), nil)
@@ -120,7 +120,7 @@ func TestUserMiddleware(t *testing.T) {
 	})
 
 	t.Run("user not found", func(t *testing.T) {
-		server, storeMock, _, _ := newTestServer(t)
+		server, storeMock, _, _, _ := newTestServer(t)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+testdata.User1.ID.String(), nil)
 		req = req.WithContext(utils.SetUser(req.Context(), &models.User{ID: testdata.User1.ID, Login: testdata.User1.Login}))
@@ -140,7 +140,7 @@ func TestUserMiddleware(t *testing.T) {
 	})
 
 	t.Run("internal error", func(t *testing.T) {
-		server, storeMock, _, _ := newTestServer(t)
+		server, storeMock, _, _, _ := newTestServer(t)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+testdata.User1.ID.String(), nil)
 		req = req.WithContext(utils.SetUser(req.Context(), &models.User{ID: testdata.User1.ID, Login: testdata.User1.Login}))
@@ -161,7 +161,7 @@ func TestUserMiddleware(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
-	server, _, _, _ := newTestServer(t)
+	server, _, _, _, _ := newTestServer(t)
 
 	user := testdata.User1
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/"+user.ID.String(), nil)
@@ -179,7 +179,7 @@ func TestGetUser(t *testing.T) {
 
 func TestDeleteUser(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		server, storeMock, _, _ := newTestServer(t)
+		server, storeMock, _, _, _ := newTestServer(t)
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/users/me", nil)
@@ -196,7 +196,7 @@ func TestDeleteUser(t *testing.T) {
 	})
 
 	t.Run("delete error", func(t *testing.T) {
-		server, storeMock, _, _ := newTestServer(t)
+		server, storeMock, _, _, _ := newTestServer(t)
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/users/me", nil)
@@ -215,7 +215,7 @@ func TestDeleteUser(t *testing.T) {
 
 func TestChangePassword(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		server, storeMock, _, _ := newTestServer(t)
+		server, storeMock, _, _, _ := newTestServer(t)
 
 		oldPassword := "oldpass123"
 		hashedOldPassword, _ := utils.HashPass(oldPassword)
@@ -238,7 +238,7 @@ func TestChangePassword(t *testing.T) {
 	})
 
 	t.Run("invalid body", func(t *testing.T) {
-		server, _, _, _ := newTestServer(t)
+		server, _, _, _, _ := newTestServer(t)
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me/change-password",
@@ -252,7 +252,7 @@ func TestChangePassword(t *testing.T) {
 	})
 
 	t.Run("old password mismatch", func(t *testing.T) {
-		server, _, _, _ := newTestServer(t)
+		server, _, _, _, _ := newTestServer(t)
 
 		oldPassword := "correctpass"
 		hashedOldPassword, _ := utils.HashPass(oldPassword)
@@ -271,7 +271,7 @@ func TestChangePassword(t *testing.T) {
 	})
 
 	t.Run("update error", func(t *testing.T) {
-		server, storeMock, _, _ := newTestServer(t)
+		server, storeMock, _, _, _ := newTestServer(t)
 
 		oldPassword := "oldpass123"
 		hashedOldPassword, _ := utils.HashPass(oldPassword)
@@ -296,7 +296,7 @@ func TestChangePassword(t *testing.T) {
 
 func TestLogout(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		server, _, authMock, _ := newTestServer(t)
+		server, _, authMock, _, _ := newTestServer(t)
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/logout", nil)
@@ -313,7 +313,7 @@ func TestLogout(t *testing.T) {
 	})
 
 	t.Run("revoke tokens error", func(t *testing.T) {
-		server, _, authMock, _ := newTestServer(t)
+		server, _, authMock, _, _ := newTestServer(t)
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/logout", nil)
@@ -332,7 +332,7 @@ func TestLogout(t *testing.T) {
 
 func TestSetAvatar(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		server, storeMock, _, fileStoreMock := newTestServer(t)
+		server, storeMock, _, fileStoreMock, _ := newTestServer(t)
 
 		// Create multipart form with valid JPEG avatar
 		body := createMultipartFormWithAvatar(t, "test_avatar.jpg", "image/jpeg", []byte("fake jpeg data"))
@@ -372,7 +372,7 @@ func TestSetAvatar(t *testing.T) {
 	})
 
 	t.Run("invalid multipart form", func(t *testing.T) {
-		server, _, _, _ := newTestServer(t)
+		server, _, _, _, _ := newTestServer(t)
 
 		user := testdata.User1
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/users/me/avatar", strings.NewReader("invalid data"))
@@ -386,7 +386,7 @@ func TestSetAvatar(t *testing.T) {
 	})
 
 	t.Run("missing avatar field", func(t *testing.T) {
-		server, _, _, _ := newTestServer(t)
+		server, _, _, _, _ := newTestServer(t)
 
 		body := createMultipartFormWithField(t, "wrong_field", "test.jpg", "image/jpeg", []byte("data"))
 
@@ -402,7 +402,7 @@ func TestSetAvatar(t *testing.T) {
 	})
 
 	t.Run("unsupported file type", func(t *testing.T) {
-		server, _, _, _ := newTestServer(t)
+		server, _, _, _, _ := newTestServer(t)
 
 		body := createMultipartFormWithAvatar(t, "test.pdf", "application/pdf", []byte("fake pdf"))
 
@@ -418,7 +418,7 @@ func TestSetAvatar(t *testing.T) {
 	})
 
 	t.Run("file too large", func(t *testing.T) {
-		server, _, _, _ := newTestServer(t)
+		server, _, _, _, _ := newTestServer(t)
 
 		largeData := make([]byte, 11*1024*1024) // 11MB
 		body := createMultipartFormWithAvatar(t, "huge.jpg", "image/jpeg", largeData)
@@ -435,7 +435,7 @@ func TestSetAvatar(t *testing.T) {
 	})
 
 	t.Run("filestore error", func(t *testing.T) {
-		server, _, _, fileStoreMock := newTestServer(t)
+		server, _, _, fileStoreMock, _ := newTestServer(t)
 
 		body := createMultipartFormWithAvatar(t, "test.jpg", "image/jpeg", []byte("fake jpeg"))
 
@@ -455,7 +455,7 @@ func TestSetAvatar(t *testing.T) {
 	})
 
 	t.Run("store update error", func(t *testing.T) {
-		server, storeMock, _, fileStoreMock := newTestServer(t)
+		server, storeMock, _, fileStoreMock, _ := newTestServer(t)
 
 		body := createMultipartFormWithAvatar(t, "test.jpg", "image/jpeg", []byte("fake jpeg"))
 
@@ -486,7 +486,7 @@ func TestSetAvatar(t *testing.T) {
 
 func TestDeleteAvatar(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		server, storeMock, _, fileStoreMock := newTestServer(t)
+		server, storeMock, _, fileStoreMock, _ := newTestServer(t)
 
 		avatarURL := "http://localhost:9000/bucket/user-id/avatars/test.jpg"
 		user := testdata.User1
@@ -512,7 +512,7 @@ func TestDeleteAvatar(t *testing.T) {
 	})
 
 	t.Run("no avatar to delete", func(t *testing.T) {
-		server, _, _, _ := newTestServer(t)
+		server, _, _, _, _ := newTestServer(t)
 
 		user := testdata.User1
 		user.Avatar = nil
@@ -527,7 +527,7 @@ func TestDeleteAvatar(t *testing.T) {
 	})
 
 	t.Run("filestore delete error", func(t *testing.T) {
-		server, _, _, fileStoreMock := newTestServer(t)
+		server, _, _, fileStoreMock, _ := newTestServer(t)
 
 		avatarURL := "http://localhost:9000/bucket/user-id/avatars/test.jpg"
 		user := testdata.User1
@@ -547,7 +547,7 @@ func TestDeleteAvatar(t *testing.T) {
 	})
 
 	t.Run("store update error", func(t *testing.T) {
-		server, storeMock, _, fileStoreMock := newTestServer(t)
+		server, storeMock, _, fileStoreMock, _ := newTestServer(t)
 
 		avatarURL := "http://localhost:9000/bucket/user-id/avatars/test.jpg"
 		user := testdata.User1

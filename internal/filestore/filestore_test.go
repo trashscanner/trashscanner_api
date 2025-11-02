@@ -285,9 +285,11 @@ func TestUploadScan(t *testing.T) {
 		require.NoError(t, err)
 
 		userID := uuid.New().String()
+		scanID := uuid.New()
 		scanContent := []byte("fake scan image content")
 		file := models.File{
 			Name:  "trash_photo.jpg",
+			ID:    scanID,
 			Size:  int64(len(scanContent)),
 			Entry: io.NopCloser(bytes.NewReader(scanContent)),
 		}
@@ -297,8 +299,10 @@ func TestUploadScan(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.NotEmpty(t, scanPath)
-		assert.Contains(t, scanPath, userID)
-		assert.Contains(t, scanPath, "scans")
+
+		// Проверяем, что путь содержит ID файла, а не имя
+		expectedPath := fmt.Sprintf("%s/scans/%s", userID, scanID.String())
+		assert.Equal(t, expectedPath, scanPath)
 
 		minioStore := store.(*minioStore)
 		obj, err := minioStore.client.GetObject(ctx, testBucket, scanPath, minio.GetObjectOptions{})
@@ -322,8 +326,10 @@ func TestUploadScan(t *testing.T) {
 
 		scanPaths := make([]string, 0, 3)
 		for i := 0; i < 3; i++ {
+			scanID := uuid.New()
 			content := []byte(fmt.Sprintf("scan content %d", i))
 			file := models.File{
+				ID:    scanID,
 				Name:  fmt.Sprintf("scan_%d.jpg", i),
 				Size:  int64(len(content)),
 				Entry: io.NopCloser(bytes.NewReader(content)),
@@ -332,9 +338,14 @@ func TestUploadScan(t *testing.T) {
 			scanPath, err := store.UploadScan(ctx, userID, &file)
 			require.NoError(t, err)
 			scanPaths = append(scanPaths, scanPath)
+
+			// Проверяем, что путь содержит ID файла
+			expectedPath := fmt.Sprintf("%s/scans/%s", userID, scanID.String())
+			assert.Equal(t, expectedPath, scanPath)
 		}
 
 		assert.Len(t, scanPaths, 3)
+		// Проверяем, что все пути уникальны
 		for i := 0; i < 3; i++ {
 			for j := i + 1; j < 3; j++ {
 				assert.NotEqual(t, scanPaths[i], scanPaths[j])
@@ -366,6 +377,7 @@ func TestUploadScan(t *testing.T) {
 
 		errorReader := &errorReader{err: fmt.Errorf("read error")}
 		file := models.File{
+			ID:    uuid.New(),
 			Name:  "scan.jpg",
 			Size:  100,
 			Entry: errorReader,
@@ -407,8 +419,10 @@ func TestFileStoreIntegration(t *testing.T) {
 		scanCount := 5
 		scanPaths := make([]string, 0, scanCount)
 		for i := 0; i < scanCount; i++ {
+			scanID := uuid.New()
 			content := []byte(fmt.Sprintf("trash scan %d", i))
 			scanFile := models.File{
+				ID:    scanID,
 				Name:  fmt.Sprintf("trash_%d.jpg", i),
 				Size:  int64(len(content)),
 				Entry: io.NopCloser(bytes.NewReader(content)),
@@ -524,6 +538,7 @@ func BenchmarkUploadScan(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		file := models.File{
+			ID:    uuid.New(),
 			Name:  fmt.Sprintf("scan_%d.jpg", i),
 			Size:  int64(len(scanContent)),
 			Entry: io.NopCloser(bytes.NewReader(scanContent)),

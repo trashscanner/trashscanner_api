@@ -24,7 +24,7 @@ import (
 
 func TestLoginMiddleware(t *testing.T) {
 	t.Run("invalid body", func(t *testing.T) {
-		server, _, _, _ := newTestServer(t)
+		server, _, _, _, _ := newTestServer(t)
 		body := loadJSONFixture(t, "login_empty_fields.json")
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewReader(body))
 		rr := httptest.NewRecorder()
@@ -45,7 +45,7 @@ func TestLoginMiddleware(t *testing.T) {
 	})
 
 	t.Run("user not found", func(t *testing.T) {
-		server, storeMock, _, _ := newTestServer(t)
+		server, storeMock, _, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewReader(body))
@@ -77,7 +77,7 @@ func TestLoginMiddleware(t *testing.T) {
 	})
 
 	t.Run("user exists", func(t *testing.T) {
-		server, storeMock, _, _ := newTestServer(t)
+		server, storeMock, _, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/login", bytes.NewReader(body))
@@ -109,7 +109,7 @@ func TestLoginMiddleware(t *testing.T) {
 	})
 
 	t.Run("store error", func(t *testing.T) {
-		server, storeMock, _, _ := newTestServer(t)
+		server, storeMock, _, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewReader(body))
@@ -133,7 +133,7 @@ func TestLoginMiddleware(t *testing.T) {
 
 func TestLoginHandler(t *testing.T) {
 	t.Run("creates new user", func(t *testing.T) {
-		server, storeMock, authMock, _ := newTestServer(t)
+		server, storeMock, authMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.LoginUserRequest
@@ -206,7 +206,7 @@ func TestLoginHandler(t *testing.T) {
 	})
 
 	t.Run("existing user success", func(t *testing.T) {
-		server, storeMock, authMock, _ := newTestServer(t)
+		server, storeMock, authMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.LoginUserRequest
@@ -251,7 +251,7 @@ func TestLoginHandler(t *testing.T) {
 	})
 
 	t.Run("invalid password", func(t *testing.T) {
-		server, storeMock, authMock, _ := newTestServer(t)
+		server, storeMock, authMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_invalid_credentials.json")
 		var authReq dto.LoginUserRequest
@@ -287,7 +287,7 @@ func TestLoginHandler(t *testing.T) {
 	})
 
 	t.Run("create user error", func(t *testing.T) {
-		server, storeMock, authMock, _ := newTestServer(t)
+		server, storeMock, authMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.LoginUserRequest
@@ -317,7 +317,7 @@ func TestLoginHandler(t *testing.T) {
 	})
 
 	t.Run("token creation error", func(t *testing.T) {
-		server, storeMock, authMock, _ := newTestServer(t)
+		server, storeMock, authMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.LoginUserRequest
@@ -355,7 +355,7 @@ func TestLoginHandler(t *testing.T) {
 
 func TestRegisterHandler(t *testing.T) {
 	t.Run("success - creates new user with all fields", func(t *testing.T) {
-		server, storeMock, authMock, _ := newTestServer(t)
+		server, storeMock, authMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.LoginUserRequest
@@ -430,7 +430,7 @@ func TestRegisterHandler(t *testing.T) {
 	})
 
 	t.Run("error - user already exists", func(t *testing.T) {
-		server, _, authMock, _ := newTestServer(t)
+		server, _, authMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.LoginUserRequest
@@ -456,7 +456,7 @@ func TestRegisterHandler(t *testing.T) {
 	})
 
 	t.Run("error - name is required", func(t *testing.T) {
-		server, storeMock, authMock, _ := newTestServer(t)
+		server, storeMock, authMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.LoginUserRequest
@@ -482,7 +482,7 @@ func TestRegisterHandler(t *testing.T) {
 	})
 
 	t.Run("error - create user fails", func(t *testing.T) {
-		server, storeMock, authMock, _ := newTestServer(t)
+		server, storeMock, authMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.LoginUserRequest
@@ -511,7 +511,7 @@ func TestRegisterHandler(t *testing.T) {
 	})
 
 	t.Run("error - token creation fails", func(t *testing.T) {
-		server, storeMock, authMock, _ := newTestServer(t)
+		server, storeMock, authMock, _, _ := newTestServer(t)
 
 		body := loadJSONFixture(t, "login_valid.json")
 		var authReq dto.LoginUserRequest
@@ -560,7 +560,7 @@ func TestRegisterHandler(t *testing.T) {
 
 func TestRefreshHandler(t *testing.T) {
 	t.Run("success - refresh tokens via cookie", func(t *testing.T) {
-		server, _, authMock, _ := newTestServer(t)
+		server, _, authMock, _, _ := newTestServer(t)
 
 		refreshToken := "valid.refresh.token"
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/refresh", nil)
@@ -598,7 +598,7 @@ func TestRefreshHandler(t *testing.T) {
 	})
 
 	t.Run("error - missing refresh token cookie", func(t *testing.T) {
-		server, _, authMock, _ := newTestServer(t)
+		server, _, authMock, _, _ := newTestServer(t)
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/refresh", nil)
 
@@ -614,7 +614,7 @@ func TestRefreshHandler(t *testing.T) {
 	})
 
 	t.Run("error - token not found", func(t *testing.T) {
-		server, _, authMock, _ := newTestServer(t)
+		server, _, authMock, _, _ := newTestServer(t)
 
 		refreshToken := "invalid.token"
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/refresh", nil)
@@ -638,7 +638,7 @@ func TestRefreshHandler(t *testing.T) {
 	})
 
 	t.Run("error - token expired", func(t *testing.T) {
-		server, _, authMock, _ := newTestServer(t)
+		server, _, authMock, _, _ := newTestServer(t)
 
 		refreshToken := "expired.token"
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/refresh", nil)
@@ -662,7 +662,7 @@ func TestRefreshHandler(t *testing.T) {
 	})
 
 	t.Run("error - internal server error", func(t *testing.T) {
-		server, _, authMock, _ := newTestServer(t)
+		server, _, authMock, _, _ := newTestServer(t)
 
 		refreshToken := "valid.token"
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/refresh", nil)
@@ -686,7 +686,7 @@ func TestRefreshHandler(t *testing.T) {
 	})
 
 	t.Run("error - revoked token", func(t *testing.T) {
-		server, _, authMock, _ := newTestServer(t)
+		server, _, authMock, _, _ := newTestServer(t)
 
 		refreshToken := "revoked.token"
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/refresh", nil)

@@ -138,3 +138,119 @@ func (s *predictorTestSuite) TestAlreadyProcessing() {
 
 	time.Sleep(time.Second)
 }
+
+func (s *predictorTestSuite) TestPredict_StartPredictionError() {
+	scanURL := testdata.User1ID.String() + "/scans/" + uuid.NewString()
+
+	s.mStore.EXPECT().
+		StartPrediction(mock.Anything, testdata.User1.ID, scanURL).
+		Return(nil, errlocal.NewErrInternal("db error", "", nil)).Once()
+
+	result, err := s.predictor.Predict(s.ctx, scanURL)
+	s.Error(err)
+	s.Nil(result)
+	s.Equal(int32(0), s.predictor.limiter.Load())
+}
+
+func (s *predictorTestSuite) TestPredict_RequestPredictError() {
+	testPrediction := testdata.NewPrediction
+	predictionID := uuid.New()
+
+	s.mStore.EXPECT().
+		StartPrediction(mock.Anything, testPrediction.UserID, testPrediction.TrashScan).
+		Run(func(_ context.Context, _ uuid.UUID, _ string) {
+			testPrediction.ID = predictionID
+		}).Return(&testPrediction, nil).Once()
+
+	s.mClient.EXPECT().
+		RequestPredict(mock.Anything, testdata.ScanURL, predictionID, mock.Anything).
+		Return(nil, errlocal.NewErrInternal("request failed", "", nil)).Once()
+
+	s.mStore.EXPECT().ExecTx(mock.Anything, mock.Anything).Return(nil).Once()
+
+	result, err := s.predictor.Predict(s.ctx, testdata.ScanURL)
+	s.NoError(err)
+	s.Equal(&testPrediction, result)
+
+	time.Sleep(time.Second)
+}
+
+func (s *predictorTestSuite) TestPredict_CompletePredictionError() {
+	testPrediction := testdata.NewPrediction
+	predictionID := uuid.New()
+
+	s.mStore.EXPECT().
+		StartPrediction(mock.Anything, testPrediction.UserID, testPrediction.TrashScan).
+		Run(func(_ context.Context, _ uuid.UUID, _ string) {
+			testPrediction.ID = predictionID
+		}).Return(&testPrediction, nil).Once()
+
+	s.mClient.EXPECT().
+		RequestPredict(mock.Anything, testdata.ScanURL, predictionID, mock.Anything).
+		Return(&predictResponse{
+			ID:            predictionID,
+			Scan:          testPrediction.TrashScan,
+			Result:        map[uint8]float64{1: 0.9},
+			Probabilities: map[uint8]float64{1: 0.9, 2: 0.1, 3: 0.0},
+		}, nil).Once()
+
+	s.mStore.EXPECT().ExecTx(mock.Anything, mock.Anything).
+		Return(errlocal.NewErrInternal("tx error", "", nil)).Once()
+
+	result, err := s.predictor.Predict(s.ctx, testdata.ScanURL)
+	s.NoError(err)
+	s.Equal(&testPrediction, result)
+
+	time.Sleep(time.Second)
+}
+
+func (s *predictorTestSuite) TestTryPutScanInProcessing() {
+	scanURL := "test/scan/url"
+
+	// Первый раз должно быть успешно
+	ok := s.predictor.tryPutScanInProcessing(scanURL)
+	s.True(ok)
+	s.Contains(s.predictor.scansInProcessing, scanURL)
+
+	// Второй раз с тем же URL должно вернуть false
+	ok = s.predictor.tryPutScanInProcessing(scanURL)
+	s.False(ok)
+
+	// Другой URL должен быть успешным
+	ok = s.predictor.tryPutScanInProcessing("test/scan/url2")
+	s.True(ok)
+	s.Len(s.predictor.scansInProcessing, 2)
+}
+
+func (s *predictorTestSuite) TestDeleteScanFromProcessing() {
+	scanURL := "test/scan/url"
+	s.predictor.scansInProcessing[scanURL] = struct{}{}
+
+	s.predictor.deleteScanFromProcessing(scanURL)
+	s.NotContains(s.predictor.scansInProcessing, scanURL)
+
+	// Удаление несуществующего не должно приводить к ошибке
+	s.predictor.deleteScanFromProcessing("nonexistent")
+	s.Len(s.predictor.scansInProcessing, 0)
+}
+
+func (s *predictorTestSuite) TestNewPredictor() {
+	logger := logging.NewLogger(config.Config{})
+	store := mocks.NewStore(s.T())
+	cfg := config.PredictorConfig{
+		Host:                       "http://predictor.test",
+		Token:                      "test-token",
+		MaxPredictionsInProcessing: 5,
+	}
+
+	predictor := NewPredictor(logger, store, cfg)
+
+	s.NotNil(predictor)
+	s.NotNil(predictor.log)
+	s.NotNil(predictor.client)
+	s.NotNil(predictor.store)
+	s.Equal(int32(5), predictor.limitRate)
+	s.Equal(int32(0), predictor.limiter.Load())
+	s.NotNil(predictor.scansInProcessing)
+	s.Len(predictor.scansInProcessing, 0)
+}

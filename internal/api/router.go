@@ -1,11 +1,21 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 	_ "github.com/trashscanner/trashscanner_api/docs"
+)
+
+const (
+	predictionIDTag = "prediction_id"
+
+	offsetQueryKey = "offset"
+	limitQueryKey  = "limit"
+	defaultLimit   = 100
+	defaultOffset  = 0
 )
 
 func (s *Server) initRouter() {
@@ -36,4 +46,10 @@ func (s *Server) initRouter() {
 	userRouter.HandleFunc("/avatar", s.deleteAvatar).Methods(http.MethodDelete)
 	userRouter.HandleFunc("/logout", s.logout).Methods(http.MethodPost)
 	userRouter.HandleFunc("/change-password", s.changePassword).Methods(http.MethodPut)
+
+	predictionRouter := root.PathPrefix("/predictions").Subrouter()
+	predictionRouter.Use(s.authMiddleware)
+	predictionRouter.HandleFunc("", s.startPrediction).Methods(http.MethodPost)
+	predictionRouter.HandleFunc("", s.listPredictions).Methods(http.MethodGet)
+	predictionRouter.HandleFunc(fmt.Sprintf("/{%s}", predictionIDTag), s.getPrediction).Methods(http.MethodGet)
 }

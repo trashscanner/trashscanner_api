@@ -14,6 +14,7 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/database"
 	"github.com/trashscanner/trashscanner_api/internal/filestore"
 	"github.com/trashscanner/trashscanner_api/internal/logging"
+	"github.com/trashscanner/trashscanner_api/internal/predictor"
 	"github.com/trashscanner/trashscanner_api/internal/store"
 )
 
@@ -51,7 +52,9 @@ func main() {
 		return
 	}
 
-	server := api.NewServer(cfg, store, fileStore, auth, logger)
+	predictor := predictor.NewPredictor(logger, store, cfg.Predictor)
+
+	server := api.NewServer(cfg, store, fileStore, auth, predictor, logger)
 
 	errCh := make(chan error, 1)
 	signCh := make(chan os.Signal, 1)

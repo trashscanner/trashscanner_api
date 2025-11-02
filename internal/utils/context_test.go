@@ -114,3 +114,86 @@ func TestContextKeys(t *testing.T) {
 
 	assert.Equal(t, len(expectedKeys), len(ContextKeys))
 }
+
+func TestCopyContext(t *testing.T) {
+	t.Run("Copies all known values", func(t *testing.T) {
+		ctx := context.Background()
+		user := &models.User{ID: uuid.New(), Login: "testuser"}
+		ctx = SetUser(ctx, user)
+		ctx = context.WithValue(ctx, RequestIDKey, "req-123")
+		ctx = context.WithValue(ctx, PathKey, "/api/test")
+		ctx = context.WithValue(ctx, MethodKey, "POST")
+		ctx = context.WithValue(ctx, TimeKey, time.Now())
+
+		newCtx := CopyContext(ctx)
+
+		assert.Equal(t, user, GetUser(newCtx))
+
+		reqID, ok := GetRequestID(newCtx)
+		assert.True(t, ok)
+		assert.Equal(t, "req-123", reqID)
+
+		path, ok := GetPath(newCtx)
+		assert.True(t, ok)
+		assert.Equal(t, "/api/test", path)
+
+		method, ok := GetMethod(newCtx)
+		assert.True(t, ok)
+		assert.Equal(t, "POST", method)
+
+		_, ok = ElapsedTime(newCtx)
+		assert.True(t, ok)
+	})
+
+	t.Run("New context is independent from original", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		ctx = context.WithValue(ctx, RequestIDKey, "req-456")
+
+		newCtx := CopyContext(ctx)
+
+		cancel()
+
+		select {
+		case <-ctx.Done():
+		default:
+			t.Fatal("Original context should be cancelled")
+		}
+
+		select {
+		case <-newCtx.Done():
+			t.Fatal("New context should NOT be cancelled")
+		default:
+		}
+
+		reqID, ok := GetRequestID(newCtx)
+		assert.True(t, ok)
+		assert.Equal(t, "req-456", reqID)
+	})
+
+	t.Run("Handles empty context", func(t *testing.T) {
+		ctx := context.Background()
+
+		newCtx := CopyContext(ctx)
+
+		_, ok := GetRequestID(newCtx)
+		assert.False(t, ok)
+
+		_, ok = GetPath(newCtx)
+		assert.False(t, ok)
+	})
+
+	t.Run("Skips nil values", func(t *testing.T) {
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, RequestIDKey, "req-789")
+
+		newCtx := CopyContext(ctx)
+
+		reqID, ok := GetRequestID(newCtx)
+		assert.True(t, ok)
+		assert.Equal(t, "req-789", reqID)
+
+		val, ok := GetContextValue(newCtx, UserCtxKey)
+		assert.False(t, ok)
+		assert.Nil(t, val)
+	})
+}
