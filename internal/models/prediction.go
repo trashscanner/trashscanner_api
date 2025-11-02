@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"errors"
 	"strings"
 	"time"
 
@@ -108,14 +107,15 @@ func NewPredictionResult(m map[uint8]float64) PredictionResult {
 }
 
 type Prediction struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
-	TrashScan string
-	Status    PredictionStatus
-	Result    PredictionResult
-	Error     error
+	ID        uuid.UUID        `json:"id"`
+	UserID    uuid.UUID        `json:"user_id"`
+	TrashScan string           `json:"scan_key"`
+	Status    PredictionStatus `json:"status"`
+	Result    PredictionResult `json:"result"`
+	Error     string           `json:"error"`
 
-	CreatedAt, UpdatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (pr Prediction) IsValid() bool {
@@ -132,7 +132,7 @@ func (pr *Prediction) Model(prediction db.Prediction) {
 		_ = json.Unmarshal(prediction.Result, &pr.Result)
 	}
 	if prediction.Error != nil {
-		pr.Error = errors.New(*prediction.Error)
+		pr.Error = *prediction.Error
 	}
 	pr.CreatedAt = prediction.CreatedAt
 	pr.UpdatedAt = prediction.UpdatedAt

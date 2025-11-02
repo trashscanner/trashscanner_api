@@ -45,6 +45,11 @@ func TestConfig(t *testing.T) {
 				Bucket:    "trashscanner-images",
 				UseSSL:    false,
 			},
+			Predictor: PredictorConfig{
+				Host:                       "10.10.10.10",
+				Token:                      "token",
+				MaxPredictionsInProcessing: 10,
+			},
 		}
 		assert.NoError(t, err)
 		assert.Equal(t, expectedConfig, config)
@@ -71,6 +76,9 @@ func TestConfig(t *testing.T) {
 		os.Setenv("FILESTORE_SECRET_KEY", "envSecretKey")
 		os.Setenv("FILESTORE_BUCKET", "env-bucket")
 		os.Setenv("FILESTORE_USE_SSL", "true")
+		os.Setenv("PREDICTOR_HOST", "predictor.example.com")
+		os.Setenv("PREDICTOR_TOKEN", "env-token")
+		os.Setenv("PREDICTOR_MAX_PREDICTIONS_IN_PROCESSING", "5")
 
 		defer func() {
 			for _, curEnv := range os.Environ() {
@@ -99,5 +107,8 @@ func TestConfig(t *testing.T) {
 		assert.Equal(t, "envSecretKey", config.Store.SecretKey)
 		assert.Equal(t, "env-bucket", config.Store.Bucket)
 		assert.Equal(t, true, config.Store.UseSSL)
+		assert.Equal(t, "predictor.example.com", config.Predictor.Host)
+		assert.Equal(t, "env-token", config.Predictor.Token)
+		assert.Equal(t, 5, config.Predictor.MaxPredictionsInProcessing)
 	})
 }

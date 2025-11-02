@@ -28,6 +28,7 @@ func GetRequestBody[T any](r *http.Request) (*T, error) {
 
 const (
 	avatarFieldName = "avatar"
+	scanFieldName   = "scan"
 	maxFileSize     = 10 << 20 // 10 MB
 )
 
@@ -37,13 +38,21 @@ var supportedFileTypes = map[string]struct{}{
 }
 
 func GetAvatarFromMultipartForm(r *http.Request) (*models.File, error) {
+	return getFileFromMultipartForm(r, avatarFieldName)
+}
+
+func GetScanFromMultipartForm(r *http.Request) (*models.File, error) {
+	return getFileFromMultipartForm(r, scanFieldName)
+}
+
+func getFileFromMultipartForm(r *http.Request, fieldName string) (*models.File, error) {
 	if err := r.ParseMultipartForm(maxFileSize); err != nil {
 		return nil, errors.New("failed to parse multipart form")
 	}
 
-	file, header, err := r.FormFile(avatarFieldName)
+	file, header, err := r.FormFile(fieldName)
 	if err != nil {
-		return nil, errors.New("avatar field is required")
+		return nil, errors.New(fieldName + " field is required")
 	}
 	if header == nil {
 		return nil, errors.New("file header is nil")

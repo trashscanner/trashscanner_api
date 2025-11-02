@@ -45,7 +45,6 @@ func (s *pgStore) StartPrediction(ctx context.Context, userID uuid.UUID, scanURL
 	return model, nil
 }
 
-// result should be error or models.PredictionResult
 func (s *pgStore) CompletePrediction(
 	ctx context.Context,
 	id uuid.UUID,

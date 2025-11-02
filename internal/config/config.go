@@ -15,11 +15,12 @@ const (
 )
 
 type Config struct {
-	Server ServerConfig      `mapstructure:"server"`
-	DB     DBConfig          `mapstructure:"database"`
-	Store  FileStoreConfig   `mapstructure:"filestore"`
-	Auth   AuthManagerConfig `mapstructure:"auth_manager"`
-	Log    LogConfig         `mapstructure:"log"`
+	Server    ServerConfig      `mapstructure:"server"`
+	DB        DBConfig          `mapstructure:"database"`
+	Store     FileStoreConfig   `mapstructure:"filestore"`
+	Auth      AuthManagerConfig `mapstructure:"auth_manager"`
+	Predictor PredictorConfig   `mapstructure:"predictor"`
+	Log       LogConfig         `mapstructure:"log"`
 }
 
 type ServerConfig struct {
@@ -53,9 +54,9 @@ type AuthManagerConfig struct {
 }
 
 type PredictorConfig struct {
-	Host                       string
-	Token                      string
-	MaxPredictionsInProcessing int
+	Host                       string `mapstructure:"host" validate:"required"`
+	Token                      string `mapstructure:"token" validate:"required"`
+	MaxPredictionsInProcessing int    `mapstructure:"max_predictions_in_processing" validate:"required,gt=0"`
 }
 
 type LogConfig struct {

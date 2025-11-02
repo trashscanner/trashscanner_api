@@ -49,6 +49,24 @@ definitions:
     - login
     - password
     type: object
+  dto.PredictionResponse:
+    properties:
+      createdAt:
+        type: string
+      error: {}
+      id:
+        type: string
+      result:
+        $ref: '#/definitions/models.PredictionResult'
+      status:
+        $ref: '#/definitions/models.PredictionStatus'
+      trashScan:
+        type: string
+      updatedAt:
+        type: string
+      userID:
+        type: string
+    type: object
   dto.UploadAvatarResponse:
     properties:
       avatar_url:
@@ -122,6 +140,21 @@ definitions:
       system:
         type: string
     type: object
+  models.PredictionResult:
+    additionalProperties:
+      format: float64
+      type: number
+    type: object
+  models.PredictionStatus:
+    enum:
+    - processing
+    - completed
+    - failed
+    type: string
+    x-enum-varnames:
+    - PredictionProcessingStatus
+    - PredictionCompletedStatus
+    - PredictionFailedStatus
   models.Stat:
     properties:
       created_at:
@@ -158,25 +191,25 @@ definitions:
     - eco_legend
     type: string
     x-enum-comments:
-      UserStatusEarthDefend: Защитник Земли
-      UserStatusEcoChampion: Эко-чемпион
-      UserStatusEcoLegend: Эко-легенда
-      UserStatusEcoScout: Эко-разведчик
-      UserStatusEcoWarrior: Эко-воин
-      UserStatusGreenGuard: Зеленый страж
-      UserStatusNatureHero: Герой природы
-      UserStatusNewbie: Новичок
-      UserStatusPlanetGuard: Хранитель планеты
+      UserStatusEarthDefend: Защитник Земли 1500+
+      UserStatusEcoChampion: Эко-чемпион 3000+
+      UserStatusEcoLegend: Эко-легенда 10000+
+      UserStatusEcoScout: Эко-разведчик 100+
+      UserStatusEcoWarrior: Эко-воин 500+
+      UserStatusGreenGuard: Зеленый страж 300+
+      UserStatusNatureHero: Герой природы 1000+
+      UserStatusNewbie: Новичок 0
+      UserStatusPlanetGuard: Хранитель планеты 5000+
     x-enum-descriptions:
-    - Новичок
-    - Эко-разведчик
-    - Зеленый страж
-    - Эко-воин
-    - Герой природы
-    - Защитник Земли
-    - Эко-чемпион
-    - Хранитель планеты
-    - Эко-легенда
+    - Новичок 0
+    - Эко-разведчик 100+
+    - Зеленый страж 300+
+    - Эко-воин 500+
+    - Герой природы 1000+
+    - Защитник Земли 1500+
+    - Эко-чемпион 3000+
+    - Хранитель планеты 5000+
+    - Эко-легенда 10000+
     x-enum-varnames:
     - UserStatusNewbie
     - UserStatusEcoScout
@@ -234,6 +267,123 @@ paths:
       summary: User login
       tags:
       - auth
+  /predictions:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of predictions for a user
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Prediction result
+          schema:
+            items:
+              $ref: '#/definitions/dto.PredictionResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errlocal.ErrUnauthorized'
+        "403":
+          description: Forbidden - user ID mismatch
+          schema:
+            $ref: '#/definitions/errlocal.ErrForbidden'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      security:
+      - BearerAuth: []
+      summary: Get a list of predictions
+      tags:
+      - predictions
+    post:
+      consumes:
+      - multipart/form-data
+      description: Start a new prediction for a user
+      parameters:
+      - description: File to upload
+        in: formData
+        name: scan
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Prediction result
+          schema:
+            $ref: '#/definitions/dto.PredictionResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errlocal.ErrUnauthorized'
+        "403":
+          description: Forbidden - user ID mismatch
+          schema:
+            $ref: '#/definitions/errlocal.ErrForbidden'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/errlocal.ErrNotFound'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      security:
+      - BearerAuth: []
+      summary: Start a new prediction
+      tags:
+      - predictions
+  /predictions/{PredictionID}:
+    get:
+      consumes:
+      - application/json
+      description: Get a prediction by ID
+      parameters:
+      - description: Prediction ID UUID format
+        in: path
+        name: PredictionID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Prediction result
+          schema:
+            $ref: '#/definitions/dto.PredictionResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errlocal.ErrUnauthorized'
+        "403":
+          description: Forbidden - user ID mismatch
+          schema:
+            $ref: '#/definitions/errlocal.ErrForbidden'
+        "404":
+          description: Resource not found
+          schema:
+            $ref: '#/definitions/errlocal.ErrNotFound'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      security:
+      - BearerAuth: []
+      summary: Get a prediction
+      tags:
+      - predictions
   /refresh:
     post:
       consumes:
@@ -475,10 +625,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
+        "204":
           description: User logged out successfully
-          schema:
-            $ref: '#/definitions/dto.UserResponse'
         "401":
           description: Unauthorized
           schema:

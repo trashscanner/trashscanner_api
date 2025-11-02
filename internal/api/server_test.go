@@ -25,9 +25,10 @@ func TestNewServer(t *testing.T) {
 	store := storemocks.NewStore(t)
 	fileStore := filestoremocks.NewFileStore(t)
 	authManager := mocks.NewAuthManager(t)
+	predictor := newMockPredictor(t)
 	logger := logging.NewLogger(cfg)
 
-	server := NewServer(cfg, store, fileStore, authManager, logger)
+	server := NewServer(cfg, store, fileStore, authManager, predictor, logger)
 
 	require.NotNil(t, server.router)
 	require.NotNil(t, server.s)
@@ -39,7 +40,7 @@ func TestNewServer(t *testing.T) {
 }
 
 func TestWriteResponse(t *testing.T) {
-	server, _, _, _ := newTestServer(t)
+	server, _, _, _, _ := newTestServer(t)
 
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -53,7 +54,7 @@ func TestWriteResponse(t *testing.T) {
 }
 
 func TestWriteError(t *testing.T) {
-	server, _, _, _ := newTestServer(t)
+	server, _, _, _, _ := newTestServer(t)
 
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -67,7 +68,7 @@ func TestWriteError(t *testing.T) {
 }
 
 func TestShutdownWithoutStart(t *testing.T) {
-	server, _, _, _ := newTestServer(t)
+	server, _, _, _, _ := newTestServer(t)
 
 	start := time.Now()
 	err := server.Shutdown()

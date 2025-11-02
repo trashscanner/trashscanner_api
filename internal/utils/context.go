@@ -73,3 +73,15 @@ func ElapsedTime(ctx context.Context) (time.Duration, bool) {
 	}
 	return time.Since(startTime), true
 }
+
+func CopyContext(ctx context.Context) context.Context {
+	newCtx := context.Background()
+
+	for key := range ContextKeys {
+		if val := ctx.Value(key); val != nil {
+			newCtx = context.WithValue(newCtx, key, val)
+		}
+	}
+
+	return newCtx
+}
