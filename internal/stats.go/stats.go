@@ -19,6 +19,9 @@ func UpdateStats(
 	}
 
 	currentStats := user.Stat
+	if currentStats.TrashByTypes == nil {
+		currentStats.TrashByTypes = make(map[string]int)
+	}
 
 	currentStats.FilesScanned++
 	currentStats.LastScannedAt = time.Now()

@@ -95,6 +95,7 @@ func (pr *Predictor) processPrediction(ctx context.Context, scanURL string, pred
 		return stats.UpdateStats(ctx, s, prediction)
 	}); completeErr != nil {
 		logger.Errorf("error while complete prediction %s: %v", prediction.ID.String(), completeErr)
+		_ = pr.store.CompletePrediction(ctx, prediction.ID, nil, completeErr)
 	}
 }
 

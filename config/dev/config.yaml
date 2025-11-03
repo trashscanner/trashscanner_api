@@ -17,8 +17,8 @@ auth_manager:
   refresh_token_ttl: 168h
   signing_algorithm: EdDSA
 predictor:
-  host: localhost
-  token: test_token
+  address: http://localhost:8000
+  token: secret-token
   max_predictions_in_processing: 10
 server:
   host: localhost

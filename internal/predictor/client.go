@@ -30,7 +30,7 @@ type predictorClient struct {
 func newPredictorClient(cfg config.PredictorConfig, log *logging.Logger) *predictorClient {
 	return &predictorClient{
 		c:      &http.Client{Timeout: predictorClientRequestTimeout},
-		host:   cfg.Host,
+		host:   cfg.Address,
 		token:  cfg.Token,
 		logger: log.WithPredictorClientTag(),
 	}
@@ -89,7 +89,7 @@ func (c *predictorClient) RequestPredict(
 	defer func() { _ = resp.Body.Close() }()
 
 	decoder := json.NewDecoder(resp.Body)
-	if resp.StatusCode != http.StatusAccepted {
+	if resp.StatusCode != http.StatusOK {
 		return nil, parseErrorResponse(decoder, resp.StatusCode)
 	}
 
