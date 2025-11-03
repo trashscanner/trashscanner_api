@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -50,8 +51,10 @@ func (s *Stat) Model(stat db.Stat) {
 	s.Rating = int(stat.Rating)
 	s.FilesScanned = int(stat.FilesScanned)
 	s.TotalWeight = stat.TotalWeight
+	s.LastScannedAt = stat.LastScannedAt.Time
 	s.CreatedAt = stat.CreatedAt
 	s.UpdatedAt = stat.UpdatedAt
+	_ = json.Unmarshal(stat.TrashByTypes, &s.TrashByTypes)
 }
 
 type Achievement struct {

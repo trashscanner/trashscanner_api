@@ -44,6 +44,7 @@ CREATE TABLE stats (
     total_weight FLOAT NOT NULL DEFAULT 0.0,
     achievements JSONB,
     trash_by_types JSONB,
+    last_scanned_at TIMESTAMPTZ,
     
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()

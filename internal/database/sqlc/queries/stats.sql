@@ -11,5 +11,6 @@ SET
     total_weight = $4,
     achievements = $5,
     trash_by_types = $6,
+    last_scanned_at = $7,
     updated_at = now()
-WHERE id = $7;
+WHERE id = $8;
