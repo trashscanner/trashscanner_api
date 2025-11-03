@@ -54,7 +54,7 @@ type AuthManagerConfig struct {
 }
 
 type PredictorConfig struct {
-	Host                       string `mapstructure:"host" validate:"required"`
+	Address                    string `mapstructure:"address" validate:"required"`
 	Token                      string `mapstructure:"token" validate:"required"`
 	MaxPredictionsInProcessing int    `mapstructure:"max_predictions_in_processing" validate:"required,gt=0"`
 }

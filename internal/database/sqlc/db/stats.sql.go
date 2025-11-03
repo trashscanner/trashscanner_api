@@ -9,10 +9,11 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getStatsByUserID = `-- name: GetStatsByUserID :one
-SELECT id, user_id, status, rating, files_scanned, total_weight, achievements, trash_by_types, created_at, updated_at FROM stats
+SELECT id, user_id, status, rating, files_scanned, total_weight, achievements, trash_by_types, last_scanned_at, created_at, updated_at FROM stats
 WHERE user_id = $1
 `
 
@@ -28,6 +29,7 @@ func (q *Queries) GetStatsByUserID(ctx context.Context, userID uuid.UUID) (Stat,
 		&i.TotalWeight,
 		&i.Achievements,
 		&i.TrashByTypes,
+		&i.LastScannedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -43,18 +45,20 @@ SET
     total_weight = $4,
     achievements = $5,
     trash_by_types = $6,
+    last_scanned_at = $7,
     updated_at = now()
-WHERE id = $7
+WHERE id = $8
 `
 
 type UpdateStatsParams struct {
-	Status       string    `json:"status"`
-	Rating       int32     `json:"rating"`
-	FilesScanned int32     `json:"files_scanned"`
-	TotalWeight  float64   `json:"total_weight"`
-	Achievements []byte    `json:"achievements"`
-	TrashByTypes []byte    `json:"trash_by_types"`
-	ID           uuid.UUID `json:"id"`
+	Status        string             `json:"status"`
+	Rating        int32              `json:"rating"`
+	FilesScanned  int32              `json:"files_scanned"`
+	TotalWeight   float64            `json:"total_weight"`
+	Achievements  []byte             `json:"achievements"`
+	TrashByTypes  []byte             `json:"trash_by_types"`
+	LastScannedAt pgtype.Timestamptz `json:"last_scanned_at"`
+	ID            uuid.UUID          `json:"id"`
 }
 
 func (q *Queries) UpdateStats(ctx context.Context, arg UpdateStatsParams) error {
@@ -65,6 +69,7 @@ func (q *Queries) UpdateStats(ctx context.Context, arg UpdateStatsParams) error 
 		arg.TotalWeight,
 		arg.Achievements,
 		arg.TrashByTypes,
+		arg.LastScannedAt,
 		arg.ID,
 	)
 	return err

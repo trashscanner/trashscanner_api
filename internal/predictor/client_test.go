@@ -85,7 +85,7 @@ func (s *predictorClientTestSuite) TestRequestPredict() {
 	ctx := context.Background()
 
 	s.Run("success", func() {
-		s.setupTestServer(testSuccessPredictResponse, http.StatusAccepted)
+		s.setupTestServer(testSuccessPredictResponse, http.StatusOK)
 		expectedResult := &predictResponse{
 			ID:     testdata.PredictionID,
 			Scan:   testdata.ScanID.String(),
@@ -151,7 +151,7 @@ func (s *predictorClientTestSuite) TestRequestPredict() {
 			s.Equal("test-request-id", r.Header.Get("X-Request-ID"))
 			s.Equal("test-value", r.Header.Get("X-Custom-Header"))
 
-			w.WriteHeader(http.StatusAccepted)
+			w.WriteHeader(http.StatusOK)
 			w.Write(testSuccessPredictResponse)
 		}))
 		s.client.host = s.testServer.URL
@@ -169,8 +169,8 @@ func (s *predictorClientTestSuite) TestRequestPredict() {
 func (s *predictorClientTestSuite) TestNewPredictorClient() {
 	logger := logging.NewLogger(config.Config{})
 	cfg := config.PredictorConfig{
-		Host:  "http://test-host",
-		Token: "test-token",
+		Address: "http://test-host",
+		Token:   "test-token",
 	}
 
 	client := newPredictorClient(cfg, logger)

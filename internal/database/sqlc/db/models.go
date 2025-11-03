@@ -46,16 +46,17 @@ type RefreshToken struct {
 }
 
 type Stat struct {
-	ID           uuid.UUID `json:"id"`
-	UserID       uuid.UUID `json:"user_id"`
-	Status       string    `json:"status"`
-	Rating       int32     `json:"rating"`
-	FilesScanned int32     `json:"files_scanned"`
-	TotalWeight  float64   `json:"total_weight"`
-	Achievements []byte    `json:"achievements"`
-	TrashByTypes []byte    `json:"trash_by_types"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID            uuid.UUID          `json:"id"`
+	UserID        uuid.UUID          `json:"user_id"`
+	Status        string             `json:"status"`
+	Rating        int32              `json:"rating"`
+	FilesScanned  int32              `json:"files_scanned"`
+	TotalWeight   float64            `json:"total_weight"`
+	Achievements  []byte             `json:"achievements"`
+	TrashByTypes  []byte             `json:"trash_by_types"`
+	LastScannedAt pgtype.Timestamptz `json:"last_scanned_at"`
+	CreatedAt     time.Time          `json:"created_at"`
+	UpdatedAt     time.Time          `json:"updated_at"`
 }
 
 type User struct {

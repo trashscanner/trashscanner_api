@@ -19,6 +19,9 @@ func UpdateStats(
 	}
 
 	currentStats := user.Stat
+	if currentStats.TrashByTypes == nil {
+		currentStats.TrashByTypes = make(map[string]int)
+	}
 
 	currentStats.FilesScanned++
 	currentStats.LastScannedAt = time.Now()
@@ -36,28 +39,28 @@ func UpdateStats(
 }
 
 func calculateUserStatus(stat *models.Stat) models.UserStatus {
-	if stat.Rating > 10000 {
+	if stat.Rating >= 10000 {
 		return models.UserStatusEcoLegend
 	}
-	if stat.Rating > 5000 {
+	if stat.Rating >= 5000 {
 		return models.UserStatusPlanetGuard
 	}
-	if stat.Rating > 3000 {
+	if stat.Rating >= 3000 {
 		return models.UserStatusEcoChampion
 	}
-	if stat.Rating > 1500 {
+	if stat.Rating >= 1500 {
 		return models.UserStatusEarthDefend
 	}
-	if stat.Rating > 1000 {
+	if stat.Rating >= 1000 {
 		return models.UserStatusNatureHero
 	}
-	if stat.Rating > 500 {
+	if stat.Rating >= 500 {
 		return models.UserStatusEcoWarrior
 	}
-	if stat.Rating > 300 {
+	if stat.Rating >= 300 {
 		return models.UserStatusGreenGuard
 	}
-	if stat.Rating > 100 {
+	if stat.Rating >= 100 {
 		return models.UserStatusEcoScout
 	}
 	return models.UserStatusNewbie

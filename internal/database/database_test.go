@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	su "github.com/stretchr/testify/suite"
 	"github.com/trashscanner/trashscanner_api/internal/config"
@@ -399,12 +400,15 @@ func (s *databaseTestSuite) TestUpdateStats() {
 	s.NoError(err)
 
 	// Stats are automatically created with the user via CTE
+	trashByTypes := []byte(`{"metal": 1}`)
 	err = s.store.UpdateStats(s.ctx, db.UpdateStatsParams{
-		ID:           stats.ID,
-		Status:       "eco_warrior",
-		Rating:       150,
-		FilesScanned: 25,
-		TotalWeight:  75.5,
+		ID:            stats.ID,
+		Status:        "eco_warrior",
+		Rating:        150,
+		FilesScanned:  25,
+		TotalWeight:   75.5,
+		TrashByTypes:  trashByTypes,
+		LastScannedAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
 	})
 	s.NoError(err)
 
@@ -414,6 +418,8 @@ func (s *databaseTestSuite) TestUpdateStats() {
 	s.Equal(int32(150), stats.Rating)
 	s.Equal(int32(25), stats.FilesScanned)
 	s.Equal(75.5, stats.TotalWeight)
+	s.JSONEq(string(trashByTypes), string(stats.TrashByTypes))
+	s.NotZero(stats.LastScannedAt)
 }
 
 func (s *databaseTestSuite) createTestPrediction(userID uuid.UUID) uuid.UUID {

@@ -46,7 +46,7 @@ func TestConfig(t *testing.T) {
 				UseSSL:    false,
 			},
 			Predictor: PredictorConfig{
-				Host:                       "10.10.10.10",
+				Address:                    "http://10.10.10.10:8000",
 				Token:                      "token",
 				MaxPredictionsInProcessing: 10,
 			},
@@ -76,7 +76,7 @@ func TestConfig(t *testing.T) {
 		os.Setenv("FILESTORE_SECRET_KEY", "envSecretKey")
 		os.Setenv("FILESTORE_BUCKET", "env-bucket")
 		os.Setenv("FILESTORE_USE_SSL", "true")
-		os.Setenv("PREDICTOR_HOST", "predictor.example.com")
+		os.Setenv("PREDICTOR_ADDRESS", "http://predictor.example.com:8000")
 		os.Setenv("PREDICTOR_TOKEN", "env-token")
 		os.Setenv("PREDICTOR_MAX_PREDICTIONS_IN_PROCESSING", "5")
 
@@ -107,7 +107,7 @@ func TestConfig(t *testing.T) {
 		assert.Equal(t, "envSecretKey", config.Store.SecretKey)
 		assert.Equal(t, "env-bucket", config.Store.Bucket)
 		assert.Equal(t, true, config.Store.UseSSL)
-		assert.Equal(t, "predictor.example.com", config.Predictor.Host)
+		assert.Equal(t, "http://predictor.example.com:8000", config.Predictor.Address)
 		assert.Equal(t, "env-token", config.Predictor.Token)
 		assert.Equal(t, 5, config.Predictor.MaxPredictionsInProcessing)
 	})

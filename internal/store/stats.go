@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/trashscanner/trashscanner_api/internal/database/sqlc/db"
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
 	"github.com/trashscanner/trashscanner_api/internal/models"
@@ -26,6 +27,10 @@ func (s *pgStore) UpdateStats(ctx context.Context, stat *models.Stat) error {
 		FilesScanned: int32(stat.FilesScanned),
 		TotalWeight:  float64(stat.TotalWeight),
 		TrashByTypes: rawTrashByTypes,
+		LastScannedAt: pgtype.Timestamptz{
+			Time:  stat.LastScannedAt,
+			Valid: !stat.LastScannedAt.IsZero(),
+		},
 	})
 	if err != nil {
 		return errlocal.NewErrInternal("failed to update user stats", err.Error(),

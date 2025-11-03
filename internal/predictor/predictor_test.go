@@ -196,6 +196,9 @@ func (s *predictorTestSuite) TestPredict_CompletePredictionError() {
 
 	s.mStore.EXPECT().ExecTx(mock.Anything, mock.Anything).
 		Return(errlocal.NewErrInternal("tx error", "", nil)).Once()
+	s.mStore.EXPECT().
+		CompletePrediction(mock.Anything, predictionID, models.PredictionResult(nil),
+			errlocal.NewErrInternal("tx error", "", nil)).Return(nil).Once()
 
 	result, err := s.predictor.Predict(s.ctx, testdata.ScanURL)
 	s.NoError(err)
@@ -238,7 +241,7 @@ func (s *predictorTestSuite) TestNewPredictor() {
 	logger := logging.NewLogger(config.Config{})
 	store := mocks.NewStore(s.T())
 	cfg := config.PredictorConfig{
-		Host:                       "http://predictor.test",
+		Address:                    "http://predictor.test",
 		Token:                      "test-token",
 		MaxPredictionsInProcessing: 5,
 	}
