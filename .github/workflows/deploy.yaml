@@ -11,8 +11,8 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-deploy:
-    name: Build and Deploy
+  build:
+    name: Build Docker Image
     runs-on: ubuntu-latest
     environment:
       name: test
@@ -54,71 +54,107 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          pull: true
 
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1.0.3
-        env:
-          CONFIG_PATH: ${{ vars.CONFIG_PATH }}
-          AUTH_MANAGER_PUBLIC_KEY: ${{ secrets.AUTH_MANAGER_PUBLIC_KEY }}
-          AUTH_MANAGER_SECRET_PRIVATE_KEY: ${{ secrets.AUTH_MANAGER_SECRET_PRIVATE_KEY }}
-          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-          FILESTORE_SECRET_KEY: ${{ secrets.FILESTORE_SECRET_KEY }}
-          PREDICTOR_TOKEN: ${{ secrets.PREDICTOR_TOKEN }}
-          IMAGE_TAG: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-        with:
-          host: ${{ vars.SSH_HOST }}
-          username: ${{ vars.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: CONFIG_PATH,AUTH_MANAGER_PUBLIC_KEY,AUTH_MANAGER_SECRET_PRIVATE_KEY,DATABASE_PASSWORD,FILESTORE_SECRET_KEY,PREDICTOR_TOKEN,IMAGE_TAG
-          script: |
-            mkdir -p ~/trashscanner_api
-            cd ~/trashscanner_api
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: test
 
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ vars.SSH_HOST }} >> ~/.ssh/known_hosts
 
-            docker stop trashscanner_api || true
-            docker rm trashscanner_api || true
+      - name: Deploy via SSH
+        run: |
+          ssh -tt -i ~/.ssh/deploy_key ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} 'bash -s' << 'EOF'
+          set -euo pipefail
+          
+          IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo "Image: $IMAGE_TAG"
+          
+          mkdir -p ~/trashscanner_api
+          cd ~/trashscanner_api
+          
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          
+          docker stop trashscanner_api 2>/dev/null || echo "Container was not running"
+          docker rm -f trashscanner_api 2>/dev/null || echo "Container did not exist"
+          
+          docker images | grep trashscanner_api | awk '{print $3}' | xargs -r docker rmi -f || true
+          
+          docker pull $IMAGE_TAG
+          if [ $? -ne 0 ]; then
+            echo "✗ Failed to pull image!"
+            exit 1
+          fi
+          
+          docker images | grep trashscanner_api
+          
+          cat > .env << 'ENVEOF'
+          CONFIG_PATH=${{ vars.CONFIG_PATH }}
+          AUTH_MANAGER_PUBLIC_KEY=${{ secrets.AUTH_MANAGER_PUBLIC_KEY }}
+          AUTH_MANAGER_SECRET_PRIVATE_KEY=${{ secrets.AUTH_MANAGER_SECRET_PRIVATE_KEY }}
+          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+          FILESTORE_SECRET_KEY=${{ secrets.FILESTORE_SECRET_KEY }}
+          PREDICTOR_TOKEN=${{ secrets.PREDICTOR_TOKEN }}
+          ENVEOF
+          
+          docker run -d \
+            --name trashscanner_api \
+            --restart unless-stopped \
+            -p 8080:8080 \
+            --env-file .env \
+            $IMAGE_TAG
 
-            docker rmi $IMAGE_TAG || true
+          rm .env
+          
+          if [ $? -ne 0 ]; then
+            echo "✗ Failed to start container!"
+            docker logs trashscanner_api 2>/dev/null || true
+            exit 1
+          fi
+          
+          echo "✓ Container started successfully"
+          exit 0
+          EOF
 
-            docker pull $IMAGE_TAG
-
-            cat > .env << EOF
-            CONFIG_PATH=$CONFIG_PATH
-            AUTH_MANAGER_PUBLIC_KEY=$AUTH_MANAGER_PUBLIC_KEY
-            AUTH_MANAGER_SECRET_PRIVATE_KEY=$AUTH_MANAGER_SECRET_PRIVATE_KEY
-            DATABASE_PASSWORD=$DATABASE_PASSWORD
-            FILESTORE_SECRET_KEY=$FILESTORE_SECRET_KEY
-            PREDICTOR_TOKEN=$PREDICTOR_TOKEN
-            EOF
-
-            docker run -d \
-              --name trashscanner_api \
-              --restart unless-stopped \
-              -p 8080:8080 \
-              --env-file .env \
-              $IMAGE_TAG
-
-            docker ps -a | grep trashscanner_api
-            docker image prune -f
-      - name: Check deployment status
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ vars.SSH_HOST }}
-          username: ${{ vars.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            sleep 10
-            
-            echo "=== Container logs ==="
-            docker logs --tail 50 trashscanner_api
-            
-            echo "=== Container status ==="
-            docker ps -a | grep trashscanner_api
-            
-            if [ "$(docker inspect -f '{{.State.Running}}' trashscanner_api)" != "true" ]; then
-              echo "Container is not running!"
-              exit 1
+      - name: Health check
+        run: |
+          ssh -tt -i ~/.ssh/deploy_key ${{ vars.SSH_USER }}@${{ vars.SSH_HOST }} 'bash -s' << 'EOF'
+          set -euo pipefail
+          
+          echo "=== Health check (30 attempts, 60 seconds total) ==="
+          for i in $(seq 1 30); do
+            if curl -f http://localhost:8080/api/v1/health > /dev/null 2>&1; then
+              HEALTH_STATUS=$(curl -s http://localhost:8080/api/v1/health)
+              echo "Health check response: $HEALTH_STATUS"
+              if [ "$HEALTH_STATUS" = "true" ]; then
+                echo ""
+                echo "✓ Deployment successful! Server is healthy."
+                exit 0
+              else
+                echo "✗ Server reports unhealthy status: $HEALTH_STATUS"
+                echo ""
+                echo "Container logs:"
+                docker logs --tail 100 trashscanner_api
+                exit 1
+              fi
             fi
-            
-            echo "Deployment successful!"
+            echo "Attempt $i/30: Health check failed, retrying in 2 seconds..."
+            sleep 2
+          done
+          
+          echo ""
+          echo "✗ Health check failed after 30 attempts (60 seconds)"
+          echo ""
+          echo "Final container logs:"
+          docker logs --tail 100 trashscanner_api
+          exit 1
+          EOF

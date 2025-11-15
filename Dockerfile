@@ -15,5 +15,7 @@ WORKDIR /app
 
 COPY --from=builder app/bin/trashscanner ./bin/trashscanner
 COPY --from=builder app/config ./config
+COPY --from=builder app/internal/database/migrations ./migrations
+COPY --from=builder app/docs ./docs
 
 CMD ["./bin/trashscanner"]

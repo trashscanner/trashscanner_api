@@ -34,6 +34,7 @@ type Server struct {
 	authManager auth.AuthManager
 	predictor   predictor
 	logger      *logging.Logger
+	healthy     bool
 }
 
 type predictor interface {
@@ -87,6 +88,7 @@ func NewServer(
 func (s *Server) Start() error {
 	s.logger.Infof("starting server at %s", s.s.Addr)
 	s.initRouter()
+	s.healthy = true
 
 	return s.s.ListenAndServe()
 }
@@ -95,6 +97,7 @@ func (s *Server) Shutdown() error {
 	s.logger.Infof("shutting down server at %s", s.s.Addr)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+	s.healthy = false
 
 	if err := s.s.Shutdown(ctx); err != nil {
 		s.logger.Warnf("graceful shutdown failed, forcing close: %v", err)
@@ -107,7 +110,6 @@ func (s *Server) Shutdown() error {
 func (s *Server) WriteResponse(w http.ResponseWriter, r *http.Request, status int, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
-
 	if data == nil && status != http.StatusNoContent {
 		data = map[string]string{"status": http.StatusText(status)}
 	}
@@ -142,4 +144,16 @@ func (s *Server) WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	}
 
 	s.logger.WithContext(r.Context()).WithError(err).Error("request processed with error")
+}
+
+// GetUser godoc
+// @Summary Health check
+// @Description Check server health
+// @Tags health
+// @Produce json
+// @Success 200 {object} bool "Is server healthy"
+// @Failure 500 {object} errlocal.ErrInternal "Internal server error"
+// @Router /health [get]
+func (s *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
+	s.WriteResponse(w, r, http.StatusOK, s.healthy)
 }
