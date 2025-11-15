@@ -54,6 +54,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          no-cache: false
+          pull: true
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
@@ -71,18 +73,27 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: CONFIG_PATH,AUTH_MANAGER_PUBLIC_KEY,AUTH_MANAGER_SECRET_PRIVATE_KEY,DATABASE_PASSWORD,FILESTORE_SECRET_KEY,PREDICTOR_TOKEN,IMAGE_TAG
           script: |
+            set -e
+            
             mkdir -p ~/trashscanner_api
             cd ~/trashscanner_api
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
-            docker stop trashscanner_api || true
-            docker rm trashscanner_api || true
+            docker stop trashscanner_api 2>/dev/null || echo "Container not running"
+            docker rm -f trashscanner_api 2>/dev/null || echo "Container not found"
 
-            docker rmi $IMAGE_TAG || true
+            docker rmi -f $IMAGE_TAG || true
 
             docker pull $IMAGE_TAG
 
+            if [ $? -ne 0 ]; then
+              echo "Failed to pull image!"
+              exit 1
+            fi
+            
+            docker images | grep trashscanner_api
+          
             cat > .env << EOF
             CONFIG_PATH=$CONFIG_PATH
             AUTH_MANAGER_PUBLIC_KEY=$AUTH_MANAGER_PUBLIC_KEY
@@ -98,9 +109,8 @@ jobs:
               -p 8080:8080 \
               --env-file .env \
               $IMAGE_TAG
-
+        
             docker ps -a | grep trashscanner_api
-            docker image prune -f
       - name: Check deployment status
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -108,7 +118,10 @@ jobs:
           username: ${{ vars.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sleep 10
+            set -e
+
+            echo "=== Waiting for container to start ==="
+            sleep 5
             
             echo "=== Container logs ==="
             docker logs --tail 50 trashscanner_api
@@ -116,9 +129,35 @@ jobs:
             echo "=== Container status ==="
             docker ps -a | grep trashscanner_api
             
-            if [ "$(docker inspect -f '{{.State.Running}}' trashscanner_api)" != "true" ]; then
-              echo "Container is not running!"
+            echo "=== Checking if container is running ==="
+            CONTAINER_RUNNING=$(docker inspect -f '{{.State.Running}}' trashscanner_api 2>/dev/null || echo "false")
+            if [ "$CONTAINER_RUNNING" != "true" ]; then
+              echo "✗ Container is not running!"
+              echo "Container state:"
+              docker inspect trashscanner_api | grep -A 20 "State"
               exit 1
             fi
             
-            echo "Deployment successful!"
+            echo "✓ Container is running"
+            
+            echo "=== Health check ==="
+            for i in {1..30}; do
+              if curl -f http://localhost:8080/api/v1/health > /dev/null 2>&1; then
+                HEALTH_STATUS=$(curl -s http://localhost:8080/api/v1/health)
+                echo "Health check response: $HEALTH_STATUS"
+                if [ "$HEALTH_STATUS" = "true" ]; then
+                  echo "✓ Server is healthy!"
+                  exit 0
+                else
+                  echo "✗ Server reports unhealthy status: $HEALTH_STATUS"
+                  exit 1
+                fi
+              fi
+              echo "Attempt $i/30: Health check failed, retrying in 2 seconds..."
+              sleep 2
+            done
+            
+            echo "✗ Health check failed after 30 attempts (60 seconds)"
+            echo "Final container logs:"
+            docker logs --tail 100 trashscanner_api
+            exit 1

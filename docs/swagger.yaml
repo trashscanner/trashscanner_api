@@ -51,20 +51,21 @@ definitions:
     type: object
   dto.PredictionResponse:
     properties:
-      createdAt:
+      created_at:
         type: string
-      error: {}
+      error:
+        type: string
       id:
         type: string
       result:
         $ref: '#/definitions/models.PredictionResult'
+      scan_key:
+        type: string
       status:
         $ref: '#/definitions/models.PredictionStatus'
-      trashScan:
+      updated_at:
         type: string
-      updatedAt:
-        type: string
-      userID:
+      user_id:
         type: string
     type: object
   dto.UploadAvatarResponse:
@@ -233,6 +234,23 @@ info:
   title: TrashScanner API
   version: "1.0"
 paths:
+  /health:
+    get:
+      description: Check server health
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Is server healthy
+          schema:
+            type: boolean
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      summary: Health check
+      tags:
+      - health
   /login:
     post:
       consumes:
@@ -320,7 +338,7 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
+        "202":
           description: Prediction result
           schema:
             $ref: '#/definitions/dto.PredictionResponse'
