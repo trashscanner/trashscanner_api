@@ -1,0 +1,28 @@
+database:
+  host: 31.207.74.207
+  port: "5432"
+  user: trashscanner_test
+  password: ""
+  name: trashscanner_test_db
+  migrations_path: migrations
+  sslmode: disable
+filestore:
+  endpoint: 31.207.74.207:9000
+  access_key: minioadmin
+  secret_key: ""
+  bucket: trashscanner-images
+  use_ssl: false
+auth_manager:
+  access_token_ttl: 15m
+  refresh_token_ttl: 168h
+  signing_algorithm: EdDSA
+predictor:
+  address: http://31.207.74.207:8000
+  token: ""
+  max_predictions_in_processing: 10
+server:
+  host: 0.0.0.0
+  port: "8080"
+log:
+  level: debug 
+  format: text
