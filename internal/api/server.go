@@ -52,7 +52,7 @@ type predictor interface {
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8080
+// @host 0.0.0.0:8080
 // @BasePath /api/v1
 
 // @securityDefinitions.apikey BearerAuth
@@ -146,7 +146,7 @@ func (s *Server) WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	s.logger.WithContext(r.Context()).WithError(err).Error("request processed with error")
 }
 
-// GetUser godoc
+// HealthCheck godoc
 // @Summary Health check
 // @Description Check server health
 // @Tags health
