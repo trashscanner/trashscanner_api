@@ -23,6 +23,32 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/health": {
+            "get": {
+                "description": "Check server health",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "Is server healthy",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrInternal"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "description": "Authenticate user and return JWT tokens",
@@ -164,7 +190,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
+                    "202": {
                         "description": "Prediction result",
                         "schema": {
                             "$ref": "#/definitions/dto.PredictionResponse"
@@ -745,26 +771,28 @@ const docTemplate = `{
         "dto.PredictionResponse": {
             "type": "object",
             "properties": {
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
-                "error": {},
+                "error": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
                 "result": {
                     "$ref": "#/definitions/models.PredictionResult"
                 },
+                "scan_key": {
+                    "type": "string"
+                },
                 "status": {
                     "$ref": "#/definitions/models.PredictionStatus"
                 },
-                "trashScan": {
+                "updated_at": {
                     "type": "string"
                 },
-                "updatedAt": {
-                    "type": "string"
-                },
-                "userID": {
+                "user_id": {
                     "type": "string"
                 }
             }

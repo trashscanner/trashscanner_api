@@ -40,31 +40,154 @@ func TestNewServer(t *testing.T) {
 }
 
 func TestWriteResponse(t *testing.T) {
-	server, _, _, _, _ := newTestServer(t)
+	t.Run("with data", func(t *testing.T) {
+		server, _, _, _, _ := newTestServer(t)
 
-	rr := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/test", nil)
-	data := map[string]any{"message": "ok"}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/test", nil)
+		data := map[string]any{"message": "ok"}
 
-	server.WriteResponse(rr, req, http.StatusAccepted, data)
+		server.WriteResponse(rr, req, http.StatusAccepted, data)
 
-	assert.Equal(t, http.StatusAccepted, rr.Code)
-	assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
-	assert.JSONEq(t, `{"message": "ok"}`, rr.Body.String())
+		assert.Equal(t, http.StatusAccepted, rr.Code)
+		assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
+		assert.JSONEq(t, `{"message": "ok"}`, rr.Body.String())
+	})
+
+	t.Run("with nil data and non-204 status", func(t *testing.T) {
+		server, _, _, _, _ := newTestServer(t)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/test", nil)
+
+		server.WriteResponse(rr, req, http.StatusOK, nil)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
+		assert.JSONEq(t, `{"status": "OK"}`, rr.Body.String())
+	})
+
+	t.Run("with nil data and 204 status", func(t *testing.T) {
+		server, _, _, _, _ := newTestServer(t)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("DELETE", "/test", nil)
+
+		server.WriteResponse(rr, req, http.StatusNoContent, nil)
+
+		assert.Equal(t, http.StatusNoContent, rr.Code)
+		assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
+		assert.JSONEq(t, `null`, rr.Body.String())
+	})
+
+	t.Run("with unencodable data", func(t *testing.T) {
+		server, _, _, _, _ := newTestServer(t)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/test", nil)
+		invalidData := make(chan int)
+
+		server.WriteResponse(rr, req, http.StatusOK, invalidData)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
+		assert.Contains(t, rr.Body.String(), "failed to encode response")
+	})
 }
 
 func TestWriteError(t *testing.T) {
-	server, _, _, _, _ := newTestServer(t)
+	t.Run("with LocalError", func(t *testing.T) {
+		server, _, _, _, _ := newTestServer(t)
 
-	rr := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/test", nil)
-	err := errlocal.NewErrInternal("boom", errors.New("boom").Error(), nil)
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/test", nil)
+		err := errlocal.NewErrInternal("boom", errors.New("boom").Error(), nil)
 
-	server.WriteError(rr, req, err)
+		server.WriteError(rr, req, err)
 
-	assert.Equal(t, http.StatusInternalServerError, rr.Code)
-	assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
-	assert.Contains(t, rr.Body.String(), "boom")
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+		assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
+		assert.Contains(t, rr.Body.String(), "boom")
+	})
+
+	t.Run("with regular error", func(t *testing.T) {
+		server, _, _, _, _ := newTestServer(t)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/test", nil)
+		err := errors.New("regular error")
+
+		server.WriteError(rr, req, err)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+		assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
+	})
+
+	t.Run("with BadRequest error", func(t *testing.T) {
+		server, _, _, _, _ := newTestServer(t)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/test", nil)
+		err := errlocal.NewErrBadRequest("invalid input", "field is required", nil)
+
+		server.WriteError(rr, req, err)
+
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+		assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
+		assert.Contains(t, rr.Body.String(), "invalid input")
+	})
+
+	t.Run("with NotFound error", func(t *testing.T) {
+		server, _, _, _, _ := newTestServer(t)
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/test", nil)
+		err := errlocal.NewErrNotFound("not found", "resource not found", nil)
+
+		server.WriteError(rr, req, err)
+
+		assert.Equal(t, http.StatusNotFound, rr.Code)
+		assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
+		assert.Contains(t, rr.Body.String(), "not found")
+	})
+}
+
+func TestHealthCheck(t *testing.T) {
+	tests := []struct {
+		name           string
+		healthy        bool
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "healthy server",
+			healthy:        true,
+			expectedStatus: http.StatusOK,
+			expectedBody:   "true",
+		},
+		{
+			name:           "unhealthy server",
+			healthy:        false,
+			expectedStatus: http.StatusOK,
+			expectedBody:   "false",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server, _, _, _, _ := newTestServer(t)
+			server.healthy = tt.healthy
+
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", "/health", nil)
+
+			server.healthCheck(rr, req)
+
+			assert.Equal(t, tt.expectedStatus, rr.Code)
+			assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
+			assert.JSONEq(t, tt.expectedBody, rr.Body.String())
+		})
+	}
 }
 
 func TestShutdownWithoutStart(t *testing.T) {

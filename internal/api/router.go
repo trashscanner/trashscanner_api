@@ -30,6 +30,7 @@ func (s *Server) initRouter() {
 	})
 
 	root.Use(mux.CORSMethodMiddleware(root), s.commonMiddleware)
+	root.HandleFunc("/health", s.healthCheck).Methods(http.MethodGet)
 
 	root.HandleFunc("/refresh", s.refresh).Methods(http.MethodPost)
 
