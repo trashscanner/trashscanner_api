@@ -77,6 +77,37 @@ func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	s.WriteResponse(w, r, http.StatusOK, utils.GetUser(r.Context()))
 }
 
+// UpdateUser godoc
+// @Summary Update user
+// @Description Update user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param updateUserRequest body dto.UpdateUserRequest true "New user details"
+// @Success 200 {object} dto.UserResponse "User information"
+// @Failure 401 {object} errlocal.ErrUnauthorized "Unauthorized"
+// @Failure 403 {object} errlocal.ErrForbidden "Forbidden - user ID mismatch"
+// @Failure 404 {object} errlocal.ErrNotFound "User not found"
+// @Failure 500 {object} errlocal.ErrInternal "Internal server error"
+// @Security BearerAuth
+// @Router /users/me [patch]
+func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
+	body, err := dto.GetRequestBody[dto.UpdateUserRequest](r)
+	if err != nil {
+		s.WriteError(w, r, errlocal.NewErrBadRequest("invalid request body", err.Error(), nil))
+		return
+	}
+
+	u := utils.GetUser(r.Context())
+	u.Name = body.Name
+	if err := s.store.UpdateUser(r.Context(), u); err != nil {
+		s.WriteError(w, r, err)
+		return
+	}
+
+	s.WriteResponse(w, r, http.StatusOK, u)
+}
+
 // DeleteUser godoc
 // @Summary Delete user account
 // @Description Delete the authenticated user's account

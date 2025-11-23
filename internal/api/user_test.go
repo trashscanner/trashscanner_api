@@ -177,6 +177,64 @@ func TestGetUser(t *testing.T) {
 	assert.Equal(t, user.ID, resp.ID)
 }
 
+func TestUpdateUser(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		server, storeMock, _, _, _ := newTestServer(t)
+
+		user := testdata.User1
+		req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me",
+			loadJSONFixtureReader(t, "update_user_valid.json"))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
+
+		storeMock.EXPECT().
+			UpdateUser(mock.Anything, mock.MatchedBy(func(u *models.User) bool {
+				return u.ID == user.ID && u.Name != ""
+			})).
+			Return(nil)
+
+		rr := httptest.NewRecorder()
+		server.updateUser(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+
+		var resp models.User
+		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+		assert.Equal(t, user.ID, resp.ID)
+	})
+
+	t.Run("invalid body", func(t *testing.T) {
+		server, _, _, _, _ := newTestServer(t)
+
+		user := testdata.User1
+		req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me",
+			strings.NewReader("invalid json"))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
+
+		rr := httptest.NewRecorder()
+		server.updateUser(rr, req)
+
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+	})
+
+	t.Run("update error", func(t *testing.T) {
+		server, storeMock, _, _, _ := newTestServer(t)
+
+		user := testdata.User1
+		req := httptest.NewRequest(http.MethodPatch, "/api/v1/users/me",
+			loadJSONFixtureReader(t, "update_user_valid.json"))
+		req = req.WithContext(utils.SetUser(req.Context(), &user))
+
+		storeMock.EXPECT().
+			UpdateUser(mock.Anything, mock.Anything).
+			Return(errlocal.NewErrInternal("db error", "", nil))
+
+		rr := httptest.NewRecorder()
+		server.updateUser(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
+}
+
 func TestDeleteUser(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		server, storeMock, _, _, _ := newTestServer(t)
