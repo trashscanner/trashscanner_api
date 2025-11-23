@@ -68,6 +68,15 @@ definitions:
       user_id:
         type: string
     type: object
+  dto.UpdateUserRequest:
+    properties:
+      name:
+        maxLength: 64
+        minLength: 3
+        type: string
+    required:
+    - name
+    type: object
   dto.UploadAvatarResponse:
     properties:
       avatar_url:
@@ -522,6 +531,45 @@ paths:
       security:
       - BearerAuth: []
       summary: Get user information
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: Update user
+      parameters:
+      - description: New user details
+        in: body
+        name: updateUserRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User information
+          schema:
+            $ref: '#/definitions/dto.UserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errlocal.ErrUnauthorized'
+        "403":
+          description: Forbidden - user ID mismatch
+          schema:
+            $ref: '#/definitions/errlocal.ErrForbidden'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/errlocal.ErrNotFound'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      security:
+      - BearerAuth: []
+      summary: Update user
       tags:
       - users
   /users/me/avatar:

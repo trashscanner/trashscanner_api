@@ -87,22 +87,33 @@ func (s *pgStore) GetUserByLogin(ctx context.Context, login string) (*models.Use
 	return &user, nil
 }
 
+func (s *pgStore) UpdateUser(ctx context.Context, user *models.User) error {
+	ctx, cancel := context.WithTimeout(ctx, connTimeout)
+	defer cancel()
+
+	if err := s.q.UpdateUser(ctx, db.UpdateUserParams{
+		ID:   user.ID,
+		Name: user.Name,
+	}); err != nil {
+		return errlocal.NewErrInternal("failed to update user", err.Error(),
+			map[string]any{"user_id": user.ID})
+	}
+
+	return nil
+}
+
 func (s *pgStore) UpdateUserPass(ctx context.Context, id uuid.UUID, newHashedPass string) error {
 	ctx, cancel := context.WithTimeout(ctx, connTimeout)
 	defer cancel()
 
-	err := s.q.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
+	if err := s.q.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
 		ID:             id,
 		HashedPassword: newHashedPass,
-	})
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return errlocal.NewErrNotFound("user not found", "no user with given ID",
-				map[string]any{"user_id": id})
-		}
+	}); err != nil {
 		return errlocal.NewErrInternal("failed to update user password", err.Error(),
 			map[string]any{"user_id": id})
 	}
+
 	return nil
 }
 
@@ -110,18 +121,14 @@ func (s *pgStore) UpdateAvatar(ctx context.Context, user *models.User) error {
 	ctx, cancel := context.WithTimeout(ctx, connTimeout)
 	defer cancel()
 
-	err := s.q.UpdateUserAvatar(ctx, db.UpdateUserAvatarParams{
+	if err := s.q.UpdateUserAvatar(ctx, db.UpdateUserAvatarParams{
 		ID:     user.ID,
 		Avatar: user.Avatar,
-	})
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return errlocal.NewErrNotFound("user not found", "no user with given ID",
-				map[string]any{"user_id": user.ID.String()})
-		}
+	}); err != nil {
 		return errlocal.NewErrInternal("failed to update user avatar", err.Error(),
 			map[string]any{"user_id": user.ID.String()})
 	}
+
 	return nil
 }
 
@@ -129,14 +136,10 @@ func (s *pgStore) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	ctx, cancel := context.WithTimeout(ctx, connTimeout)
 	defer cancel()
 
-	err := s.q.DeleteUser(ctx, id)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return errlocal.NewErrNotFound("user not found", "no user with given ID",
-				map[string]any{"user_id": id})
-		}
+	if err := s.q.DeleteUser(ctx, id); err != nil {
 		return errlocal.NewErrInternal("failed to delete user", err.Error(),
 			map[string]any{"user_id": id})
 	}
+
 	return nil
 }

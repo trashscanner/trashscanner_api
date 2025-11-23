@@ -378,28 +378,6 @@ func TestUpdateAvatar(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Update to new avatar URL", func(t *testing.T) {
-		ctx := context.Background()
-
-		mockQ := dbMock.NewQuerier(t)
-
-		store := &pgStore{
-			q: mockQ,
-		}
-
-		user := testdata.User2
-		user.Avatar = &testdata.NewAvatarURL
-
-		mockQ.EXPECT().UpdateUserAvatar(mock.Anything, db.UpdateUserAvatarParams{
-			ID:     testdata.User2ID,
-			Avatar: &testdata.NewAvatarURL,
-		}).Return(nil).Once()
-
-		err := store.UpdateAvatar(ctx, &user)
-
-		assert.NoError(t, err)
-	})
-
 	t.Run("Update avatar fails", func(t *testing.T) {
 		ctx := context.Background()
 
@@ -415,6 +393,54 @@ func TestUpdateAvatar(t *testing.T) {
 			Return(updateErr).Once()
 
 		err := store.UpdateAvatar(ctx, &testdata.User1)
+
+		assert.Error(t, err)
+		var localErr *errlocal.ErrInternal
+		assert.ErrorAs(t, err, &localErr)
+		assert.Contains(t, localErr.System(), updateErr.Error())
+	})
+}
+
+func TestUpdateUser(t *testing.T) {
+	t.Run("Update user successfully", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQ := dbMock.NewQuerier(t)
+
+		store := &pgStore{
+			q: mockQ,
+		}
+
+		user := testdata.User1
+		user.Name = "Updated Name"
+
+		mockQ.EXPECT().UpdateUser(mock.Anything, db.UpdateUserParams{
+			ID:   testdata.User1ID,
+			Name: "Updated Name",
+		}).Return(nil).Once()
+
+		err := store.UpdateUser(ctx, &user)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("Update user fails", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQ := dbMock.NewQuerier(t)
+
+		store := &pgStore{
+			q: mockQ,
+		}
+
+		user := testdata.User2
+		user.Name = "New Name"
+		updateErr := assert.AnError
+
+		mockQ.EXPECT().UpdateUser(mock.Anything, mock.Anything).
+			Return(updateErr).Once()
+
+		err := store.UpdateUser(ctx, &user)
 
 		assert.Error(t, err)
 		var localErr *errlocal.ErrInternal
@@ -461,26 +487,5 @@ func TestDeleteUser(t *testing.T) {
 		var localErr *errlocal.ErrInternal
 		assert.ErrorAs(t, err, &localErr)
 		assert.Contains(t, localErr.System(), deleteErr.Error())
-	})
-
-	t.Run("User not found", func(t *testing.T) {
-		ctx := context.Background()
-
-		mockQ := dbMock.NewQuerier(t)
-
-		store := &pgStore{
-			q: mockQ,
-		}
-
-		nonExistentID := uuid.New()
-
-		mockQ.EXPECT().DeleteUser(mock.Anything, nonExistentID).
-			Return(pgx.ErrNoRows).Once()
-
-		err := store.DeleteUser(ctx, nonExistentID)
-
-		assert.Error(t, err)
-		var localErr *errlocal.ErrNotFound
-		assert.ErrorAs(t, err, &localErr)
 	})
 }

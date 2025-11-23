@@ -10,7 +10,7 @@ import (
 )
 
 type HTTPResource interface {
-	LoginUserRequest | ChangePasswordRequest
+	LoginUserRequest | ChangePasswordRequest | UpdateUserRequest
 }
 
 func GetRequestBody[T any](r *http.Request) (*T, error) {
@@ -35,6 +35,7 @@ const (
 var supportedFileTypes = map[string]struct{}{
 	"image/jpeg": {},
 	"image/png":  {},
+	"image/jpg":  {},
 }
 
 func GetAvatarFromMultipartForm(r *http.Request) (*models.File, error) {
