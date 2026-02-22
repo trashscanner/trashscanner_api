@@ -16,13 +16,15 @@ func setAuthCookies(w http.ResponseWriter, tokens *auth.TokenPair) {
 		Name:     accessCookieName,
 		Value:    tokens.Access,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false, // Set to false to support non-HTTPS test endpoints
+		Path:     "/",
 	}
 	refreshCookie := &http.Cookie{
 		Name:     refreshCookieName,
 		Value:    tokens.Refresh,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false, // Set to false to support non-HTTPS test endpoints
+		Path:     "/",
 	}
 
 	http.SetCookie(w, accessCookie)
@@ -50,15 +52,17 @@ func clearAuthCookies(w http.ResponseWriter) {
 		Name:     accessCookieName,
 		Value:    "",
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		MaxAge:   -1,
+		Path:     "/",
 	}
 	refreshCookie := &http.Cookie{
 		Name:     refreshCookieName,
 		Value:    "",
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		MaxAge:   -1,
+		Path:     "/",
 	}
 
 	http.SetCookie(w, accessCookie)

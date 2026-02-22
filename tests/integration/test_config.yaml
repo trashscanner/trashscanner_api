@@ -1,0 +1,39 @@
+server:
+  host: 0.0.0.0
+  port: "8080"
+database:
+  host: "db"
+  port: "5432"
+  user: "user"
+  password: "password"
+  name: "db"
+  migrations_path: "migrations"
+  sslmode: "disable"
+filestore:
+  endpoint: "minio:9000"
+  access_key: "minio"
+  secret_key: "minio"
+  bucket: "trashscanner-images"
+  use_ssl: false
+predictor:
+  address: "http://predictor:8000"
+  token: "dummy"
+  max_predictions_in_processing: 10
+auth_manager:
+  signing_algorithm: EdDSA
+  access_token_ttl: 15m
+  refresh_token_ttl: 24h
+auth_config:
+  default_role: anonymous
+  rules:
+    - pattern: /api/v1/admin/**
+      roles: [admin]
+    - pattern: /api/v1/users/me/**
+      roles: [user, admin]
+    - pattern: /api/v1/predictions/**
+      roles: [user, admin]
+    - pattern: /**
+      roles: [anonymous, user, admin]
+log:
+  level: info
+  format: text

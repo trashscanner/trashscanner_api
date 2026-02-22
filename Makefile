@@ -16,18 +16,21 @@ lint:
 
 test:
 	go test $$(go list ./... | grep -v '/internal/database' | grep -v '/docs' | grep -v '/models' | \
-		grep -v '/internal/api/dto'  | grep -v '/mocks' | grep -v '/filestore' | grep -v '/cmd/') \
+		grep -v '/internal/api/dto'  | grep -v '/mocks' | grep -v '/filestore' | grep -v '/cmd/' | grep -v '/tests/') \
 		-coverprofile=coverage.out --race --timeout 2m
 	cat coverage.out | grep -v "internal/database/sqlc" > coverage.txt || true
 
 test-all:
-	go test $$(go list ./... | grep -v '/mocks') --race --timeout 2m
+	go test $$(go list ./... | grep -v '/mocks' | grep -v '/tests/') --race --timeout 2m
 
 test-db:
 	go test ./internal/database/... --race --timeout 2m
 
 test-filestore:
 	go test ./internal/filestore/... --race --timeout 2m
+
+test-integration:
+	go test ./tests/integration/... -v --race --timeout 5m
 
 build:
 	go build -o bin/trashscanner cmd/trashscanner/main.go
