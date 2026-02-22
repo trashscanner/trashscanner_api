@@ -37,7 +37,11 @@ func (s *pgStore) GetAdminUsers(ctx context.Context, limit, offset int32) ([]mod
 			}
 		}
 
-		if row.Status != nil || row.Rating != nil || row.FilesScanned != nil || row.TotalWeight != nil || row.LastScannedAt.Valid {
+		if row.Status != nil ||
+			row.Rating != nil ||
+			row.FilesScanned != nil ||
+			row.TotalWeight != nil ||
+			row.LastScannedAt.Valid {
 			user.Stat = &models.Stat{}
 			if row.Status != nil {
 				user.Stat.Status = models.UserStatus(*row.Status)

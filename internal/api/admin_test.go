@@ -74,16 +74,44 @@ func TestGetUsersList(t *testing.T) {
 	t.Run("invalid_pagination", func(t *testing.T) {
 		server, storeMock, _, _, _ := newTestServer(t)
 
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users?limit=-10&offset=-1", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users?limit=0&offset=-1", nil)
 		rr := httptest.NewRecorder()
 
-		// defaults to 0 and 100 if invalid
+		// limit=0 is overridden to 100
+		// offset=-1 is overridden by utils.GetQueryParam to 0
 		storeMock.EXPECT().GetAdminUsers(mock.Anything, int32(100), int32(0)).Return([]models.User{}, nil)
 		storeMock.EXPECT().CountUsers(mock.Anything).Return(int64(0), nil)
 
 		server.getUsersList(rr, req)
 
 		assert.Equal(t, http.StatusOK, rr.Code)
+	})
+
+	t.Run("error_get_admin_users", func(t *testing.T) {
+		server, storeMock, _, _, _ := newTestServer(t)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users?limit=10&offset=0", nil)
+		rr := httptest.NewRecorder()
+
+		storeMock.EXPECT().GetAdminUsers(mock.Anything, int32(10), int32(0)).Return(nil, assert.AnError)
+
+		server.getUsersList(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
+
+	t.Run("error_count_users", func(t *testing.T) {
+		server, storeMock, _, _, _ := newTestServer(t)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users?limit=10&offset=0", nil)
+		rr := httptest.NewRecorder()
+
+		storeMock.EXPECT().GetAdminUsers(mock.Anything, int32(10), int32(0)).Return([]models.User{}, nil)
+		storeMock.EXPECT().CountUsers(mock.Anything).Return(int64(0), assert.AnError)
+
+		server.getUsersList(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
 }
 
@@ -147,5 +175,41 @@ func TestCreateUser_Admin(t *testing.T) {
 		server.createUser(rr, req)
 
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
+	})
+
+	t.Run("bad_request_body", func(t *testing.T) {
+		server, _, _, _, _ := newTestServer(t)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/users", bytes.NewBufferString("{invalid json}"))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+
+		server.createUser(rr, req)
+
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+	})
+
+	t.Run("store_error", func(t *testing.T) {
+		server, storeMock, _, _, _ := newTestServer(t)
+
+		reqDto := dto.CreateAdminRequest{
+			Login:    "newadmin",
+			Name:     "New Admin",
+			Password: "securepassword",
+			Role:     models.RoleAdmin,
+		}
+
+		body, err := json.Marshal(reqDto)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/users", bytes.NewBuffer(body))
+		req.Header.Set("Content-Type", "application/json")
+		rr := httptest.NewRecorder()
+
+		storeMock.EXPECT().CreateUser(mock.Anything, mock.AnythingOfType("*models.User")).Return(assert.AnError)
+
+		server.createUser(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
 }

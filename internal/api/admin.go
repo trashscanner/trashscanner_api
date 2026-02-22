@@ -26,11 +26,8 @@ func (s *Server) getUsersList(w http.ResponseWriter, r *http.Request) {
 	limit := utils.GetQueryParam[int](r, limitQueryKey, defaultLimit)
 	offset := utils.GetQueryParam[int](r, offsetQueryKey, defaultOffset)
 
-	if limit <= 0 {
+	if limit == 0 {
 		limit = defaultLimit
-	}
-	if offset < 0 {
-		offset = defaultOffset
 	}
 
 	users, err := s.store.GetAdminUsers(r.Context(), int32(limit), int32(offset))
