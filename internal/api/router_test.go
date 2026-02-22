@@ -122,7 +122,7 @@ func TestInitRouter_GetUserFlow(t *testing.T) {
 
 	user := testdata.User1
 	token := "access.token"
-	claims := &auth.Claims{UserID: user.ID.String(), Login: user.Login}
+	claims := &auth.Claims{UserID: user.ID.String(), Login: user.Login, Role: string(user.Role)}
 
 	authMock.EXPECT().
 		Parse(token).

@@ -16,9 +16,10 @@ WITH new_user AS (
     INSERT INTO users (
         name,
         login,
-        hashed_password
+        hashed_password,
+        role
     ) VALUES (
-        $1, $2, $3
+        $1, $2, $3, $4
     ) RETURNING id
 ),
 new_stats AS (
@@ -34,10 +35,16 @@ type CreateUserParams struct {
 	Name           string `json:"name"`
 	Login          string `json:"login"`
 	HashedPassword string `json:"hashed_password"`
+	Role           string `json:"role"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Login, arg.HashedPassword)
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Name,
+		arg.Login,
+		arg.HashedPassword,
+		arg.Role,
+	)
 	var user_id uuid.UUID
 	err := row.Scan(&user_id)
 	return user_id, err
@@ -55,7 +62,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, login, name, hashed_password, avatar, deleted, created_at, updated_at FROM users
+SELECT id, login, name, hashed_password, role, avatar, deleted, created_at, updated_at FROM users
 WHERE id = $1 AND deleted = FALSE
 `
 
@@ -67,6 +74,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.Login,
 		&i.Name,
 		&i.HashedPassword,
+		&i.Role,
 		&i.Avatar,
 		&i.Deleted,
 		&i.CreatedAt,
@@ -76,7 +84,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const getUserByLogin = `-- name: GetUserByLogin :one
-SELECT id, login, name, hashed_password, avatar, deleted, created_at, updated_at FROM users
+SELECT id, login, name, hashed_password, role, avatar, deleted, created_at, updated_at FROM users
 WHERE login = $1 AND deleted = FALSE
 `
 
@@ -88,6 +96,7 @@ func (q *Queries) GetUserByLogin(ctx context.Context, login string) (User, error
 		&i.Login,
 		&i.Name,
 		&i.HashedPassword,
+		&i.Role,
 		&i.Avatar,
 		&i.Deleted,
 		&i.CreatedAt,

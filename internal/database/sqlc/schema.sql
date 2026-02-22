@@ -3,6 +3,7 @@ CREATE TABLE users (
     login TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
     hashed_password TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'user',
     avatar TEXT,
     deleted BOOLEAN NOT NULL DEFAULT FALSE,
 

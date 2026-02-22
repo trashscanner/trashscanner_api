@@ -50,6 +50,9 @@ func TestConfig(t *testing.T) {
 				Token:                      "token",
 				MaxPredictionsInProcessing: 10,
 			},
+			AuthConfig: AuthConfig{
+				DefaultRole: "anonymous",
+			},
 		}
 		assert.NoError(t, err)
 		assert.Equal(t, expectedConfig, config)

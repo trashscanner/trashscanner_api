@@ -25,9 +25,15 @@ func (s *pgStore) CreateUser(ctx context.Context, user *models.User) error {
 			map[string]any{"login": user.Login})
 	}
 
+	role := string(user.Role)
+	if role == "" {
+		role = "user"
+	}
+
 	id, cErr := s.q.CreateUser(ctx, db.CreateUserParams{
 		Login:          user.Login,
 		HashedPassword: user.HashedPassword,
+		Role:           role,
 	})
 	if cErr != nil {
 		return errlocal.NewErrInternal("failed to create user", cErr.Error(),

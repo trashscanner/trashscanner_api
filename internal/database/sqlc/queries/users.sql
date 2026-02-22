@@ -3,9 +3,10 @@ WITH new_user AS (
     INSERT INTO users (
         name,
         login,
-        hashed_password
+        hashed_password,
+        role
     ) VALUES (
-        $1, $2, $3
+        $1, $2, $3, $4
     ) RETURNING id
 ),
 new_stats AS (

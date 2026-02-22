@@ -22,6 +22,7 @@ func (r *LoginUserRequest) ToModel() models.User {
 		Name:           r.Name,
 		Login:          r.Login,
 		HashedPassword: hp,
+		Role:           models.RoleUser,
 	}
 }
 

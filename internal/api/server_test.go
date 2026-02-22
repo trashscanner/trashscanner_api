@@ -76,8 +76,8 @@ func TestWriteResponse(t *testing.T) {
 		server.WriteResponse(rr, req, http.StatusNoContent, nil)
 
 		assert.Equal(t, http.StatusNoContent, rr.Code)
-		assert.Equal(t, "application/json; charset=utf-8", rr.Header().Get("Content-Type"))
-		assert.JSONEq(t, `null`, rr.Body.String())
+		assert.Empty(t, rr.Header().Get("Content-Type"))
+		assert.Empty(t, rr.Body.String())
 	})
 
 	t.Run("with unencodable data", func(t *testing.T) {

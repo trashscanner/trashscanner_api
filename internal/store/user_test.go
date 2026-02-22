@@ -32,6 +32,7 @@ func TestUserCreate(t *testing.T) {
 		mockQ.EXPECT().CreateUser(mock.Anything, db.CreateUserParams{
 			Login:          user.Login,
 			HashedPassword: user.HashedPassword,
+			Role:           "user",
 		}).Return(id, nil).Once()
 
 		err := store.CreateUser(ctx, &user)
