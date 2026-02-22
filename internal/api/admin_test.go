@@ -74,11 +74,10 @@ func TestGetUsersList(t *testing.T) {
 	t.Run("invalid_pagination", func(t *testing.T) {
 		server, storeMock, _, _, _ := newTestServer(t)
 
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users?limit=0&offset=-1", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users?limit=-10&offset=-1", nil)
 		rr := httptest.NewRecorder()
 
-		// limit=0 is overridden to 100
-		// offset=-1 is overridden by utils.GetQueryParam to 0
+		// defaults to 0 and 100 if invalid
 		storeMock.EXPECT().GetAdminUsers(mock.Anything, int32(100), int32(0)).Return([]models.User{}, nil)
 		storeMock.EXPECT().CountUsers(mock.Anything).Return(int64(0), nil)
 
