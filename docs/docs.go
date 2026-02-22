@@ -23,6 +23,131 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/admin/users": {
+            "get": {
+                "description": "Get paginated list of all users with their stats",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Get users list",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AdminUserListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrBadRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrUnauthorized"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrForbidden"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrInternal"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new user with specific role (e.g., admin)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "Create user as admin",
+                "parameters": [
+                    {
+                        "description": "User data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateAdminRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrBadRequest"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrUnauthorized"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrForbidden"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrConflict"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/errlocal.ErrInternal"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Check server health",
@@ -759,6 +884,61 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.AdminUserListResponse": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "total_count": {
+                    "type": "integer"
+                },
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.AdminUserResponse"
+                    }
+                }
+            }
+        },
+        "dto.AdminUserResponse": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "deleted": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_login_at": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/models.Role"
+                },
+                "stat": {
+                    "$ref": "#/definitions/dto.StatResponse"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.AuthRequest": {
             "type": "object",
             "properties": {
@@ -802,6 +982,34 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 64,
                     "minLength": 8
+                }
+            }
+        },
+        "dto.CreateAdminRequest": {
+            "type": "object",
+            "required": [
+                "login",
+                "name",
+                "password",
+                "role"
+            ],
+            "properties": {
+                "login": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8
+                },
+                "role": {
+                    "$ref": "#/definitions/models.Role"
                 }
             }
         },
@@ -858,6 +1066,41 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.StatResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "files_scanned": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_scanned_at": {
+                    "type": "string"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.UserStatus"
+                },
+                "total_weight": {
+                    "type": "number"
+                },
+                "trash_by_types": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.UpdateUserRequest": {
             "type": "object",
             "required": [
@@ -892,11 +1135,17 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "last_login_at": {
+                    "type": "string"
+                },
                 "login": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/models.Role"
                 },
                 "stat": {
                     "$ref": "#/definitions/models.Stat"
@@ -907,6 +1156,21 @@ const docTemplate = `{
             }
         },
         "errlocal.ErrBadRequest": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "message": {
+                    "type": "string"
+                },
+                "system": {
+                    "type": "string"
+                }
+            }
+        },
+        "errlocal.ErrConflict": {
             "type": "object",
             "properties": {
                 "details": {
@@ -999,6 +1263,19 @@ const docTemplate = `{
                 "PredictionProcessingStatus",
                 "PredictionCompletedStatus",
                 "PredictionFailedStatus"
+            ]
+        },
+        "models.Role": {
+            "type": "string",
+            "enum": [
+                "admin",
+                "user",
+                "anonymous"
+            ],
+            "x-enum-varnames": [
+                "RoleAdmin",
+                "RoleUser",
+                "RoleAnonymous"
             ]
         },
         "models.Stat": {

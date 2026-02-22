@@ -9,16 +9,17 @@ import (
 )
 
 type User struct {
-	ID             uuid.UUID `json:"id"`
-	Login          string    `json:"login"`
-	Name           string    `json:"name"`
-	HashedPassword string    `json:"-"`
-	Role           Role      `json:"role"`
-	Avatar         *string   `json:"avatar,omitempty"`
-	Stat           *Stat     `json:"stat,omitempty"`
-	Deleted        bool      `json:"-"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID             uuid.UUID  `json:"id"`
+	Login          string     `json:"login"`
+	Name           string     `json:"name"`
+	HashedPassword string     `json:"-"`
+	Role           Role       `json:"role"`
+	Avatar         *string    `json:"avatar,omitempty"`
+	Stat           *Stat      `json:"stat,omitempty"`
+	Deleted        bool       `json:"-"`
+	LastLoginAt    *time.Time `json:"last_login_at,omitempty"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 func (u *User) Model(user db.User) {
