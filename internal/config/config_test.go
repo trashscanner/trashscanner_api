@@ -115,3 +115,62 @@ func TestConfig(t *testing.T) {
 		assert.Equal(t, 5, config.Predictor.MaxPredictionsInProcessing)
 	})
 }
+
+func TestAuthConfig_IsAllowed(t *testing.T) {
+	cfg := AuthConfig{
+		DefaultRole: "anonymous",
+		Rules: []AuthRule{
+			{Pattern: "/api/v1/health", Roles: []string{"anonymous", "user", "admin"}},
+			{Pattern: "/api/v1/users/me/**", Roles: []string{"user", "admin"}},
+			{Pattern: "/api/v1/admin/*", Roles: []string{"admin"}},
+		},
+	}
+
+	tests := []struct {
+		name     string
+		role     string
+		urlPath  string
+		expected bool
+	}{
+		{"health check anonymous", "anonymous", "/api/v1/health", true},
+		{"health check user", "user", "/api/v1/health", true},
+		{"users me user", "user", "/api/v1/users/me", true},
+		{"users me avatar user", "user", "/api/v1/users/me/avatar", true},
+		{"users me anonymous", "anonymous", "/api/v1/users/me", false},
+		{"admin path admin", "admin", "/api/v1/admin/dashboard", true},
+		{"admin path user", "user", "/api/v1/admin/dashboard", false},
+		{"admin deep path admin (not matched by *)", "admin", "/api/v1/admin/dashboard/settings", false},
+		{"unknown path", "admin", "/api/v1/unknown", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, cfg.IsAllowed(tt.role, tt.urlPath))
+		})
+	}
+}
+
+func TestMatchPattern(t *testing.T) {
+	tests := []struct {
+		pattern  string
+		path     string
+		expected bool
+	}{
+		{"/api/v1/health", "/api/v1/health", true},
+		{"/api/v1/health", "/api/v1/health/", true},
+		{"/api/v1/health", "/api/v2/health", false},
+		{"/api/v1/*", "/api/v1/users", true},
+		{"/api/v1/*", "/api/v1/users/me", false},
+		{"/api/v1/**", "/api/v1/users/me", true},
+		{"/api/v1/**", "/api/v1", true}, // ** matches zero segments
+		{"**/users", "/api/v1/users", true},
+		{"/api/**/permissions", "/api/v1/users/permissions", true},
+		{"/api/**/permissions", "/api/v1/permissions", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.pattern+" against "+tt.path, func(t *testing.T) {
+			assert.Equal(t, tt.expected, matchPattern(tt.pattern, tt.path))
+		})
+	}
+}
