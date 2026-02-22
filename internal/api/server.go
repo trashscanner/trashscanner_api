@@ -87,6 +87,11 @@ func NewServer(
 	}
 }
 
+func (s *Server) InitRouter() *mux.Router {
+	s.initRouter()
+	return s.router
+}
+
 func (s *Server) Start() error {
 	s.logger.Infof("starting server at %s", s.s.Addr)
 	s.initRouter()
