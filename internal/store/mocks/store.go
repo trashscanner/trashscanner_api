@@ -251,6 +251,66 @@ func (_c *Store_Conn_Call) RunAndReturn(run func() *pgxpool.Pool) *Store_Conn_Ca
 	return _c
 }
 
+// CountUsers provides a mock function for the type Store
+func (_mock *Store) CountUsers(ctx context.Context) (int64, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountUsers")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (int64, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) int64); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Store_CountUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountUsers'
+type Store_CountUsers_Call struct {
+	*mock.Call
+}
+
+// CountUsers is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Store_Expecter) CountUsers(ctx interface{}) *Store_CountUsers_Call {
+	return &Store_CountUsers_Call{Call: _e.mock.On("CountUsers", ctx)}
+}
+
+func (_c *Store_CountUsers_Call) Run(run func(ctx context.Context)) *Store_CountUsers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_CountUsers_Call) Return(n int64, err error) *Store_CountUsers_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *Store_CountUsers_Call) RunAndReturn(run func(ctx context.Context) (int64, error)) *Store_CountUsers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateUser provides a mock function for the type Store
 func (_mock *Store) CreateUser(ctx context.Context, user *models.User) error {
 	ret := _mock.Called(ctx, user)
@@ -418,6 +478,80 @@ func (_c *Store_ExecTx_Call) Return(err error) *Store_ExecTx_Call {
 }
 
 func (_c *Store_ExecTx_Call) RunAndReturn(run func(ctx context.Context, fn func(store.Store) error) error) *Store_ExecTx_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAdminUsers provides a mock function for the type Store
+func (_mock *Store) GetAdminUsers(ctx context.Context, limit int32, offset int32) ([]models.User, error) {
+	ret := _mock.Called(ctx, limit, offset)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAdminUsers")
+	}
+
+	var r0 []models.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int32, int32) ([]models.User, error)); ok {
+		return returnFunc(ctx, limit, offset)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int32, int32) []models.User); ok {
+		r0 = returnFunc(ctx, limit, offset)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.User)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int32, int32) error); ok {
+		r1 = returnFunc(ctx, limit, offset)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Store_GetAdminUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAdminUsers'
+type Store_GetAdminUsers_Call struct {
+	*mock.Call
+}
+
+// GetAdminUsers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - limit int32
+//   - offset int32
+func (_e *Store_Expecter) GetAdminUsers(ctx interface{}, limit interface{}, offset interface{}) *Store_GetAdminUsers_Call {
+	return &Store_GetAdminUsers_Call{Call: _e.mock.On("GetAdminUsers", ctx, limit, offset)}
+}
+
+func (_c *Store_GetAdminUsers_Call) Run(run func(ctx context.Context, limit int32, offset int32)) *Store_GetAdminUsers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int32
+		if args[1] != nil {
+			arg1 = args[1].(int32)
+		}
+		var arg2 int32
+		if args[2] != nil {
+			arg2 = args[2].(int32)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Store_GetAdminUsers_Call) Return(users []models.User, err error) *Store_GetAdminUsers_Call {
+	_c.Call.Return(users, err)
+	return _c
+}
+
+func (_c *Store_GetAdminUsers_Call) RunAndReturn(run func(ctx context.Context, limit int32, offset int32) ([]models.User, error)) *Store_GetAdminUsers_Call {
 	_c.Call.Return(run)
 	return _c
 }

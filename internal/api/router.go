@@ -54,4 +54,9 @@ func (s *Server) initRouter() {
 	predictionRouter.HandleFunc("", s.startPrediction).Methods(http.MethodPost)
 	predictionRouter.HandleFunc("", s.listPredictions).Methods(http.MethodGet)
 	predictionRouter.HandleFunc(fmt.Sprintf("/{%s}", predictionIDTag), s.getPrediction).Methods(http.MethodGet)
+
+	adminRouter := root.PathPrefix("/admin").Subrouter()
+	adminRouter.Use(s.authMiddleware)
+	adminRouter.HandleFunc("/users", s.getUsersList).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/users", s.createUser).Methods(http.MethodPost)
 }

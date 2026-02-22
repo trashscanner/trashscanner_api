@@ -22,3 +22,5 @@ type UploadAvatarRequest struct {
 type UploadAvatarResponse struct {
 	AvatarURL string `json:"avatar_url" example:"http://localhost:9000/trashscanner-images/user-id/avatars/avatar.jpg"`
 }
+
+type StatResponse models.Stat

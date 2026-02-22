@@ -1,5 +1,41 @@
 basePath: /api/v1
 definitions:
+  dto.AdminUserListResponse:
+    properties:
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total_count:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/dto.AdminUserResponse'
+        type: array
+    type: object
+  dto.AdminUserResponse:
+    properties:
+      avatar:
+        type: string
+      created_at:
+        type: string
+      deleted:
+        type: boolean
+      id:
+        type: string
+      last_login_at:
+        type: string
+      login:
+        type: string
+      name:
+        type: string
+      role:
+        $ref: '#/definitions/models.Role'
+      stat:
+        $ref: '#/definitions/dto.StatResponse'
+      updated_at:
+        type: string
+    type: object
   dto.AuthRequest:
     properties:
       login:
@@ -30,6 +66,27 @@ definitions:
     required:
     - new_password
     - old_password
+    type: object
+  dto.CreateAdminRequest:
+    properties:
+      login:
+        maxLength: 50
+        minLength: 3
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      password:
+        minLength: 8
+        type: string
+      role:
+        $ref: '#/definitions/models.Role'
+    required:
+    - login
+    - name
+    - password
+    - role
     type: object
   dto.LoginUserRequest:
     properties:
@@ -68,6 +125,29 @@ definitions:
       user_id:
         type: string
     type: object
+  dto.StatResponse:
+    properties:
+      created_at:
+        type: string
+      files_scanned:
+        type: integer
+      id:
+        type: string
+      last_scanned_at:
+        type: string
+      rating:
+        type: integer
+      status:
+        $ref: '#/definitions/models.UserStatus'
+      total_weight:
+        type: number
+      trash_by_types:
+        additionalProperties:
+          type: integer
+        type: object
+      updated_at:
+        type: string
+    type: object
   dto.UpdateUserRequest:
     properties:
       name:
@@ -91,16 +171,30 @@ definitions:
         type: string
       id:
         type: string
+      last_login_at:
+        type: string
       login:
         type: string
       name:
         type: string
+      role:
+        $ref: '#/definitions/models.Role'
       stat:
         $ref: '#/definitions/models.Stat'
       updated_at:
         type: string
     type: object
   errlocal.ErrBadRequest:
+    properties:
+      details:
+        additionalProperties: {}
+        type: object
+      message:
+        type: string
+      system:
+        type: string
+    type: object
+  errlocal.ErrConflict:
     properties:
       details:
         additionalProperties: {}
@@ -165,6 +259,16 @@ definitions:
     - PredictionProcessingStatus
     - PredictionCompletedStatus
     - PredictionFailedStatus
+  models.Role:
+    enum:
+    - admin
+    - user
+    - anonymous
+    type: string
+    x-enum-varnames:
+    - RoleAdmin
+    - RoleUser
+    - RoleAnonymous
   models.Stat:
     properties:
       created_at:
@@ -243,6 +347,89 @@ info:
   title: TrashScanner API
   version: "1.0"
 paths:
+  /api/v1/admin/users:
+    get:
+      consumes:
+      - application/json
+      description: Get paginated list of all users with their stats
+      parameters:
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
+      - default: 100
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AdminUserListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errlocal.ErrBadRequest'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errlocal.ErrUnauthorized'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errlocal.ErrForbidden'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      summary: Get users list
+      tags:
+      - admin
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with specific role (e.g., admin)
+      parameters:
+      - description: User data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateAdminRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errlocal.ErrBadRequest'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errlocal.ErrUnauthorized'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/errlocal.ErrForbidden'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/errlocal.ErrConflict'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errlocal.ErrInternal'
+      summary: Create user as admin
+      tags:
+      - admin
   /health:
     get:
       description: Check server health

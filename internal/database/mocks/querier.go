@@ -95,6 +95,66 @@ func (_c *Querier_CompletePrediction_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// CountUsers provides a mock function for the type Querier
+func (_mock *Querier) CountUsers(ctx context.Context) (int64, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountUsers")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (int64, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) int64); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Querier_CountUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountUsers'
+type Querier_CountUsers_Call struct {
+	*mock.Call
+}
+
+// CountUsers is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Querier_Expecter) CountUsers(ctx interface{}) *Querier_CountUsers_Call {
+	return &Querier_CountUsers_Call{Call: _e.mock.On("CountUsers", ctx)}
+}
+
+func (_c *Querier_CountUsers_Call) Run(run func(ctx context.Context)) *Querier_CountUsers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Querier_CountUsers_Call) Return(n int64, err error) *Querier_CountUsers_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *Querier_CountUsers_Call) RunAndReturn(run func(ctx context.Context) (int64, error)) *Querier_CountUsers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateLoginHistory provides a mock function for the type Querier
 func (_mock *Querier) CreateLoginHistory(ctx context.Context, arg db.CreateLoginHistoryParams) (uuid.UUID, error) {
 	ret := _mock.Called(ctx, arg)
@@ -486,6 +546,74 @@ func (_c *Querier_GetActiveTokensByUser_Call) Return(refreshTokens []db.RefreshT
 }
 
 func (_c *Querier_GetActiveTokensByUser_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) ([]db.RefreshToken, error)) *Querier_GetActiveTokensByUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAdminUsers provides a mock function for the type Querier
+func (_mock *Querier) GetAdminUsers(ctx context.Context, arg db.GetAdminUsersParams) ([]db.GetAdminUsersRow, error) {
+	ret := _mock.Called(ctx, arg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAdminUsers")
+	}
+
+	var r0 []db.GetAdminUsersRow
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, db.GetAdminUsersParams) ([]db.GetAdminUsersRow, error)); ok {
+		return returnFunc(ctx, arg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, db.GetAdminUsersParams) []db.GetAdminUsersRow); ok {
+		r0 = returnFunc(ctx, arg)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.GetAdminUsersRow)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, db.GetAdminUsersParams) error); ok {
+		r1 = returnFunc(ctx, arg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Querier_GetAdminUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAdminUsers'
+type Querier_GetAdminUsers_Call struct {
+	*mock.Call
+}
+
+// GetAdminUsers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - arg db.GetAdminUsersParams
+func (_e *Querier_Expecter) GetAdminUsers(ctx interface{}, arg interface{}) *Querier_GetAdminUsers_Call {
+	return &Querier_GetAdminUsers_Call{Call: _e.mock.On("GetAdminUsers", ctx, arg)}
+}
+
+func (_c *Querier_GetAdminUsers_Call) Run(run func(ctx context.Context, arg db.GetAdminUsersParams)) *Querier_GetAdminUsers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 db.GetAdminUsersParams
+		if args[1] != nil {
+			arg1 = args[1].(db.GetAdminUsersParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Querier_GetAdminUsers_Call) Return(getAdminUsersRows []db.GetAdminUsersRow, err error) *Querier_GetAdminUsers_Call {
+	_c.Call.Return(getAdminUsersRows, err)
+	return _c
+}
+
+func (_c *Querier_GetAdminUsers_Call) RunAndReturn(run func(ctx context.Context, arg db.GetAdminUsersParams) ([]db.GetAdminUsersRow, error)) *Querier_GetAdminUsers_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -42,3 +42,5 @@ auth_config:
       roles: ["user", "admin"]
     - pattern: "/api/v1/predictions/**"
       roles: ["user", "admin"]
+    - pattern: "/api/v1/admin/**"
+      roles: ["admin"]
