@@ -29,7 +29,7 @@ func (s *Server) initRouter() {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	})
 
-	root.Use(mux.CORSMethodMiddleware(root), s.commonMiddleware)
+	root.Use(mux.CORSMethodMiddleware(root), s.commonMiddleware, s.softAuthMiddleware, s.roleMiddleware)
 	root.HandleFunc("/health", s.healthCheck).Methods(http.MethodGet)
 
 	root.HandleFunc("/refresh", s.refresh).Methods(http.MethodPost)

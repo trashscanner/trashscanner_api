@@ -32,6 +32,7 @@ func TestUserCreate(t *testing.T) {
 		mockQ.EXPECT().CreateUser(mock.Anything, db.CreateUserParams{
 			Login:          user.Login,
 			HashedPassword: user.HashedPassword,
+			Role:           "user",
 		}).Return(id, nil).Once()
 
 		err := store.CreateUser(ctx, &user)
@@ -62,6 +63,33 @@ func TestUserCreate(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "already exists")
+	})
+
+	t.Run("Create user successfully with empty role defaults to user", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQ := dbMock.NewQuerier(t)
+
+		store := &pgStore{
+			q: mockQ,
+		}
+
+		id := uuid.New()
+		user := testdata.NewUser
+		user.Role = "" // empty role
+
+		mockQ.EXPECT().GetUserByLogin(mock.Anything, user.Login).Return(db.User{}, pgx.ErrNoRows).Once()
+
+		mockQ.EXPECT().CreateUser(mock.Anything, db.CreateUserParams{
+			Login:          user.Login,
+			HashedPassword: user.HashedPassword,
+			Role:           "user",
+		}).Return(id, nil).Once()
+
+		err := store.CreateUser(ctx, &user)
+
+		assert.NoError(t, err)
+		assert.Equal(t, id, user.ID)
 	})
 
 	t.Run("Database error on login check", func(t *testing.T) {

@@ -64,6 +64,7 @@ type User struct {
 	Login          string    `json:"login"`
 	Name           string    `json:"name"`
 	HashedPassword string    `json:"hashed_password"`
+	Role           string    `json:"role"`
 	Avatar         *string   `json:"avatar"`
 	Deleted        bool      `json:"deleted"`
 	CreatedAt      time.Time `json:"created_at"`

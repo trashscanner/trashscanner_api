@@ -34,6 +34,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 	UserID    string `json:"user_id" validate:"required,uuid"`
 	Login     string `json:"login"`
+	Role      string `json:"role"`
 	TokenType string `json:"token_type"`
 }
 
@@ -43,6 +44,7 @@ func (m *jwtGenerator) newPair(user models.User) (*TokenPair, error) {
 	accessToken := jwt.NewWithClaims(m.signingMethod, Claims{
 		UserID:    user.ID.String(),
 		Login:     user.Login,
+		Role:      string(user.Role),
 		TokenType: "access",
 
 		RegisteredClaims: jwt.RegisteredClaims{

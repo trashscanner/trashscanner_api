@@ -27,10 +27,51 @@ func (s *Server) authMiddleware(next http.Handler) http.Handler {
 		user := &models.User{
 			ID:    uuid.MustParse(claims.UserID),
 			Login: claims.Login,
+			Role:  models.Role(claims.Role),
 		}
 		ctx := utils.SetUser(r.Context(), user)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (s *Server) softAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		access, err := getAccessCookie(r)
+		if err == nil && access != "" {
+			claims, parseErr := s.authManager.Parse(access)
+			if parseErr == nil {
+				user := &models.User{
+					ID:    uuid.MustParse(claims.UserID),
+					Login: claims.Login,
+					Role:  models.Role(claims.Role),
+				}
+				ctx := utils.SetUser(r.Context(), user)
+				r = r.WithContext(ctx)
+			}
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) roleMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		role := s.authConfig.DefaultRole
+
+		userVal := r.Context().Value(utils.UserCtxKey)
+		if userVal != nil {
+			if u, ok := userVal.(*models.User); ok && u != nil {
+				role = string(u.Role)
+			}
+		}
+
+		if !s.authConfig.IsAllowed(role, r.URL.Path) {
+			s.WriteError(w, r, errlocal.NewErrForbidden("access denied", "insufficient role", nil))
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }
 

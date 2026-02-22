@@ -14,6 +14,7 @@ var (
 		Name:           "test_name",
 		Login:          "test_user",
 		HashedPassword: "hashed_password",
+		Role:           models.RoleUser,
 	}
 	User1ID = uuid.MustParse("04ae379a-31a6-4b32-a6d7-f6cdd844f81a")
 	User1   = models.User{
@@ -21,6 +22,7 @@ var (
 		Name:           "test_name_1",
 		Login:          "test_user_1",
 		HashedPassword: "hashed_password_1",
+		Role:           models.RoleUser,
 		Deleted:        false,
 		Stat:           &Stats1,
 	}
@@ -30,6 +32,7 @@ var (
 		Name:           "test_name_2",
 		Login:          "test_user_2",
 		HashedPassword: "hashed_password_2",
+		Role:           models.RoleUser,
 		Deleted:        false,
 		Stat:           &Stats2,
 	}

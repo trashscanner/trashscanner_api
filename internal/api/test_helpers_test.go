@@ -29,12 +29,20 @@ func newTestServer(t *testing.T) (*Server, *storemocks.Store, *authmocks.AuthMan
 	cfg := config.Config{Log: config.LogConfig{Level: "error", Format: "text"}}
 	logger := logging.NewLogger(cfg)
 
+	authConfig := &config.AuthConfig{
+		DefaultRole: "anonymous",
+		Rules: []config.AuthRule{
+			{Pattern: "/**", Roles: []string{"anonymous", "user", "admin"}}, // Allow everything in tests by default unless explicitly tested
+		},
+	}
+
 	srv := &Server{
 		s:           &http.Server{},
 		router:      mux.NewRouter(),
 		store:       store,
 		authManager: authManager,
 		fileStore:   fileStore,
+		authConfig:  authConfig,
 		predictor:   predictor,
 		logger:      logger,
 	}

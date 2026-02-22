@@ -32,6 +32,7 @@ type Server struct {
 	store       store.Store
 	fileStore   filestore.FileStore
 	authManager auth.AuthManager
+	authConfig  *config.AuthConfig
 	predictor   predictor
 	logger      *logging.Logger
 	healthy     bool
@@ -80,6 +81,7 @@ func NewServer(
 		store:       store,
 		fileStore:   fileStore,
 		authManager: authManager,
+		authConfig:  &cfg.AuthConfig,
 		predictor:   predictor,
 		logger:      logger.WithApiTag(),
 	}
@@ -108,9 +110,15 @@ func (s *Server) Shutdown() error {
 }
 
 func (s *Server) WriteResponse(w http.ResponseWriter, r *http.Request, status int, data any) {
+	if status == http.StatusNoContent {
+		w.WriteHeader(status)
+		s.logger.WithContext(r.Context()).WithField("status", status).Info("request processed")
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
-	if data == nil && status != http.StatusNoContent {
+	if data == nil {
 		data = map[string]string{"status": http.StatusText(status)}
 	}
 

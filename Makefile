@@ -21,13 +21,13 @@ test:
 	cat coverage.out | grep -v "internal/database/sqlc" > coverage.txt || true
 
 test-all:
-	go test $$(go list ./... | grep -v '/mocks') -v --race --timeout 2m
+	go test $$(go list ./... | grep -v '/mocks') --race --timeout 2m
 
 test-db:
-	go test ./internal/database/... -v --race --timeout 2m
+	go test ./internal/database/... --race --timeout 2m
 
 test-filestore:
-	go test ./internal/filestore/... -v --race --timeout 2m
+	go test ./internal/filestore/... --race --timeout 2m
 
 build:
 	go build -o bin/trashscanner cmd/trashscanner/main.go

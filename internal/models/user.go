@@ -13,6 +13,7 @@ type User struct {
 	Login          string    `json:"login"`
 	Name           string    `json:"name"`
 	HashedPassword string    `json:"-"`
+	Role           Role      `json:"role"`
 	Avatar         *string   `json:"avatar,omitempty"`
 	Stat           *Stat     `json:"stat,omitempty"`
 	Deleted        bool      `json:"-"`
@@ -25,6 +26,7 @@ func (u *User) Model(user db.User) {
 	u.Name = user.Name
 	u.Login = user.Login
 	u.HashedPassword = user.HashedPassword
+	u.Role = Role(user.Role)
 	u.Avatar = user.Avatar
 	u.Deleted = user.Deleted
 	u.CreatedAt = user.CreatedAt
