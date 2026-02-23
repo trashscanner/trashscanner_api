@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -96,6 +97,115 @@ func TestPgStore_GetAdminUsers(t *testing.T) {
 		users, err := store.GetAdminUsers(context.Background(), 10, 0)
 		assert.Error(t, err)
 		assert.Nil(t, users)
+	})
+}
+
+func TestPgStore_GetAdminUserByID(t *testing.T) {
+	t.Run("success_with_stats", func(t *testing.T) {
+		q := mocks.NewQuerier(t)
+		store := &pgStore{q: q}
+
+		now := time.Now()
+		userID := uuid.New()
+
+		statusStr := string(models.UserStatusNewbie)
+		rating := int32(100)
+		filesScanned := int32(50)
+		totalWeight := float64(10.5)
+
+		row := db.GetAdminUserByIDRow{
+			ID:           userID,
+			Login:        "testuser",
+			Name:         "Test User",
+			Role:         "user",
+			Avatar:       nil,
+			Deleted:      false,
+			CreatedAt:    now,
+			UpdatedAt:    now,
+			LastLoginAt:  now,
+			Status:       &statusStr,
+			Rating:       &rating,
+			FilesScanned: &filesScanned,
+			TotalWeight:  &totalWeight,
+			LastScannedAt: pgtype.Timestamptz{
+				Time:  now,
+				Valid: true,
+			},
+		}
+
+		q.EXPECT().GetAdminUserByID(mock.Anything, userID).Return(row, nil)
+
+		user, err := store.GetAdminUserByID(context.Background(), userID)
+		require.NoError(t, err)
+		require.NotNil(t, user)
+
+		assert.Equal(t, userID, user.ID)
+		assert.Equal(t, "testuser", user.Login)
+		assert.Equal(t, "Test User", user.Name)
+		assert.Equal(t, models.Role("user"), user.Role)
+		assert.NotNil(t, user.LastLoginAt)
+		assert.NotNil(t, user.Stat)
+		assert.Equal(t, models.UserStatusNewbie, user.Stat.Status)
+		assert.Equal(t, 100, user.Stat.Rating)
+		assert.Equal(t, 50, user.Stat.FilesScanned)
+		assert.Equal(t, 10.5, user.Stat.TotalWeight)
+		assert.Equal(t, now, user.Stat.LastScannedAt)
+	})
+
+	t.Run("success_without_stats", func(t *testing.T) {
+		q := mocks.NewQuerier(t)
+		store := &pgStore{q: q}
+
+		now := time.Now()
+		userID := uuid.New()
+
+		row := db.GetAdminUserByIDRow{
+			ID:        userID,
+			Login:     "nostatuser",
+			Name:      "No Stat User",
+			Role:      "user",
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+
+		q.EXPECT().GetAdminUserByID(mock.Anything, userID).Return(row, nil)
+
+		user, err := store.GetAdminUserByID(context.Background(), userID)
+		require.NoError(t, err)
+		require.NotNil(t, user)
+
+		assert.Equal(t, "nostatuser", user.Login)
+		assert.Nil(t, user.LastLoginAt)
+		assert.Nil(t, user.Stat)
+	})
+
+	t.Run("not_found", func(t *testing.T) {
+		q := mocks.NewQuerier(t)
+		store := &pgStore{q: q}
+
+		userID := uuid.New()
+
+		q.EXPECT().GetAdminUserByID(mock.Anything, userID).
+			Return(db.GetAdminUserByIDRow{}, fmt.Errorf("no rows in result set"))
+
+		user, err := store.GetAdminUserByID(context.Background(), userID)
+		assert.Error(t, err)
+		assert.Nil(t, user)
+		assert.Contains(t, err.Error(), "user not found")
+	})
+
+	t.Run("db_error", func(t *testing.T) {
+		q := mocks.NewQuerier(t)
+		store := &pgStore{q: q}
+
+		userID := uuid.New()
+
+		q.EXPECT().GetAdminUserByID(mock.Anything, userID).
+			Return(db.GetAdminUserByIDRow{}, sql.ErrConnDone)
+
+		user, err := store.GetAdminUserByID(context.Background(), userID)
+		assert.Error(t, err)
+		assert.Nil(t, user)
 	})
 }
 

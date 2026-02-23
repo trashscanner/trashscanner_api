@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -99,17 +100,154 @@ func TestGetUsersList(t *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
+}
 
-	t.Run("error_count_users", func(t *testing.T) {
+func TestGetAdminUser(t *testing.T) {
+	t.Run("success_with_predictions", func(t *testing.T) {
 		server, storeMock, _, _, _ := newTestServer(t)
 
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users?limit=10&offset=0", nil)
+		now := time.Now()
+		userID := uuid.New()
+		loginTime := now.Add(-time.Hour)
+
+		dbUser := &models.User{
+			ID:          userID,
+			Login:       "testuser",
+			Name:        "Test User",
+			Role:        "user",
+			CreatedAt:   now,
+			UpdatedAt:   now,
+			LastLoginAt: &loginTime,
+			Stat: &models.Stat{
+				Rating:       50,
+				FilesScanned: 3,
+			},
+		}
+
+		predictions := []*models.Prediction{
+			{
+				ID:        uuid.New(),
+				UserID:    userID,
+				TrashScan: "scan1.jpg",
+				Status:    models.PredictionCompletedStatus,
+				Result:    models.PredictionResult{"plastic": 0.9},
+				CreatedAt: now,
+				UpdatedAt: now,
+			},
+		}
+
+		storeMock.EXPECT().GetAdminUserByID(mock.Anything, userID).Return(dbUser, nil)
+		storeMock.EXPECT().GetPredictionsByUserID(mock.Anything, userID, 0, 100).Return(predictions, nil)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users/"+userID.String(), nil)
+		req = mux.SetURLVars(req, map[string]string{userIDTag: userID.String()})
 		rr := httptest.NewRecorder()
 
-		storeMock.EXPECT().GetAdminUsers(mock.Anything, int32(10), int32(0)).Return([]models.User{}, nil)
-		storeMock.EXPECT().CountUsers(mock.Anything).Return(int64(0), assert.AnError)
+		server.getAdminUser(rr, req)
 
-		server.getUsersList(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+
+		var res dto.AdminUserDetailResponse
+		err := json.NewDecoder(rr.Body).Decode(&res)
+		require.NoError(t, err)
+
+		assert.Equal(t, userID, res.ID)
+		assert.Equal(t, "testuser", res.Login)
+		require.NotNil(t, res.LastLoginAt)
+		require.NotNil(t, res.Stat)
+		assert.Equal(t, 50, res.Stat.Rating)
+		assert.Len(t, res.Predictions, 1)
+		assert.Equal(t, 100, res.Limit)
+		assert.Equal(t, 0, res.Offset)
+	})
+
+	t.Run("success_empty_predictions", func(t *testing.T) {
+		server, storeMock, _, _, _ := newTestServer(t)
+
+		now := time.Now()
+		userID := uuid.New()
+
+		dbUser := &models.User{
+			ID:        userID,
+			Login:     "emptyuser",
+			Name:      "Empty User",
+			Role:      "user",
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+
+		storeMock.EXPECT().GetAdminUserByID(mock.Anything, userID).Return(dbUser, nil)
+		storeMock.EXPECT().GetPredictionsByUserID(mock.Anything, userID, 0, 10).Return([]*models.Prediction{}, nil)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users/"+userID.String()+"?limit=10&offset=0", nil)
+		req = mux.SetURLVars(req, map[string]string{userIDTag: userID.String()})
+		rr := httptest.NewRecorder()
+
+		server.getAdminUser(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+
+		var res dto.AdminUserDetailResponse
+		err := json.NewDecoder(rr.Body).Decode(&res)
+		require.NoError(t, err)
+
+		assert.Equal(t, "emptyuser", res.Login)
+		assert.Len(t, res.Predictions, 0)
+		assert.Equal(t, 10, res.Limit)
+		assert.Equal(t, 0, res.Offset)
+	})
+
+	t.Run("invalid_uuid", func(t *testing.T) {
+		server, _, _, _, _ := newTestServer(t)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users/not-a-uuid", nil)
+		req = mux.SetURLVars(req, map[string]string{userIDTag: "not-a-uuid"})
+		rr := httptest.NewRecorder()
+
+		server.getAdminUser(rr, req)
+
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+	})
+
+	t.Run("user_not_found", func(t *testing.T) {
+		server, storeMock, _, _, _ := newTestServer(t)
+
+		userID := uuid.New()
+
+		storeMock.EXPECT().GetAdminUserByID(mock.Anything, userID).Return(nil, assert.AnError)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users/"+userID.String(), nil)
+		req = mux.SetURLVars(req, map[string]string{userIDTag: userID.String()})
+		rr := httptest.NewRecorder()
+
+		server.getAdminUser(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
+
+	t.Run("error_get_predictions", func(t *testing.T) {
+		server, storeMock, _, _, _ := newTestServer(t)
+
+		now := time.Now()
+		userID := uuid.New()
+
+		dbUser := &models.User{
+			ID:        userID,
+			Login:     "testuser",
+			Name:      "Test User",
+			Role:      "user",
+			CreatedAt: now,
+			UpdatedAt: now,
+		}
+
+		storeMock.EXPECT().GetAdminUserByID(mock.Anything, userID).Return(dbUser, nil)
+		storeMock.EXPECT().GetPredictionsByUserID(mock.Anything, userID, 0, 100).Return(nil, assert.AnError)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users/"+userID.String(), nil)
+		req = mux.SetURLVars(req, map[string]string{userIDTag: userID.String()})
+		rr := httptest.NewRecorder()
+
+		server.getAdminUser(rr, req)
 
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 	})
