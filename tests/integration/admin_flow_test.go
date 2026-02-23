@@ -55,6 +55,13 @@ var _ = Describe("Admin Flow E2E", func() {
 		loginResp.Body.Close()
 	})
 
+	AfterEach(func() {
+		// Clean up all test data to avoid conflicts between specs
+		_, err := dbPool.Exec(context.Background(),
+			"TRUNCATE predictions, login_history, refresh_tokens, stats, users CASCADE")
+		Expect(err).NotTo(HaveOccurred())
+	})
+
 	It("Should manage users via admin endpoints and enforce RBAC", func() {
 		// 1. Admin gets user list
 		reqList, _ := http.NewRequest(http.MethodGet, baseURL+"/admin/users", nil)

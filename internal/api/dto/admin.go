@@ -84,7 +84,9 @@ type AdminUserDetailResponse struct {
 	Offset      int                  `json:"offset"`
 }
 
-func NewAdminUserDetailResponse(user models.User, predictions []*models.Prediction, limit, offset int) AdminUserDetailResponse {
+func NewAdminUserDetailResponse(
+	user models.User, predictions []*models.Prediction, limit, offset int,
+) AdminUserDetailResponse {
 	preds := make([]PredictionResponse, 0, len(predictions))
 	for _, p := range predictions {
 		preds = append(preds, PredictionResponse(*p))
