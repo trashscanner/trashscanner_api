@@ -11,11 +11,11 @@ import (
 
 const (
 	predictionIDTag = "prediction_id"
-
-	offsetQueryKey = "offset"
-	limitQueryKey  = "limit"
-	defaultLimit   = 100
-	defaultOffset  = 0
+	userIDTag       = "user_id"
+	offsetQueryKey  = "offset"
+	limitQueryKey   = "limit"
+	defaultLimit    = 100
+	defaultOffset   = 0
 )
 
 func (s *Server) initRouter() {
@@ -59,4 +59,5 @@ func (s *Server) initRouter() {
 	adminRouter.Use(s.authMiddleware)
 	adminRouter.HandleFunc("/users", s.getUsersList).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/users", s.createUser).Methods(http.MethodPost)
+	adminRouter.HandleFunc(fmt.Sprintf("/users/{%s}", userIDTag), s.getAdminUser).Methods(http.MethodGet)
 }

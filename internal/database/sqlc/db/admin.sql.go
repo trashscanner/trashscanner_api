@@ -24,6 +24,72 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const getAdminUserByID = `-- name: GetAdminUserByID :one
+SELECT 
+    u.id, 
+    u.login, 
+    u.name, 
+    u.role, 
+    u.avatar, 
+    u.deleted, 
+    u.created_at, 
+    u.updated_at,
+    s.status,
+    s.rating,
+    s.files_scanned,
+    s.total_weight,
+    s.last_scanned_at,
+    lh.last_login_at
+FROM users u
+LEFT JOIN stats s ON s.user_id = u.id
+LEFT JOIN (
+    SELECT user_id, MAX(created_at) AS last_login_at
+    FROM login_history
+    WHERE success = true
+    GROUP BY user_id
+) lh ON lh.user_id = u.id
+WHERE u.id = $1
+`
+
+type GetAdminUserByIDRow struct {
+	ID            uuid.UUID          `json:"id"`
+	Login         string             `json:"login"`
+	Name          string             `json:"name"`
+	Role          string             `json:"role"`
+	Avatar        *string            `json:"avatar"`
+	Deleted       bool               `json:"deleted"`
+	CreatedAt     time.Time          `json:"created_at"`
+	UpdatedAt     time.Time          `json:"updated_at"`
+	Status        *string            `json:"status"`
+	Rating        *int32             `json:"rating"`
+	FilesScanned  *int32             `json:"files_scanned"`
+	TotalWeight   *float64           `json:"total_weight"`
+	LastScannedAt pgtype.Timestamptz `json:"last_scanned_at"`
+	LastLoginAt   interface{}        `json:"last_login_at"`
+}
+
+func (q *Queries) GetAdminUserByID(ctx context.Context, id uuid.UUID) (GetAdminUserByIDRow, error) {
+	row := q.db.QueryRow(ctx, getAdminUserByID, id)
+	var i GetAdminUserByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Login,
+		&i.Name,
+		&i.Role,
+		&i.Avatar,
+		&i.Deleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Status,
+		&i.Rating,
+		&i.FilesScanned,
+		&i.TotalWeight,
+		&i.LastScannedAt,
+		&i.LastLoginAt,
+	)
+	return i, err
+}
+
 const getAdminUsers = `-- name: GetAdminUsers :many
 SELECT 
     u.id, 

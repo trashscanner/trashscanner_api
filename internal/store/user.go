@@ -31,6 +31,7 @@ func (s *pgStore) CreateUser(ctx context.Context, user *models.User) error {
 	}
 
 	id, cErr := s.q.CreateUser(ctx, db.CreateUserParams{
+		Name:           user.Name,
 		Login:          user.Login,
 		HashedPassword: user.HashedPassword,
 		Role:           role,

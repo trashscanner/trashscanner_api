@@ -55,6 +55,13 @@ var _ = Describe("Admin Flow E2E", func() {
 		loginResp.Body.Close()
 	})
 
+	AfterEach(func() {
+		// Clean up all test data to avoid conflicts between specs
+		_, err := dbPool.Exec(context.Background(),
+			"TRUNCATE predictions, login_history, refresh_tokens, stats, users CASCADE")
+		Expect(err).NotTo(HaveOccurred())
+	})
+
 	It("Should manage users via admin endpoints and enforce RBAC", func() {
 		// 1. Admin gets user list
 		reqList, _ := http.NewRequest(http.MethodGet, baseURL+"/admin/users", nil)
@@ -109,5 +116,97 @@ var _ = Describe("Admin Flow E2E", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(failListResp.StatusCode).To(Equal(http.StatusForbidden), "Normal user should not access admin list")
 		failListResp.Body.Close()
+	})
+
+	It("Should get a single user by ID with predictions", func() {
+		// 1. Admin creates a new user
+		createReqBody := dto.CreateAdminRequest{
+			Login:    "detailuser",
+			Password: "detail_secure_123",
+			Name:     "Detail User",
+			Role:     models.RoleUser,
+		}
+		createBytes, _ := json.Marshal(createReqBody)
+		reqCreate, _ := http.NewRequest(http.MethodPost, baseURL+"/admin/users", bytes.NewReader(createBytes))
+		reqCreate.Header.Set("Content-Type", "application/json")
+
+		createResp, err := client.Do(reqCreate)
+		Expect(err).NotTo(HaveOccurred())
+
+		createBody, _ := io.ReadAll(createResp.Body)
+		Expect(createResp.StatusCode).To(Equal(http.StatusCreated), "Admin should create user. Body: %s", string(createBody))
+		createResp.Body.Close()
+
+		var createdUser dto.UserResponse
+		err = json.Unmarshal(createBody, &createdUser)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(createdUser.ID).NotTo(Equal(uuid.Nil))
+
+		// 2. Admin gets user by ID
+		reqGetUser, _ := http.NewRequest(http.MethodGet, baseURL+"/admin/users/"+createdUser.ID.String(), nil)
+		getUserResp, err := client.Do(reqGetUser)
+		Expect(err).NotTo(HaveOccurred())
+
+		getUserBody, _ := io.ReadAll(getUserResp.Body)
+		Expect(getUserResp.StatusCode).To(Equal(http.StatusOK), "Admin should get user by ID. Body: %s", string(getUserBody))
+		getUserResp.Body.Close()
+
+		var userDetail dto.AdminUserDetailResponse
+		err = json.Unmarshal(getUserBody, &userDetail)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(userDetail.ID).To(Equal(createdUser.ID))
+		Expect(userDetail.Login).To(Equal("detailuser"))
+		Expect(userDetail.Name).To(Equal("Detail User"))
+		Expect(userDetail.Role).To(Equal(models.RoleUser))
+		Expect(userDetail.Predictions).To(BeEmpty(), "New user should have no predictions")
+		Expect(userDetail.Limit).To(Equal(100))
+		Expect(userDetail.Offset).To(Equal(0))
+
+		// 3. Admin gets user by ID with pagination params
+		reqGetUserPaged, _ := http.NewRequest(http.MethodGet, baseURL+"/admin/users/"+createdUser.ID.String()+"?limit=5&offset=0", nil)
+		getPagedResp, err := client.Do(reqGetUserPaged)
+		Expect(err).NotTo(HaveOccurred())
+
+		pagedBody, _ := io.ReadAll(getPagedResp.Body)
+		Expect(getPagedResp.StatusCode).To(Equal(http.StatusOK), "Admin should get user with pagination. Body: %s", string(pagedBody))
+		getPagedResp.Body.Close()
+
+		var pagedDetail dto.AdminUserDetailResponse
+		err = json.Unmarshal(pagedBody, &pagedDetail)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(pagedDetail.Limit).To(Equal(5))
+		Expect(pagedDetail.Offset).To(Equal(0))
+
+		// 4. Invalid UUID returns 400
+		reqInvalid, _ := http.NewRequest(http.MethodGet, baseURL+"/admin/users/not-a-uuid", nil)
+		invalidResp, err := client.Do(reqInvalid)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(invalidResp.StatusCode).To(Equal(http.StatusBadRequest), "Invalid UUID should return 400")
+		invalidResp.Body.Close()
+
+		// 5. Non-existent user returns 404
+		reqNotFound, _ := http.NewRequest(http.MethodGet, baseURL+"/admin/users/"+uuid.New().String(), nil)
+		notFoundResp, err := client.Do(reqNotFound)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(notFoundResp.StatusCode).To(Equal(http.StatusNotFound), "Non-existent user should return 404")
+		notFoundResp.Body.Close()
+
+		// 6. Normal user cannot access this endpoint (RBAC)
+		jar, _ := cookiejar.New(nil)
+		normalClient := &http.Client{Jar: jar}
+		normalLogin := dto.AuthRequest{
+			Login:    "detailuser",
+			Password: "detail_secure_123",
+		}
+		normalBytes, _ := json.Marshal(normalLogin)
+		normalLoginResp, _ := normalClient.Post(baseURL+"/login", "application/json", bytes.NewReader(normalBytes))
+		normalLoginResp.Body.Close()
+
+		reqForbidden, _ := http.NewRequest(http.MethodGet, baseURL+"/admin/users/"+createdUser.ID.String(), nil)
+		forbiddenResp, err := normalClient.Do(reqForbidden)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(forbiddenResp.StatusCode).To(Equal(http.StatusForbidden), "Normal user should not access admin get user")
+		forbiddenResp.Body.Close()
 	})
 })

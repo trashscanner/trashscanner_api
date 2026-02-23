@@ -19,6 +19,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (uuid.UUID, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetActiveTokensByUser(ctx context.Context, userID uuid.UUID) ([]RefreshToken, error)
+	GetAdminUserByID(ctx context.Context, id uuid.UUID) (GetAdminUserByIDRow, error)
 	GetAdminUsers(ctx context.Context, arg GetAdminUsersParams) ([]GetAdminUsersRow, error)
 	GetLoginHistoryByUser(ctx context.Context, arg GetLoginHistoryByUserParams) ([]LoginHistory, error)
 	GetPrediction(ctx context.Context, id uuid.UUID) (Prediction, error)

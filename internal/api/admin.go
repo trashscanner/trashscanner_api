@@ -3,6 +3,8 @@ package api
 import (
 	"net/http"
 
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"github.com/trashscanner/trashscanner_api/internal/api/dto"
 	"github.com/trashscanner/trashscanner_api/internal/errlocal"
 	"github.com/trashscanner/trashscanner_api/internal/utils"
@@ -74,4 +76,49 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.WriteResponse(w, r, http.StatusCreated, dto.UserResponse(*model))
+}
+
+// getAdminUser godoc
+// @Summary      Get user by ID
+// @Description  Get a single user with their stats and predictions (scans)
+// @Tags         admin
+// @Accept       json
+// @Produce      json
+// @Param        user_id path      string true  "User ID (UUID)"
+// @Param        offset  query     int    false "Predictions offset" default(0)
+// @Param        limit   query     int    false "Predictions limit"  default(100)
+// @Success      200     {object}  dto.AdminUserDetailResponse
+// @Failure      400     {object}  errlocal.ErrBadRequest
+// @Failure      401     {object}  errlocal.ErrUnauthorized
+// @Failure      403     {object}  errlocal.ErrForbidden
+// @Failure      404     {object}  errlocal.ErrNotFound
+// @Failure      500     {object}  errlocal.ErrInternal
+// @Router       /api/v1/admin/users/{user_id} [get]
+func (s *Server) getAdminUser(w http.ResponseWriter, r *http.Request) {
+	userID, err := uuid.Parse(mux.Vars(r)[userIDTag])
+	if err != nil {
+		s.WriteError(w, r, errlocal.NewErrBadRequest("invalid user ID", err.Error(), nil))
+		return
+	}
+
+	user, err := s.store.GetAdminUserByID(r.Context(), userID)
+	if err != nil {
+		s.WriteError(w, r, err)
+		return
+	}
+
+	limit := utils.GetQueryParam[int](r, limitQueryKey, defaultLimit)
+	offset := utils.GetQueryParam[int](r, offsetQueryKey, defaultOffset)
+
+	if limit == 0 {
+		limit = defaultLimit
+	}
+
+	predictions, err := s.store.GetPredictionsByUserID(r.Context(), userID, offset, limit)
+	if err != nil {
+		s.WriteError(w, r, err)
+		return
+	}
+
+	s.WriteResponse(w, r, http.StatusOK, dto.NewAdminUserDetailResponse(*user, predictions, limit, offset))
 }

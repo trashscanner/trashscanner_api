@@ -44,6 +44,7 @@ type Store interface {
 	GetLoginHistory(ctx context.Context, userID uuid.UUID) ([]models.LoginHistory, error)
 
 	GetAdminUsers(ctx context.Context, limit, offset int32) ([]models.User, error)
+	GetAdminUserByID(ctx context.Context, id uuid.UUID) (*models.User, error)
 	CountUsers(ctx context.Context) (int64, error)
 
 	Close()

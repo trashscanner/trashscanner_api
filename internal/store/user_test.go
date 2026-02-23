@@ -30,6 +30,7 @@ func TestUserCreate(t *testing.T) {
 		mockQ.EXPECT().GetUserByLogin(mock.Anything, user.Login).Return(db.User{}, pgx.ErrNoRows).Once()
 
 		mockQ.EXPECT().CreateUser(mock.Anything, db.CreateUserParams{
+			Name:           user.Name,
 			Login:          user.Login,
 			HashedPassword: user.HashedPassword,
 			Role:           "user",
@@ -81,6 +82,7 @@ func TestUserCreate(t *testing.T) {
 		mockQ.EXPECT().GetUserByLogin(mock.Anything, user.Login).Return(db.User{}, pgx.ErrNoRows).Once()
 
 		mockQ.EXPECT().CreateUser(mock.Anything, db.CreateUserParams{
+			Name:           user.Name,
 			Login:          user.Login,
 			HashedPassword: user.HashedPassword,
 			Role:           "user",

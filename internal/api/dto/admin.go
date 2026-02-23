@@ -77,6 +77,29 @@ func NewAdminUserResponse(user models.User) AdminUserResponse {
 	}
 }
 
+type AdminUserDetailResponse struct {
+	AdminUserResponse
+	Predictions []PredictionResponse `json:"predictions"`
+	Limit       int                  `json:"limit"`
+	Offset      int                  `json:"offset"`
+}
+
+func NewAdminUserDetailResponse(
+	user models.User, predictions []*models.Prediction, limit, offset int,
+) AdminUserDetailResponse {
+	preds := make([]PredictionResponse, 0, len(predictions))
+	for _, p := range predictions {
+		preds = append(preds, PredictionResponse(*p))
+	}
+
+	return AdminUserDetailResponse{
+		AdminUserResponse: NewAdminUserResponse(user),
+		Predictions:       preds,
+		Limit:             limit,
+		Offset:            offset,
+	}
+}
+
 func (req *CreateAdminRequest) ToModel() *models.User {
 	hp, _ := utils.HashPass(req.Password)
 	return &models.User{
