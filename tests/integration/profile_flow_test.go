@@ -103,11 +103,8 @@ var _ = Describe("Profile Flow E2E", func() {
 		reqMeAfterLogout, _ := http.NewRequest(http.MethodGet, baseURL+"/users/me", nil)
 		meRespAfterLogout, err := client.Do(reqMeAfterLogout)
 		Expect(err).NotTo(HaveOccurred())
-		// NOTE: Because roleMiddleware runs *before* authMiddleware in router.go,
-		// and test_config limits /api/v1/users/me/** to [user, admin],
-		// an unauthenticated user (role "anonymous") hits a 403 Forbidden first
-		// before it would hit a 401 Unauthorized in authMiddleware.
-		Expect(meRespAfterLogout.StatusCode).To(Equal(http.StatusForbidden), "Should return 403 after logout due to roleMiddleware")
+		// After logout, access token is cleared, so authMiddleware returns 401.
+		Expect(meRespAfterLogout.StatusCode).To(Equal(http.StatusUnauthorized), "Should return 401 after logout")
 		meRespAfterLogout.Body.Close()
 
 		// 6. Login with new password
@@ -134,10 +131,8 @@ var _ = Describe("Profile Flow E2E", func() {
 		Expect(err).NotTo(HaveOccurred())
 		// NOTE: Deleting the user does *not* clear their cookies in the client.
 		// When meRespDeleted hits the server:
-		// 1. softAuthMiddleware parses the token, finds the user ID in it, and attaches the (stale) role to the context
-		// 2. roleMiddleware checks the role from context ("user"), and allows the request to /users/me
-		// 3. authMiddleware validates the token signature, which passes (because tokens aren't instantly invalid unless explicitly blacklisted)
-		// 4. Finally, userMiddleware attempts to fetch the user from the DB to refresh their data. This fails, returning ErrNotFound (404).
+		// 1. authMiddleware validates the token signature, which passes (tokens aren't instantly invalid unless explicitly blacklisted)
+		// 2. userMiddleware attempts to fetch the user from the DB to refresh their data. This fails, returning ErrNotFound (404).
 		Expect(meRespDeleted.StatusCode).To(Equal(http.StatusNotFound), "Deleted user should return not found")
 		meRespDeleted.Body.Close()
 	})

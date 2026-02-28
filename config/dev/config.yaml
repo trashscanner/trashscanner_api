@@ -27,20 +27,3 @@ log:
   level: debug 
   format: text
   file: ""
-auth_config:
-  default_role: anonymous
-  rules:
-    - pattern: "/api/v1/health"
-      roles: ["anonymous", "user", "admin"]
-    - pattern: "/api/v1/login"
-      roles: ["anonymous", "user", "admin"]
-    - pattern: "/api/v1/register"
-      roles: ["anonymous", "user", "admin"]
-    - pattern: "/api/v1/refresh"
-      roles: ["anonymous", "user", "admin"]
-    - pattern: "/api/v1/users/me/**"
-      roles: ["user", "admin"]
-    - pattern: "/api/v1/predictions/**"
-      roles: ["user", "admin"]
-    - pattern: "/api/v1/admin/**"
-      roles: ["admin"]

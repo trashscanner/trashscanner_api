@@ -147,3 +147,15 @@ func TestInitRouter_GetUserFlow(t *testing.T) {
 	require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
 	assert.Equal(t, user.ID, resp.ID)
 }
+
+func TestInitRouter_HealthPublic(t *testing.T) {
+	server, _, _, _, _ := newTestServer(t)
+	server.initRouter()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)
+	rr := httptest.NewRecorder()
+
+	server.router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+}

@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"path"
 	"strings"
 	"time"
 
@@ -16,13 +15,12 @@ const (
 )
 
 type Config struct {
-	Server     ServerConfig      `mapstructure:"server"`
-	DB         DBConfig          `mapstructure:"database"`
-	Store      FileStoreConfig   `mapstructure:"filestore"`
-	Auth       AuthManagerConfig `mapstructure:"auth_manager"`
-	Predictor  PredictorConfig   `mapstructure:"predictor"`
-	Log        LogConfig         `mapstructure:"log"`
-	AuthConfig AuthConfig        `mapstructure:"auth_config"`
+	Server    ServerConfig      `mapstructure:"server"`
+	DB        DBConfig          `mapstructure:"database"`
+	Store     FileStoreConfig   `mapstructure:"filestore"`
+	Auth      AuthManagerConfig `mapstructure:"auth_manager"`
+	Predictor PredictorConfig   `mapstructure:"predictor"`
+	Log       LogConfig         `mapstructure:"log"`
 }
 
 type ServerConfig struct {
@@ -101,84 +99,4 @@ func NewConfig() (Config, error) {
 func setDefaults(v *viper.Viper) {
 	v.SetDefault("server.host", "0.0.0.0")
 	v.SetDefault("server.port", "8080")
-	v.SetDefault("auth_config.default_role", "anonymous")
-}
-
-type AuthRule struct {
-	Pattern string   `mapstructure:"pattern" yaml:"pattern"`
-	Roles   []string `mapstructure:"roles" yaml:"roles"`
-}
-
-type AuthConfig struct {
-	Rules       []AuthRule `mapstructure:"rules" yaml:"rules"`
-	DefaultRole string     `mapstructure:"default_role" yaml:"default_role"`
-}
-
-func (c *AuthConfig) IsAllowed(role, urlPath string) bool {
-	urlPath = path.Clean(urlPath)
-
-	for _, rule := range c.Rules {
-		if matchPattern(rule.Pattern, urlPath) {
-			for _, r := range rule.Roles {
-				if r == role {
-					return true
-				}
-			}
-			return false
-		}
-	}
-
-	return false
-}
-
-func matchPattern(pattern, urlPath string) bool {
-	patternParts := splitPath(pattern)
-	pathParts := splitPath(urlPath)
-
-	return matchParts(patternParts, pathParts)
-}
-
-func splitPath(p string) []string {
-	p = strings.Trim(p, "/")
-	if p == "" {
-		return []string{}
-	}
-	return strings.Split(p, "/")
-}
-
-func matchParts(pattern, path []string) bool {
-	pi, pa := 0, 0
-
-	for pi < len(pattern) && pa < len(path) {
-		if pattern[pi] == "**" {
-			if pi == len(pattern)-1 {
-				return true
-			}
-			for i := pa; i <= len(path); i++ {
-				if matchParts(pattern[pi+1:], path[i:]) {
-					return true
-				}
-			}
-			return false
-		}
-
-		if pattern[pi] == "*" {
-			pi++
-			pa++
-			continue
-		}
-
-		if pattern[pi] != path[pa] {
-			return false
-		}
-
-		pi++
-		pa++
-	}
-
-	for pi < len(pattern) && pattern[pi] == "**" {
-		pi++
-	}
-
-	return pi == len(pattern) && pa == len(path)
 }

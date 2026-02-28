@@ -7,6 +7,8 @@ import (
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 	_ "github.com/trashscanner/trashscanner_api/docs"
+	"github.com/trashscanner/trashscanner_api/internal/models"
+	"github.com/trashscanner/trashscanner_api/internal/rbac"
 )
 
 const (
@@ -29,9 +31,8 @@ func (s *Server) initRouter() {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	})
 
-	root.Use(mux.CORSMethodMiddleware(root), s.commonMiddleware, s.softAuthMiddleware, s.roleMiddleware)
+	root.Use(mux.CORSMethodMiddleware(root), s.commonMiddleware)
 	root.HandleFunc("/health", s.healthCheck).Methods(http.MethodGet)
-
 	root.HandleFunc("/refresh", s.refresh).Methods(http.MethodPost)
 
 	authRouter := root.PathPrefix("").Subrouter()
@@ -56,7 +57,7 @@ func (s *Server) initRouter() {
 	predictionRouter.HandleFunc(fmt.Sprintf("/{%s}", predictionIDTag), s.getPrediction).Methods(http.MethodGet)
 
 	adminRouter := root.PathPrefix("/admin").Subrouter()
-	adminRouter.Use(s.authMiddleware)
+	adminRouter.Use(s.authMiddleware, rbac.RequireRole(s.WriteError, models.RoleAdmin))
 	adminRouter.HandleFunc("/users", s.getUsersList).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/users", s.createUser).Methods(http.MethodPost)
 	adminRouter.HandleFunc(fmt.Sprintf("/users/{%s}", userIDTag), s.getAdminUser).Methods(http.MethodGet)
