@@ -32,7 +32,6 @@ type Server struct {
 	store       store.Store
 	fileStore   filestore.FileStore
 	authManager auth.AuthManager
-	authConfig  *config.AuthConfig
 	predictor   predictor
 	logger      *logging.Logger
 	healthy     bool
@@ -81,7 +80,6 @@ func NewServer(
 		store:       store,
 		fileStore:   fileStore,
 		authManager: authManager,
-		authConfig:  &cfg.AuthConfig,
 		predictor:   predictor,
 		logger:      logger.WithApiTag(),
 	}
