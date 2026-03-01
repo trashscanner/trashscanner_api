@@ -12,12 +12,14 @@ import (
 )
 
 const (
-	predictionIDTag = "prediction_id"
-	userIDTag       = "user_id"
-	offsetQueryKey  = "offset"
-	limitQueryKey   = "limit"
-	defaultLimit    = 100
-	defaultOffset   = 0
+	predictionIDTag  = "prediction_id"
+	userIDTag        = "user_id"
+	offsetQueryKey   = "offset"
+	limitQueryKey    = "limit"
+	defaultLimit     = 100
+	defaultOffset    = 0
+	corsAllowMethods = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+	corsAllowHeaders = "Content-Type, Authorization, X-Request-ID"
 )
 
 func (s *Server) initRouter() {
@@ -28,9 +30,24 @@ func (s *Server) initRouter() {
 		http.Error(w, "endpoint not found", http.StatusNotFound)
 	})
 	root.MethodNotAllowedHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+
+			origin := r.Header.Get("Origin")
+			if origin != "" {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
+				w.Header().Set("Vary", "Origin")
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
+				w.Header().Set("Access-Control-Allow-Methods", corsAllowMethods)
+				w.Header().Set("Access-Control-Allow-Headers", corsAllowHeaders)
+				w.Header().Set("Access-Control-Max-Age", "3600")
+			}
+
+			return
+		}
+
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	})
-
 	root.Use(mux.CORSMethodMiddleware(root), s.commonMiddleware)
 	root.HandleFunc("/health", s.healthCheck).Methods(http.MethodGet)
 	root.HandleFunc("/refresh", s.refresh).Methods(http.MethodPost)
