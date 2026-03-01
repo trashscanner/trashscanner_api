@@ -45,6 +45,26 @@ func TestInitRouter_MethodNotAllowed(t *testing.T) {
 	assert.Contains(t, rr.Body.String(), "method not allowed")
 }
 
+func TestInitRouter_OptionsPreflight(t *testing.T) {
+	server, _, _, _, _ := newTestServer(t)
+	server.initRouter()
+
+	req := httptest.NewRequest(http.MethodOptions, "/api/v1/login", nil)
+	req.Header.Set("Origin", "http://example.com")
+	req.Header.Set("Access-Control-Request-Method", http.MethodPost)
+	req.Header.Set("Access-Control-Request-Headers", "Content-Type")
+
+	rr := httptest.NewRecorder()
+
+	server.router.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusNoContent, rr.Code)
+	assert.Equal(t, "http://example.com", rr.Header().Get("Access-Control-Allow-Origin"))
+	assert.Equal(t, "true", rr.Header().Get("Access-Control-Allow-Credentials"))
+	assert.Contains(t, rr.Header().Get("Access-Control-Allow-Methods"), http.MethodOptions)
+	assert.Contains(t, rr.Header().Get("Access-Control-Allow-Headers"), "Content-Type")
+}
+
 func TestInitRouter_LoginFlow(t *testing.T) {
 	server, storeMock, authMock, _, _ := newTestServer(t)
 	server.initRouter()
