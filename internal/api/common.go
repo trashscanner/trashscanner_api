@@ -9,9 +9,13 @@ import (
 	"github.com/trashscanner/trashscanner_api/internal/utils"
 )
 
-const requestIDHeader = "X-Request-ID"
-
-const ()
+const (
+	requestIDHeader    = "X-Request-ID"
+	corsAllowMethods   = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+	corsAllowHeaders   = "Content-Type, Authorization, X-Request-ID"
+	corsAllowMaxAge    = "3600"
+	corsAllowAnyOrigin = "*"
+)
 
 func (s *Server) commonMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -39,5 +43,33 @@ func (s *Server) commonMiddleware(next http.Handler) http.Handler {
 			l = l.WithField("elapsed_ms", elapsed.Milliseconds())
 		}
 		l.Info("finished handling request")
+	})
+}
+
+func (s *Server) corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+		if origin != "" {
+			w.Header().Add("Vary", "Origin")
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		} else {
+			w.Header().Set("Access-Control-Allow-Origin", corsAllowAnyOrigin)
+		}
+
+		if r.Method == http.MethodOptions && origin != "" && r.Header.Get("Access-Control-Request-Method") != "" {
+			w.Header().Set("Access-Control-Allow-Methods", corsAllowMethods)
+			requestHeaders := r.Header.Get("Access-Control-Request-Headers")
+			if requestHeaders != "" {
+				w.Header().Set("Access-Control-Allow-Headers", requestHeaders)
+			} else {
+				w.Header().Set("Access-Control-Allow-Headers", corsAllowHeaders)
+			}
+			w.Header().Set("Access-Control-Max-Age", corsAllowMaxAge)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }
